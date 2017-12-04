@@ -40,6 +40,10 @@
   version "4.14.64"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.64.tgz#979cf3a3d4a368670840bf9b3e448dc33ffe84ee"
 
+"@types/lodash@^4.14.87":
+  version "4.14.87"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.87.tgz#55f92183b048c2c64402afe472f8333f4e319a6b"
+
 "@types/marked@0.0.28":
   version "0.0.28"
   resolved "https://registry.yarnpkg.com/@types/marked/-/marked-0.0.28.tgz#44ba754e9fa51432583e8eb30a7c4dd249b52faa"
@@ -1834,6 +1838,13 @@ jodid25519@^1.0.0:
   resolved "https://registry.yarnpkg.com/jodid25519/-/jodid25519-1.0.2.tgz#06d4912255093419477d425633606e0e90782967"
   dependencies:
     jsbn "~0.1.0"
+
+js-csp@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/js-csp/-/js-csp-1.0.1.tgz#67b374d44d9e353af9f7ee44fbc60f5338117f12"
+  dependencies:
+    babel-runtime "^6.22.0"
+    lodash "^4.17.4"
 
 js-tokens@^3.0.0:
   version "3.0.1"

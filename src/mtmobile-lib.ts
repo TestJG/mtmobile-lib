@@ -1,1 +1,1 @@
-export { Dummy } from './dummy';
+export * from './utils';
