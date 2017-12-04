@@ -3,7 +3,7 @@
  */
 export class Dummy {
   /**
-   * Gets a person.
+   * Gets a person model.
    * @param  {string} name
    * @returns An object with a name.
    */
