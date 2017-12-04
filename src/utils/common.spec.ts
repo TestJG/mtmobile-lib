@@ -246,22 +246,12 @@ describe('Utils', () => {
             it('should be a function', () => {
                 expect(common.normalizeError).toBeInstanceOf(Function);
             });
-            it('on a falsy error should return error.unknown', () => {
-                expect(common.normalizeError(undefined)).toEqual(
-                    new Error('error.unknown')
-                );
-                expect(common.normalizeError(null)).toEqual(
-                    new Error('error.unknown')
-                );
-                expect(common.normalizeError(false)).toEqual(
-                    new Error('error.unknown')
-                );
-                expect(common.normalizeError('')).toEqual(
-                    new Error('error.unknown')
-                );
-                expect(common.normalizeError(0)).toEqual(
-                    new Error('error.unknown')
-                );
+            [undefined, null, false, '', 0].forEach(element => {
+                it('on a ' + JSON.stringify(element) + ' error should return error.unknown', () => {
+                    expect(common.normalizeError(element)).toEqual(
+                        new Error('error.unknown')
+                    );
+                });
             });
             it('on a non-falsy string should return an error with given string', () => {
                 expect(common.normalizeError('some random error')).toEqual(
@@ -298,18 +288,10 @@ describe('Utils', () => {
                 expect(common.errorToString(undefined)).toEqual(
                     'error.unknown'
                 );
-                expect(common.errorToString(null)).toEqual(
-                    'error.unknown'
-                );
-                expect(common.errorToString(false)).toEqual(
-                    'error.unknown'
-                );
-                expect(common.errorToString('')).toEqual(
-                    'error.unknown'
-                );
-                expect(common.errorToString(0)).toEqual(
-                    'error.unknown'
-                );
+                expect(common.errorToString(null)).toEqual('error.unknown');
+                expect(common.errorToString(false)).toEqual('error.unknown');
+                expect(common.errorToString('')).toEqual('error.unknown');
+                expect(common.errorToString(0)).toEqual('error.unknown');
             });
             it('on a non-falsy string should return an error with given string', () => {
                 expect(common.errorToString('some random error')).toEqual(
