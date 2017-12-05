@@ -6,7 +6,7 @@ import {
     objMap,
     joinStr,
     id,
-    assign
+    assignOrSame
 } from './common';
 
 /**
@@ -195,9 +195,11 @@ export const partialReducer = <T, S = any>(
               // If false or the same state is returned, then do not alter the state
               if (changes && changes !== state) {
                   if (changes instanceof Array) {
-                      return Object.assign({}, state, ...changes);
+                      return assignOrSame(state, ...changes);
+                  } else if (changes === true) {
+                    return state;
                   } else {
-                      return Object.assign({}, state, changes);
+                      return assignOrSame(state, changes);
                   }
               } else {
                   return state;

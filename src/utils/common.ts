@@ -3,6 +3,15 @@ import * as _ from 'lodash';
 export const assign = <T>(s: T, ...u: Partial<T>[]): T =>
     Object.assign({}, s, ...u);
 
+export const assignOrSame = <T>(s: T, ...u: Partial<T>[]): T => {
+    const would = assign(s, ...u);
+    const same = Object.getOwnPropertyNames(would).every(
+        k => s[k] === would[k]
+    );
+    if (same) { return s; }
+    return would;
+};
+
 export const id = <T>(a: T) => a;
 
 export const joinStr = (sep: string, strs: string[]) =>
@@ -76,9 +85,8 @@ export const objFlatMap = (
     );
 };
 
-export const objMap = (
-    mapper: (keyValue: [string, any]) => [string, any]
-) => objFlatMap(kv => [mapper(kv)]);
+export const objMap = (mapper: (keyValue: [string, any]) => [string, any]) =>
+    objFlatMap(kv => [mapper(kv)]);
 
 export const objMapValues = (mapper: (value: any, key: string) => any) =>
     objMap(([k, v]) => [k, mapper(v, k)]);
