@@ -1,4 +1,6 @@
 import { Observable, Notification } from 'rxjs';
+import { ReplaySubject } from 'rxjs/ReplaySubject';
+import deepequal from 'deep-equal';
 
 export interface DoneCallback {
     (...args: any[]): any;
@@ -10,7 +12,8 @@ export const testObsNotifications = <T = any>(
     expected: Notification<T>[],
     done: DoneCallback,
     anyValue?: T,
-    anyError?: any
+    anyError?: any,
+    doneTimeout: number | undefined = 1000
 ) => {
     expect(actual).toBeInstanceOf(Observable);
     let count = 0;
@@ -22,7 +25,7 @@ export const testObsNotifications = <T = any>(
             count < expected.length
                 ? expected[count]
                 : Notification.createComplete();
-                count++;
+        count++;
         return result;
     };
     const toStr = (n: Notification<any>) => {
@@ -48,14 +51,32 @@ export const testObsNotifications = <T = any>(
             done.fail(`Expected ${expStr}, but ${actStr} was received}`);
         } else if (kind === 'N') {
             if (anyValue === undefined || exp.value !== anyValue) {
-                expect(act.value).toEqual(exp.value);
+                if (!deepequal(act.value, exp.value)) {
+                    done.fail(
+                        `Expected value ${JSON.stringify(
+                            exp.value
+                        )}, but value ${JSON.stringify(
+                            act.value
+                        )} was received}`
+                    );
+                }
             }
         } else if (kind === 'E') {
             if (anyError === undefined || exp.error !== anyError) {
-                expect(act.error).toEqual(exp.error);
+                if (!deepequal(act.error, exp.error)) {
+                    done.fail(
+                        `Expected error ${JSON.stringify(
+                            exp.error
+                        )}, but error ${JSON.stringify(
+                            act.error
+                        )} was received}`
+                    );
+                }
             }
         }
     };
+
+    const finished$ = new ReplaySubject(1);
 
     actual.subscribe({
         next: actualValue => {
@@ -72,6 +93,7 @@ export const testObsNotifications = <T = any>(
             const actualNotification = Notification.createError(err);
             errorSpy(err);
             checkKind('E', expectedNotification, actualNotification);
+            finished$.next('E');
             done();
         },
         complete: () => {
@@ -81,9 +103,20 @@ export const testObsNotifications = <T = any>(
             const actualNotification = Notification.createComplete();
             completeSpy();
             checkKind('C', expectedNotification, actualNotification);
+            finished$.next('C');
             done();
         }
     });
+
+    if (typeof doneTimeout === 'number' && doneTimeout > 0) {
+        Observable.of(1)
+            .delay(1000)
+            .takeUntil(finished$)
+            .subscribe(() => {
+                done.fail('DONE by custom TIMEOUT');
+                done();
+            });
+    }
 };
 
 export const testObs = <T = any>(

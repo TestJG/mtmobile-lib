@@ -92,7 +92,7 @@ export const normalizeError = (err: any) => {
     }
     if (err instanceof Error) {
         if (!err.message) {
-            err.message = 'error.unknown';
+            return new Error('error.unknown');
         }
         return err;
     }

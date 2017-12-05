@@ -23,17 +23,6 @@ export const tryTo = <T>(
     }
 };
 
-export function makeState<TState>(
-    init: TState,
-    updates$: Observable<(state: TState) => TState>
-): [Observable<TState>, Subscription] {
-    const state$ = updates$
-        .scan((prev, up) => up(prev), init)
-        .publishBehavior(init);
-    const connection = state$.connect();
-    return [state$, connection];
-}
-
 export const rxid = <T>(x: T) => Observable.of(x);
 
 export const rxdelay = <T>(ms: number | Date, scheduler?: IScheduler) =>
@@ -52,9 +41,7 @@ export const wrapFunctionStream = <V, F extends FuncOfObs<V>>(
     return <F>((...args: any[]) => conn.first().switchMap(f => f(...args)));
 };
 
-export const wrapServiceStreamFromNames = <
-    T extends { [name: string]: any }
->(
+export const wrapServiceStreamFromNames = <T extends { [name: string]: any }>(
     source: Observable<T>,
     names: (keyof T)[]
 ): T => {
@@ -84,3 +71,14 @@ export const firstSwitchMap = <S>(source: Observable<S>) => <T>(
         .first()
         .switchMap(mapper)
         .catch(normalizeErrorOnCatch);
+
+export function makeState<TState>(
+    init: TState,
+    updates$: Observable<(state: TState) => TState>
+): [Observable<TState>, Subscription] {
+    const state$ = updates$
+        .scan((prev, up) => up(prev), init)
+        .publishBehavior(init);
+    const connection = state$.connect();
+    return [state$, connection];
+}

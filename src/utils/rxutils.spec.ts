@@ -276,5 +276,21 @@ describe('Utils', () => {
                 );
             });
         });
+
+        describe('makeState', () => {
+            it('should be a function', () => {
+                expect(rxutils.makeState).toBeInstanceOf(Function);
+            });
+
+            it('should scan through all intermediate states', done => {
+                const update$ = Observable.of(
+                    (n: number) => n + 1,
+                    (n: number) => n + 2,
+                    (n: number) => n + 3
+                ).concatMap(f => Observable.of(f).delay(20));
+                const [actual, subs] = rxutils.makeState(1, update$);
+                testObs(actual, [1, 2, 4, 7], null, done);
+            });
+        });
     });
 });
