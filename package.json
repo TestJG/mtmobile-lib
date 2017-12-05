@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "description": "",
   "keywords": [],
-  "main": "dist/mtmobile-lib.umd.js",
+  "main": "compiled/mtmobile-lib.js",
+  "main:rollup": "dist/mtmobile-lib.umd.js",
   "module": "dist/mtmobile-lib.es2015.js",
   "typings": "dist/types/mtmobile-lib.d.ts",
   "files": [
@@ -20,8 +21,9 @@
   },
   "scripts": {
     "lint": "tslint -p tsconfig.json -t codeFrame 'src/**/*.ts'",
-    "prebuild": "rimraf dist",
-    "build": "tsc && rollup -c && rimraf compiled && typedoc --out dist/docs --target es6 --theme minimal --exclude '**/*.spec.ts' src",
+    "prebuild": "rimraf dist && rimraf compiled",
+    "build:rollup": "tsc && rollup -c && rimraf compiled && typedoc --out dist/docs --target es6 --theme minimal --exclude '**/*.spec.ts' src",
+    "build": "tsc && typedoc --out compiled/docs --target es6 --theme minimal --exclude '**/*.spec.ts' src",
     "start": "tsc-watch --onSuccess \"rollup -c\"",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -50,6 +52,7 @@
   "devDependencies": {
     "@angular/compiler": "~4.4.1",
     "@angular/core": "~4.4.1",
+    "@ngrx/store": "^4.1.1",
     "@types/deep-equal": "^1.0.1",
     "@types/jest": "^20.0.0",
     "@types/node": "^8.0.0",
