@@ -25,7 +25,7 @@ export const testObsNotifications = <T = any>(
                 count++;
         return result;
     };
-    const toStringNotif = (n: Notification<any>) => {
+    const toStr = (n: Notification<any>) => {
         switch (n.kind) {
             case 'N':
                 return `a VALUE ${JSON.stringify(n.value)}`;
@@ -43,8 +43,8 @@ export const testObsNotifications = <T = any>(
         act: Notification<any>
     ) => {
         if (exp.kind !== kind) {
-            const expStr = toStringNotif(exp);
-            const actStr = toStringNotif(act);
+            const expStr = toStr(exp);
+            const actStr = toStr(act);
             done.fail(`Expected ${expStr}, but ${actStr} was received}`);
         } else if (kind === 'N') {
             if (anyValue === undefined || exp.value !== anyValue) {

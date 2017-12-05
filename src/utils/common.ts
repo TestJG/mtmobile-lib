@@ -76,8 +76,9 @@ export const objFlatMap = (
     );
 };
 
-export const objMap = (mapper: (keyValue: [string, any]) => [string, any]) =>
-    objFlatMap(kv => [mapper(kv)]);
+export const objMap = (
+    mapper: (keyValue: [string, any]) => [string, any]
+) => objFlatMap(kv => [mapper(kv)]);
 
 export const objMapValues = (mapper: (value: any, key: string) => any) =>
     objMap(([k, v]) => [k, mapper(v, k)]);

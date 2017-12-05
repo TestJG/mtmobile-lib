@@ -1,5 +1,6 @@
 import { Observable, Notification } from 'rxjs';
 import { testObs } from './rxtest';
+import * as common from './common';
 import * as rxutils from './rxutils';
 import { setTimeout } from 'timers';
 
@@ -83,67 +84,194 @@ describe('Utils', () => {
                 );
             });
 
-            it('on a sync error should return an observable returning that error', done => {
+            it('on an array value should return an observable returning that array as a whole', done => {
                 testObs(
-                    rxutils.tryTo(() => {
-                        throw new Error('sync error');
-                    }),
-                    [],
-                    new Error('sync error'),
+                    rxutils.tryTo(() => ['many', 'values']),
+                    [['many', 'values']],
+                    null,
                     done
                 );
+            });
+
+            it('on a sync error should return an observable returning that error', done => {
+                const actual = rxutils.tryTo(() => {
+                    throw new Error('sync error');
+                });
+                testObs(actual, [], new Error('sync error'), done);
             });
 
             it('on a successful promise should return an observable returning the promise value', done => {
-                testObs(
-                    rxutils.tryTo(
-                        () =>
-                            new Promise((r, _) =>
-                                setTimeout(() => r('a value'), 1)
-                            )
-                    ),
-                    ['a value'],
-                    null,
-                    done
+                const actual = rxutils.tryTo(
+                    () =>
+                        new Promise((r, _) => setTimeout(() => r('a value'), 1))
                 );
+                testObs(actual, ['a value'], null, done);
             });
 
             it('on a failed promise should return an observable returning the promise error', done => {
-                testObs(
-                    rxutils.tryTo(
-                        () =>
-                            new Promise((_, r) =>
-                                setTimeout(() => r(new Error('async error')), 1)
-                            )
-                    ),
-                    [],
-                    new Error('async error'),
-                    done
+                const actual = rxutils.tryTo(
+                    () =>
+                        new Promise((_, r) =>
+                            setTimeout(() => r(new Error('async error')), 1)
+                        )
                 );
+                testObs(actual, [], new Error('async error'), done);
             });
 
             it('on a successful observable should return an observable returning the same values', done => {
+                const actual = rxutils.tryTo(() =>
+                    Observable.of(1, 2, 3).concatMap(v =>
+                        Observable.of(v).delay(v)
+                    )
+                );
+                testObs(actual, [1, 2, 3], null, done);
+            });
+
+            it('on a failing observable should return an observable failing the same way', done => {
+                const actual = rxutils.tryTo(() =>
+                    Observable.of(1, 2, 3)
+                        .concatMap(v => Observable.of(v).delay(v))
+                        .concat(Observable.throw(new Error('an error')))
+                );
+                testObs(actual, [1, 2, 3], new Error('an error'), done);
+            });
+        });
+
+        describe('wrapFunctionStream', () => {
+            it('should be a function', () => {
+                expect(rxutils.wrapFunctionStream).toBeInstanceOf(Function);
+            });
+
+            it('should wait the first function to respond', done => {
+                const fun$ = Observable.of(
+                    (v: number) => Observable.of(v * 2, v * 3, v * 4),
+                    (v: number) => Observable.of(v * 20, v * 30, v * 40),
+                    (v: number) => Observable.of(v * 50, v * 60, v * 70)
+                )
+                    .concatMap((f, index) =>
+                        Observable.of(f).delay((index + 1) * 10)
+                    )
+                    .delay(10);
+                const actual = rxutils.wrapFunctionStream(fun$);
+                expect(actual).toBeInstanceOf(Function);
+                testObs(actual(5), [10, 15, 20], null, done);
+            });
+
+            it('should wait the last function to respond', done => {
+                const fun$ = Observable.of(
+                    (v: number) => Observable.of(v * 2, v * 3, v * 4),
+                    (v: number) => Observable.of(v * 20, v * 30, v * 40),
+                    (v: number) => Observable.of(v * 50, v * 60, v * 70)
+                )
+                    .concatMap((f, index) =>
+                        Observable.of(f).delay((index + 1) * 10)
+                    )
+                    .delay(10);
+                const actual = rxutils.wrapFunctionStream(fun$);
+                expect(actual).toBeInstanceOf(Function);
                 testObs(
-                    rxutils.tryTo(() =>
-                        Observable.of(1, 2, 3).concatMap(v =>
-                            Observable.of(v).delay(v)
-                        )
-                    ),
-                    [1, 2, 3],
+                    rxutils.rxdelay<number>(100).concat(actual(5)),
+                    [250, 300, 350],
+                    null,
+                    done
+                );
+            });
+        });
+
+        describe('wrapServiceStreamFromNames', () => {
+            it('should be a function', () => {
+                expect(rxutils.wrapServiceStreamFromNames).toBeInstanceOf(
+                    Function
+                );
+            });
+
+            it('should wait the first function to respond', done => {
+                const fun$ = (factor: number) => (v: number) =>
+                    Observable.of(
+                        v * 2 * factor,
+                        v * 3 * factor,
+                        v * 4 * factor
+                    );
+                const obj$ = Observable.of({
+                    factor1: fun$(1),
+                    factor2: fun$(2)
+                }).delay(10);
+                const actual = rxutils.wrapServiceStreamFromNames(obj$, [
+                    'factor1',
+                    'factor2'
+                ]);
+                expect(typeof actual).toEqual('object');
+                expect(actual.factor1).toBeInstanceOf(Function);
+                expect(actual.factor2).toBeInstanceOf(Function);
+                testObs(actual.factor2(5), [20, 30, 40], null, done);
+            });
+        });
+
+        describe('firstMap', () => {
+            it('should be a function', () => {
+                expect(rxutils.firstMap).toBeInstanceOf(Function);
+            });
+
+            it('should return only the first value', done => {
+                testObs(
+                    rxutils.firstMap(Observable.of(1, 2, 3))(common.id),
+                    [1],
                     null,
                     done
                 );
             });
 
-            it('on a failing observable should return an observable failing the same way', done => {
+            it('should map the values', done => {
                 testObs(
-                    rxutils.tryTo(() =>
-                        Observable.of(1, 2, 3).concatMap(v =>
-                            Observable.of(v).delay(v)
-                        ).concat(Observable.throw(new Error('an error')))
+                    rxutils.firstMap(Observable.of(1, 2, 3))(n => 10 * n),
+                    [10],
+                    null,
+                    done
+                );
+            });
+
+            it('should normalize errors', done => {
+                testObs(
+                    rxutils.firstMap(Observable.throw(4))(common.id),
+                    [],
+                    new Error('error.unknown'),
+                    done
+                );
+            });
+        });
+
+        describe('firstSwitchMap', () => {
+            it('should be a function', () => {
+                expect(rxutils.firstSwitchMap).toBeInstanceOf(Function);
+            });
+
+            it('should return only the first value', done => {
+                testObs(
+                    rxutils.firstSwitchMap(Observable.of(1, 2, 3))(
+                        rxutils.rxid
                     ),
-                    [1, 2, 3],
-                    new Error('an error'),
+                    [1],
+                    null,
+                    done
+                );
+            });
+
+            it('should map the values', done => {
+                testObs(
+                    rxutils.firstSwitchMap(Observable.of(1, 2, 3))(n =>
+                        Observable.of(10 * n, 23 * n)
+                    ),
+                    [10, 23],
+                    null,
+                    done
+                );
+            });
+
+            it('should normalize errors', done => {
+                testObs(
+                    rxutils.firstSwitchMap(Observable.throw(4))(rxutils.rxid),
+                    [],
+                    new Error('error.unknown'),
                     done
                 );
             });
