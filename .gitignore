@@ -5,6 +5,7 @@
 /tmp
 /out-tsc
 /compiled
+/src/**/*.js
 
 # dependencies
 /node_modules
