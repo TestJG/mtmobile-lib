@@ -1,43 +1,20 @@
 import { flatMap } from 'lodash';
-import { assignOrSame, id, errorToString } from './common';
+import { assignOrSame, id, objMapValues, toKVArray } from './common';
+import { Coerce, coerceAll } from './coercion';
+import { Validator, EasyValidator, mergeValidators } from './validation';
 
-export type Coerce<T> = (value: T) => T;
+////////////////////////////////////////////////////////////////
+//                                                            //
+//                     Interfaces                             //
+//                                                            //
+////////////////////////////////////////////////////////////////
 
-const mergeCoerceList = <T>(list: Coerce<T>[]): Coerce<T> => (value: T) =>
-    list.reduce((v, c) => c(v), value);
-
-export type EasyValidationResult = string | string[];
-
-export type EasyValidator<T> = (value: T) => EasyValidationResult;
-
-export type ValidationResult = string[];
-
-export type Validator<T> = (value: T) => ValidationResult;
-
-const emptyValidator = <T>(value: T) => [];
-
-const makeValidator = <T>(val: EasyValidator<T>): Validator<T> => (
-    value: T
-) => {
-    try {
-        const result = val(value);
-        if (result instanceof Array) {
-            return result;
-        } else {
-            return [result];
-        }
-    } catch (error) {
-        return [errorToString(error)];
-    }
-};
-
-const mergeValidators = <T>(validators: EasyValidator<T>[]): Validator<T> => (
-    value: T
-) => flatMap(validators || [], v => makeValidator(v)(value));
+export type SameValue<T> = (x: T, y: T) => boolean;
 
 export interface FormPart<T> {
     caption: string;
     description: string;
+    initValue: T;
     value: T;
     isDirty: boolean;
     isTouched: boolean;
@@ -46,23 +23,37 @@ export interface FormPart<T> {
     errors: string[];
     validator: Validator<T>;
     coerce: Coerce<T>;
+    sameValue: SameValue<T>;
 }
 
 export interface FormField<T> extends FormPart<T> {
     type: 'field';
-    initValue: T;
+}
+
+export interface ValuesMapping {
+    [name: string]: any;
+}
+export interface FormItemsMapping {
+    [name: string]: FormItem<any>;
 }
 
 export interface FormGroup<T extends { [name: string]: any }>
     extends FormPart<T> {
     type: 'group';
     fields: Map<string, FormItem<any>>;
+    construct: (values: ValuesMapping) => T;
+    destruct: (values: T) => ValuesMapping;
 }
+
+export type ValuesListing = Array<any>;
+export type FormItemsListing = Array<FormItem<any>>;
 
 export interface FormList<T extends { [name: number]: any }>
     extends FormPart<T> {
     type: 'list';
     fields: Array<FormItem<any>>;
+    construct: (values: ValuesListing) => T;
+    destruct: (values: T) => ValuesListing;
 }
 
 export type FormItem<T> = FormField<T> | FormGroup<T> | FormList<T>;
@@ -70,26 +61,46 @@ export type FormItem<T> = FormField<T> | FormGroup<T> | FormList<T>;
 export interface FormPartOptions<T> {
     caption: string;
     description: string;
-    validators: EasyValidator<T>[];
-    coerce: Coerce<T>[];
+    validators: EasyValidator<T>[] | EasyValidator<T>;
+    coerce: Coerce<T>[] | Coerce<T>;
+    sameValue: SameValue<T>;
 }
 
 export interface FormFieldOptions<T> extends FormPartOptions<T> {}
 
-// export type FormFieldOptions<T> = { type: 'field-options' } & Partial<
-//     FormPartOptions<T>
-// >;
+export interface FormGroupOptions<T> extends FormPartOptions<T> {
+    initValue: T;
+    construct: (values: ValuesMapping) => T;
+    destruct: (values: T) => ValuesMapping;
+}
 
-// export type FormGroupOptions<T extends { [name: string]: any }> = { type: 'group-options' } & Partial<
-//     FormPartOptions<T>
-// >;
+export interface FormListOptions<T> extends FormPartOptions<T> {
+    initValue: T;
+    // fields: FormItemsListing;
+    construct: (values: ValuesListing) => T;
+    destruct: (values: T) => ValuesListing;
+}
 
-// export type FormListOptions<T extends { [name: number]: any }> = { type: 'list-options' } & Partial<
-//     FormPartOptions<T>
-// >;
+export const field = <T>(
+    initValue: T,
+    options?: Partial<FormFieldOptions<T>>
+) => createField<T>(initValue, options);
 
-// export type FormItemOptions<T> =
-//     FormFieldOptions<T> | FormGroupOptions<T> | FormListOptions<T>;
+export const group = <T>(
+    fields: FormItemsMapping,
+    options?: Partial<FormGroupOptions<T>>
+) => createGroup<T>(fields, options);
+
+export const list = <T>(
+    fields: FormItemsListing,
+    options?: Partial<FormListOptions<T>>
+) => createList<T>(fields, options);
+
+////////////////////////////////////////////////////////////////
+//                                                            //
+//                     Implementation Details                 //
+//                                                            //
+////////////////////////////////////////////////////////////////
 
 interface SetValueOptions {
     testEquality: boolean;
@@ -149,7 +160,7 @@ const updateFieldValue = <T>(
 ) => {
     value = item.coerce(value);
 
-    if (opts.testEquality && item.value === value) {
+    if (opts.testEquality && item.sameValue(item.value, value)) {
         return item;
     }
 
@@ -161,7 +172,22 @@ const updateGroupValue = <T>(
     value: T,
     opts: SetValueOptions
 ) => {
-    throw new Error("updateGroupValue: Not supported yet");
+    if (!value) {
+        // Then assign value from children to parent
+        const mappings: ValuesMapping = {};
+        item.fields.forEach((child, key) => (mappings[key] = child.value));
+        value = item.construct(mappings);
+        const coercedValue = item.coerce(value);
+
+        if (opts.testEquality && item.sameValue(item.value, coercedValue)) {
+            return item;
+        }
+
+        return assignOrSame(item, <any>{ value: coercedValue });
+    } else {
+        // Then assign value from parent to children, and then back
+        throw new Error('updateGroupValue: Not supported yet');
+    }
 };
 
 const updateListValue = <T>(
@@ -169,7 +195,21 @@ const updateListValue = <T>(
     value: T,
     opts: SetValueOptions
 ) => {
-    throw new Error("updateGroupValue: Not supported yet");
+    if (!value) {
+        // Then assign value from children to parent
+        const mappings: ValuesListing = item.fields.map(child => child.value);
+        value = item.construct(mappings);
+        const coercedValue = item.coerce(value);
+
+        if (opts.testEquality && item.sameValue(item.value, coercedValue)) {
+            return item;
+        }
+
+        return assignOrSame(item, <any>{ value: coercedValue });
+    } else {
+        // Then assign value from parent to children, and then back
+        throw new Error('updateListValue: Not supported yet');
+    }
 };
 
 const setItemValue = <T>(
@@ -194,33 +234,39 @@ const setItemValue = <T>(
             break;
 
         default:
-            throw new Error('Unknown form item: ' + item.type);
+            throw new Error('Unknown form item: ' + (<any>(item || {})).type);
     }
-    if (result === item) { /* value didn't changed */
+    if (!opts.testEquality && result === item) {
+        /* value didn't changed */
         return item;
     }
 
     result = updateValidation(result, opts);
     result = updateDirty(result, opts);
     result = updateShowError(result, opts);
-    return item;
+    return result;
 };
 
-export const field = <T>(
+const defaultSameValue = <T>(x: T, y: T) => {
+    return x === y;
+};
+
+const createField = <T>(
     initValue: T,
-    options?: FormFieldOptions<T>
+    options?: Partial<FormFieldOptions<T>>
 ): FormField<T> => {
     const opts = Object.assign(
         <FormFieldOptions<T>>{
             caption: '',
             description: '',
             validators: [],
-            coerce: []
+            coerce: [],
+            sameValue: defaultSameValue
         },
         options
     );
 
-    const coerce = mergeCoerceList(opts.coerce);
+    const coerce = coerceAll(opts.coerce);
     const validator = mergeValidators(opts.validators);
 
     const aField: FormField<T> = {
@@ -235,10 +281,118 @@ export const field = <T>(
         isValid: true,
         errors: [],
         showError: false,
-        coerce
+        coerce,
+        sameValue: opts.sameValue
     };
 
     return <FormField<T>>setItemValue(aField, initValue, {
+        testEquality: false,
+        affectDirty: false,
+        validate: true
+    });
+};
+
+const defaultGroupConstruct = <T>(values: ValuesMapping): T =>
+    <T>objMapValues(id)(values || {});
+
+const defaultGroupDestruct = <T>(values: T): ValuesMapping =>
+    objMapValues(id)(values || {});
+
+const createGroup = <T>(
+    fields: FormItemsMapping,
+    options?: Partial<FormGroupOptions<T>>
+): FormGroup<T> => {
+    const opts = Object.assign(
+        <FormGroupOptions<T>>{
+            initValue: undefined,
+            caption: '',
+            description: '',
+            validators: [],
+            coerce: [],
+            construct: defaultGroupConstruct,
+            destruct: defaultGroupDestruct,
+            sameValue: defaultSameValue
+        },
+        options
+    );
+
+    const coerce = coerceAll(opts.coerce);
+    const validator = mergeValidators(opts.validators);
+    const fieldsMap = new Map<string, FormItem<any>>(toKVArray(fields));
+
+    const aGroup: FormGroup<T> = {
+        type: 'group',
+        caption: opts.caption,
+        description: opts.description,
+        value: opts.initValue,
+        initValue: opts.initValue,
+        fields: fieldsMap,
+        validator,
+        isDirty: false,
+        isTouched: false,
+        isValid: true,
+        errors: [],
+        showError: false,
+        coerce,
+        construct: opts.construct,
+        destruct: opts.destruct,
+        sameValue: opts.sameValue
+    };
+
+    return <FormGroup<T>>setItemValue(aGroup, opts.initValue, {
+        testEquality: false,
+        affectDirty: false,
+        validate: true
+    });
+};
+
+const defaultListConstruct = <T>(values: ValuesMapping): T =>
+    <T>objMapValues(id)(values || {});
+
+const defaultListDestruct = <T>(values: T): ValuesMapping =>
+    objMapValues(id)(values || {});
+
+const createList = <T>(
+    fields: FormItemsListing,
+    options?: Partial<FormListOptions<T>>
+): FormList<T> => {
+    const opts = Object.assign(
+        <FormListOptions<T>>{
+            initValue: undefined,
+            caption: '',
+            description: '',
+            validators: [],
+            coerce: [],
+            construct: defaultListConstruct,
+            destruct: defaultListDestruct,
+            sameValue: defaultSameValue
+        },
+        options
+    );
+
+    const coerce = coerceAll(opts.coerce);
+    const validator = mergeValidators(opts.validators);
+
+    const aList: FormList<T> = {
+        type: 'list',
+        caption: opts.caption,
+        description: opts.description,
+        value: opts.initValue,
+        initValue: opts.initValue,
+        fields: fields,
+        validator,
+        isDirty: false,
+        isTouched: false,
+        isValid: true,
+        errors: [],
+        showError: false,
+        coerce,
+        construct: opts.construct,
+        destruct: opts.destruct,
+        sameValue: opts.sameValue
+    };
+
+    return <FormList<T>>setItemValue(aList, opts.initValue, {
         testEquality: false,
         affectDirty: false,
         validate: true
