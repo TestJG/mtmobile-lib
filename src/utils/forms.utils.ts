@@ -47,72 +47,12 @@ export const matchListingPath = (path: string) => {
     return { step, rest };
 };
 
-////////////////////////////////////////////////////////////////
-//                                                            //
-//                     Form Items Manipulations               //
-//                                                            //
-////////////////////////////////////////////////////////////////
-
-// const setItemLens = <T = any>(value: T) => (
-//     item: FormItemState<T>
-// ): FormItemState<T> => {
-//     const coercedValue = item.coerce(value);
-//     return assignOrSame(item, { value: coercedValue });
-// };
-
-export const updateDerived = <T = any, I extends FormItem<T> = FormItem<T>>(
-    item: I
-): I => {
-    switch (item.type) {
-        case 'field': {
-            const isValid = item.errors.length === 0;
-            const showErrors = !isValid && item.isTouched;
-            const changes = <Partial<I>>{ isValid, showErrors };
-            return assignOrSame(item, changes);
-        }
-
-        default:
-            throw new Error('updateDerived: Not implemented');
-    }
-};
-
-// export const updateState = <T = any, I extends FormItem<T> = FormItem<T>>(
-//     item: I, newValue?: undefined
-// ): I => {
-//     if (newValue !== undefined) {
-//         const newItem = setItemLens(newValue || item.initValue)(item);
-//     }
-// };
-
-export const setValueInternal = (item: FormItem, value: any, path: string) => {
-    switch (item.type) {
-        case 'field': {
-            if (!!path) {
-                throw new Error(
-                    `Unexpected path accessing this field: ${JSON.stringify(
-                        path
-                    )}`
-                );
-            }
-            const newValue = item.coerce(value);
-            const sameValue = item.value === newValue;
-            if (sameValue && value === item.value) {
-                return item;
-            }
-
-            const errors = item.validator(newValue);
-
-            const newItem = assignOrSame(item, {
-                value: newValue,
-                isDirty: !sameValue || item.isDirty,
-                isTouched: true,
-                errors
-            });
-
-            return updateDerived(newItem);
-        }
-
-        default:
-            throw new Error('setValueInternal: Not implemented');
+export const checkPathInField = (path: string) => {
+    if (!!path) {
+        throw new Error(
+            `Unexpected path accessing this field: ${JSON.stringify(
+                path
+            )}`
+        );
     }
 };

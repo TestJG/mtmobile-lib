@@ -6,7 +6,7 @@ import {
     FormItemType,
     FormField
 } from './forms.interfaces';
-import { field, setValue } from './forms';
+import { field, setValue, getValue, getFormItem, existFormItem } from './forms';
 import {
     Coerce,
     mustNotBeBelow,
@@ -476,6 +476,57 @@ describe('Utils', () => {
                     isValid: false,
                     showErrors: true
                 });
+            });
+        });
+    });
+});
+
+// getValue
+describe('Utils', () => {
+    describe('Forms Tests', () => {
+        describe('getValue', () => {
+            it('should be a function', () =>
+                expect(getValue).toBeInstanceOf(Function));
+
+            describe('When a field is created', () => {
+                const ageField = field(40);
+
+                it("it should return the field's value", () =>
+                    expect(getValue(ageField)).toBe(40));
+            });
+        });
+    });
+});
+
+// getFormItem
+describe('Utils', () => {
+    describe('Forms Tests', () => {
+        describe('getFormItem', () => {
+            it('should be a function', () =>
+                expect(getFormItem).toBeInstanceOf(Function));
+
+            describe('When a field is created', () => {
+                const ageField = field(40);
+
+                it("with path '' it should return the field itself", () =>
+                    expect(getFormItem(ageField, '')).toBe(ageField));
+            });
+        });
+    });
+});
+
+// getFormItem
+describe('Utils', () => {
+    describe('Forms Tests', () => {
+        describe('existFormItem', () => {
+            it('should be a function', () =>
+                expect(existFormItem).toBeInstanceOf(Function));
+
+            describe('When a field is created', () => {
+                const ageField = field(40);
+
+                it("with path '' it should return the field itself", () =>
+                    expect(existFormItem(ageField, '')).toBeTruthy());
             });
         });
     });
