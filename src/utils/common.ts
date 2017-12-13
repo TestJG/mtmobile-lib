@@ -4,6 +4,32 @@ import * as _ from 'lodash';
 export const assign = <T>(s: T, ...u: Partial<T>[]): T =>
     Object.assign({}, s, ...u);
 
+export type ValueOrFunc<T = any> = T | ((...args: any[]) => T);
+
+export const getAsValue = <T>(valueOrFunc: ValueOrFunc<T>, ...args: any[]) => {
+    if (typeof valueOrFunc === 'function') {
+        return valueOrFunc(...args);
+    } else {
+        return valueOrFunc;
+    }
+};
+
+export const getAsValueOrError = <T>(
+    valueOrFunc: ValueOrFunc<T>,
+    onError: ValueOrFunc<T>,
+    ...args: any[]
+) => {
+    if (typeof valueOrFunc === 'function') {
+        try {
+            return valueOrFunc(...args);
+        } catch (error) {
+            return getAsValue(onError, error);
+        }
+    } else {
+        return valueOrFunc;
+    }
+};
+
 export type EqualityComparer<T> = (x: T, y: T) => boolean;
 export type EqualityComparerWithFallback<T> = (
     x: T,
@@ -111,6 +137,28 @@ export const assignOrSameWith = <T>(
 
 export const assignOrSame = <T>(s: T, ...u: Partial<T>[]): T =>
     assignOrSameWith(shallowEqualStrict, s, ...u);
+
+export const assignIf = <T>(
+    s: T,
+    condition: ValueOrFunc<boolean>,
+    thenAssign: ValueOrFunc<Partial<T>>
+): T => {
+    if (getAsValue(condition, s)) {
+        return assignOrSame(s, getAsValue(thenAssign, s));
+    } else {
+        return s;
+    }
+};
+
+export const assignIfMany = <T>(
+    s: T,
+    ...stages: Array<[ValueOrFunc<boolean>, ValueOrFunc<Partial<T>>]>
+): T =>
+    stages.reduce(
+        (prev, [condition, thenAssign]) =>
+            assignIf(prev, condition, thenAssign),
+        s
+    );
 
 export const id = <T>(a: T) => a;
 

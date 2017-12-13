@@ -1,15 +1,22 @@
 import { flatMap } from 'lodash';
-import { assignOrSame, errorToString } from './common';
+import {
+    assignOrSame,
+    errorToString,
+    ValueOrFunc,
+    getAsValueOrError
+} from './common';
 
 export type EasyValidationResult = string | string[];
 
 export type EasyValidator<T> = (value: T) => EasyValidationResult;
 
+export type ValidatorInit<T> = EasyValidator<T> | EasyValidator<T>[];
+
 export type ValidationResult = string[];
 
 export type Validator<T> = (value: T) => ValidationResult;
 
-export type MessageSource = string | ((...args: any[]) => string) | undefined;
+export type MessageSource = ValueOrFunc<string> | undefined;
 
 export const emptyValidator = <T>(value: T) => [];
 
@@ -36,7 +43,7 @@ export const makeValidator = <T>(
 };
 
 export const mergeValidators = <T>(
-    validators: EasyValidator<T> | EasyValidator<T>[] | undefined
+    validators?: ValidatorInit<T>
 ): Validator<T> => (value: T) => {
     if (validators === undefined) {
         validators = [];
@@ -54,17 +61,10 @@ export const mergeValidators = <T>(
 ////////////////////////////////////////////////////////////////
 
 const stringFromSource = (source: MessageSource) => (args: any[]) => {
-    if (!source) {
+    if (source === undefined || source === null) {
         return '';
     }
-    if (typeof source === 'function') {
-        try {
-            return source(...args);
-        } catch (error) {
-            return errorToString(error);
-        }
-    }
-    return source;
+    return getAsValueOrError(source, errorToString, ...args);
 };
 
 const getMessage = (...sources: MessageSource[]) => (args: any[]) => {
@@ -84,7 +84,7 @@ export const checkCondition = <T>(
     args?: any[]
 ) =>
     makeValidator((v: T) => {
-        if (validCondition(v)) {
+        if (!validCondition(v)) {
             return getMessage(defaultMessage, message)([...args, v]);
         } else {
             return '';

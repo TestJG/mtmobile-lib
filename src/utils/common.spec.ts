@@ -2,10 +2,13 @@ import {
     assign,
     assignOrSame,
     assignOrSameWith,
+    assignIf,
     deepEqual,
     EqualityComparer,
     deepEqualStrict,
     errorToString,
+    getAsValue,
+    getAsValueOrError,
     id,
     joinStr,
     normalizeError,
@@ -18,8 +21,71 @@ import {
     strictEqual,
     toKVArray,
     toKVMap,
-    uuid
+    uuid,
+    ValueOrFunc
 } from './common';
+
+function testEquivalenceClasses(
+    fun: EqualityComparer<any>,
+    name: string,
+    classes: Array<Array<ValueOrFunc>>
+) {
+    for (let index = 0; index < classes.length; index++) {
+        const values = classes[index];
+
+        // A value should be 'EQUAL' to other values in the same equivalence class
+        values.map(getAsValue).forEach(copy1 =>
+            values.map(getAsValue).forEach(copy2 => {
+                it(`${JSON.stringify(
+                    copy1
+                )} should be ${name} to ${JSON.stringify(copy2)}`, () => {
+                    expect(fun(copy1, copy2)).toBeTruthy();
+                });
+            })
+        );
+
+        // A value should not be 'EQUAL' to other values in different equivalence class
+        for (let index2 = 0; index2 < classes.length; index2++) {
+            if (index2 === index) {
+                continue;
+            }
+            const otherValues = classes[index2];
+
+            values.map(getAsValue).forEach(copy1 =>
+                otherValues.map(getAsValue).forEach(copy2 => {
+                    it(`${JSON.stringify(
+                        copy1
+                    )} should not be ${name} to ${JSON.stringify(
+                        copy2
+                    )}`, () => {
+                        expect(fun(copy1, copy2)).toBeFalsy();
+                    });
+                })
+            );
+        }
+    }
+}
+
+function testDeepObjects(
+    fun: EqualityComparer<any>,
+    name: string,
+    shouldBeEqual: boolean,
+    values: Array<ValueOrFunc>
+) {
+    values.forEach(value => {
+        const copy1 = getAsValue(value);
+        const copy2 = getAsValue(value);
+        it(`${JSON.stringify(copy1)} should ${
+            shouldBeEqual ? '' : 'not '
+        }be ${name} to ${JSON.stringify(copy2)}`, () => {
+            if (shouldBeEqual) {
+                expect(fun(copy1, copy2)).toBeTruthy();
+            } else {
+                expect(fun(copy1, copy2)).toBeFalsy();
+            }
+        });
+    });
+}
 
 describe('Utils', () => {
     describe('Common Tests', () => {
@@ -32,107 +98,89 @@ describe('Utils', () => {
                     'should return the same input value: ' +
                         JSON.stringify(element),
                     () => {
-                        expect(id(element)).toEqual(element);
+                        expect(id(element)).toBe(element);
                     }
                 );
             });
         });
 
-        describe('assign', () => {
+        describe('getAsValue', () => {
             it('should be a function', () => {
-                expect(assign).toBeInstanceOf(Function);
+                expect(getAsValue).toBeInstanceOf(Function);
             });
-            it('should return the merged object result', () => {
-                const init = {
-                    firstName: 'John',
-                    lastName: 'Doe',
-                    age: 40
-                };
-                const actual = assign(init, { lastName: 'Smith' }, { age: 29 });
-                const expected = {
-                    firstName: 'John',
-                    lastName: 'Smith',
-                    age: 29
-                };
-                expect(actual).toEqual(expected);
-            });
-            it('should accept null or undefined partials', () => {
-                const init = {
-                    firstName: 'John',
-                    lastName: 'Doe',
-                    age: 40
-                };
-                expect(assign(init, undefined, null)).toEqual(init);
-            });
-        });
-
-        function getValue(value: (() => any) | any): any {
-            if (typeof value === 'function') {
-                return value();
-            } else {
-                return value;
-            }
-        }
-
-        function testEquivalenceClasses(
-            fun: EqualityComparer<any>,
-            name: string,
-            classes: Array<Array<(() => any) | any>>
-        ) {
-            for (let index = 0; index < classes.length; index++) {
-                const values = classes[index];
-
-                // A value should be 'EQUAL' to other values in the same equivalence class
-                values.map(getValue).forEach(copy1 =>
-                    values.map(getValue).forEach(copy2 => {
-                        it(`${JSON.stringify(copy1)} should be ${
-                            name
-                        } to ${JSON.stringify(copy2)}`, () => {
-                            expect(fun(copy1, copy2)).toBeTruthy();
-                        });
-                    })
-                );
-
-                // A value should not be 'EQUAL' to other values in different equivalence class
-                for (let index2 = 0; index2 < classes.length; index2++) {
-                    if (index2 === index) {
-                        continue;
-                    }
-                    const otherValues = classes[index2];
-
-                    values.map(getValue).forEach(copy1 =>
-                        otherValues.map(getValue).forEach(copy2 => {
-                            it(`${JSON.stringify(copy1)} should not be ${
-                                name
-                            } to ${JSON.stringify(copy2)}`, () => {
-                                expect(fun(copy1, copy2)).toBeFalsy();
-                            });
-                        })
-                    );
-                }
-            }
-        }
-
-        function testDeepObjects(
-            fun: EqualityComparer<any>,
-            name: string,
-            shouldBeEqual: boolean,
-            values: Array<(() => any) | any>
-        ) {
-            values.forEach(value => {
-                const copy1 = getValue(value);
-                const copy2 = getValue(value);
-                it(`${JSON.stringify(copy1)} should ${
-                    shouldBeEqual ? '' : 'not '
-                }be ${name} to ${JSON.stringify(copy2)}`, () => {
-                    if (shouldBeEqual) {
-                        expect(fun(copy1, copy2)).toBeTruthy();
-                    } else {
-                        expect(fun(copy1, copy2)).toBeFalsy();
-                    }
+            it('when used with a non-function value should return the same value', () => {
+                expect(getAsValue(undefined)).toBeUndefined();
+                expect(getAsValue(1)).toBe(1);
+                expect(getAsValue('hello')).toBe('hello');
+                expect(getAsValue(['hello'])).toEqual(['hello']);
+                expect(getAsValue({ greetings: 'hello' })).toEqual({
+                    greetings: 'hello'
                 });
             });
-        }
+            it('when used with a function should return the computed value', () => {
+                expect(getAsValue(() => undefined)).toBeUndefined();
+                expect(getAsValue(() => 1)).toBe(1);
+                expect(getAsValue(() => 'hello')).toBe('hello');
+                expect(getAsValue(() => ['hello'])).toEqual(['hello']);
+                expect(getAsValue(() => ({ greetings: 'hello' }))).toEqual({
+                    greetings: 'hello'
+                });
+            });
+            it('when used with a function should pass the arguments to it', () => {
+                expect(getAsValue(a => a + 5, 10)).toBe(15);
+                expect(getAsValue((a, b) => a + b, 10, 23)).toBe(33);
+                expect(getAsValue((a, b, c) => a + b * c, 10, 2, 3)).toBe(16);
+            });
+            it('when used with a failing function should throw the same error', () => {
+                expect(() =>
+                    getAsValue(() => {
+                        throw new Error('sorry!');
+                    })
+                ).toThrowError();
+            });
+        });
+
+        describe('getAsValueOrError', () => {
+            it('should be a function', () => {
+                expect(getAsValueOrError).toBeInstanceOf(Function);
+            });
+            it('when used with a non-function value should return the same value', () => {
+                expect(getAsValueOrError(undefined, id)).toBeUndefined();
+                expect(getAsValueOrError(1, id)).toBe(1);
+                expect(getAsValueOrError('hello', id)).toBe('hello');
+                expect(getAsValueOrError(['hello'], id)).toEqual(['hello']);
+                expect(getAsValueOrError({ greetings: 'hello' }, id)).toEqual({
+                    greetings: 'hello'
+                });
+            });
+            it('when used with a function should return the computed value', () => {
+                expect(getAsValueOrError(() => undefined, id)).toBeUndefined();
+                expect(getAsValueOrError(() => 1, id)).toBe(1);
+                expect(getAsValueOrError(() => 'hello', id)).toBe('hello');
+                expect(getAsValueOrError(() => ['hello'], id)).toEqual([
+                    'hello'
+                ]);
+                expect(
+                    getAsValueOrError(() => ({ greetings: 'hello' }), id)
+                ).toEqual({
+                    greetings: 'hello'
+                });
+            });
+            it('when used with a function should pass the arguments to it', () => {
+                expect(getAsValueOrError(a => a + 5, id, 10)).toBe(15);
+                expect(getAsValueOrError((a, b) => a + b, id, 10, 23)).toBe(33);
+                expect(
+                    getAsValueOrError((a, b, c) => a + b * c, id, 10, 2, 3)
+                ).toBe(16);
+            });
+            it('when used with a failing function should throw the same error', () => {
+                expect(
+                    getAsValueOrError(() => {
+                        throw new Error('sorry!');
+                    }, err => err.message)
+                ).toBe('sorry!');
+            });
+        });
 
         describe('strictEqual', () => {
             it('should be a function', () => {
@@ -296,6 +344,34 @@ describe('Utils', () => {
             ]);
         });
 
+        describe('assign', () => {
+            it('should be a function', () => {
+                expect(assign).toBeInstanceOf(Function);
+            });
+            it('should return the merged object result', () => {
+                const init = {
+                    firstName: 'John',
+                    lastName: 'Doe',
+                    age: 40
+                };
+                const actual = assign(init, { lastName: 'Smith' }, { age: 29 });
+                const expected = {
+                    firstName: 'John',
+                    lastName: 'Smith',
+                    age: 29
+                };
+                expect(actual).toEqual(expected);
+            });
+            it('should accept null or undefined partials', () => {
+                const init = {
+                    firstName: 'John',
+                    lastName: 'Doe',
+                    age: 40
+                };
+                expect(assign(init, undefined, null)).toEqual(init);
+            });
+        });
+
         describe('assignOrSameWith', () => {
             it('should be a function', () => {
                 expect(assignOrSameWith).toBeInstanceOf(Function);
@@ -340,6 +416,118 @@ describe('Utils', () => {
                 expect(v1).toEqual(copy);
                 expect(v2).toEqual({ a: 'hello', b: 234 });
             });
+        });
+
+        describe('assignIf', () => {
+            it('should be a function', () => {
+                expect(assignIf).toBeInstanceOf(Function);
+            });
+
+            function testCases(
+                kind: 'original' | 'modified',
+                cases: Array<
+                    [
+                        string,
+                        string,
+                        ValueOrFunc,
+                        ValueOrFunc<boolean>,
+                        ValueOrFunc
+                    ]
+                >
+            ) {
+                cases.forEach(([condStr, valStr, orig, cond, val]) => {
+                    const text = `if passed ${condStr}${
+                        valStr ? ' and ' + valStr : ''
+                    } › it should return the ${kind} object`;
+                    it(text, () => {
+                        const v1 = getAsValue(original);
+                        const copy = JSON.parse(JSON.stringify(v1));
+                        const v2 = assignIf(v1, cond, val);
+                        if (kind === 'original') {
+                            expect(v2).toBe(v1);
+                            expect(v2).toEqual(copy);
+                        } else {
+                            expect(v2).not.toBe(v1);
+                            expect(v1).toEqual(copy);
+                            expect(v2).toEqual(
+                                Object.assign({}, v1, getAsValue(v2))
+                            );
+                        }
+                    });
+                });
+            }
+
+            const original = () => ({ a: 'hello', b: 123 });
+
+            testCases('original', [
+                ['a false condition value', '', original, false, { b: 234 }],
+                [
+                    'a false condition function',
+                    '',
+                    original,
+                    () => false,
+                    { b: 234 }
+                ],
+                [
+                    'a true condition value',
+                    'non-modifying changes value',
+                    original,
+                    true,
+                    { b: 123 }
+                ],
+                [
+                    'a true condition function',
+                    'non-modifying changes value',
+                    original,
+                    () => true,
+                    { b: 123 }
+                ],
+                [
+                    'a true condition value',
+                    'non-modifying changes function',
+                    original,
+                    true,
+                    () => ({ b: 123 })
+                ],
+                [
+                    'a true condition function',
+                    'non-modifying changes function',
+                    original,
+                    () => true,
+                    () => ({ b: 123 })
+                ]
+            ]);
+
+            testCases('modified', [
+                [
+                    'a true condition value',
+                    'modifying changes value',
+                    original,
+                    true,
+                    { b: 234 }
+                ],
+                [
+                    'a true condition function',
+                    'modifying changes value',
+                    original,
+                    () => true,
+                    { b: 234 }
+                ],
+                [
+                    'a true condition value',
+                    'modifying changes function',
+                    original,
+                    true,
+                    () => ({ b: 234 })
+                ],
+                [
+                    'a true condition function',
+                    'modifying changes function',
+                    original,
+                    () => true,
+                    () => ({ b: 234 })
+                ]
+            ]);
         });
 
         describe('joinStr', () => {
