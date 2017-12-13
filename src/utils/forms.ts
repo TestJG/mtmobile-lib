@@ -1,14 +1,25 @@
 import { flatMap } from 'lodash';
-import { assign, assignOrSame } from './common';
+import { assign, assignOrSame, objMapValues } from './common';
 import { coerceAll } from './coercion';
 import { mergeValidators } from './validation';
 import {
+    FormItem,
     FormFieldInit,
     FormField,
-    FormItem,
-    FormItemState
+    FormItemState,
+    FormGroupInit,
+    FormGroup,
+    FormGroupState,
+    FormGroupFields
 } from './forms.interfaces';
-import { checkPathInField } from './forms.utils';
+import {
+    checkPathInField,
+    setValueInternal,
+    matchGroupPath,
+    matchListingPath,
+    locateInGroupOrFail,
+    createGroupValue
+} from './forms.utils';
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -37,10 +48,6 @@ export const field = <T = any>(
 
     const coerce = coerceAll(coerceInit);
     const validator = mergeValidators(validatorInit);
-    const value = coerce(initValue);
-    const errors = validator(value);
-    const isValid = errors.length === 0;
-    const showErrors = false;
 
     const result: FormField<T> = {
         // Type
@@ -54,68 +61,97 @@ export const field = <T = any>(
         validator,
 
         // State
-        value,
-        errors,
+        value: undefined,
+        errors: [],
         isDirty: false,
         isTouched: false,
 
         // Derived
-        isValid,
-        showErrors
+        isValid: true,
+        showErrors: false
     };
 
-    return result;
+    return <FormField<T>>setValueInternal(result, initValue, '', {
+        affectDirty: false,
+        compareValues: false
+    });
 };
 
-export const getFormItemInternal = (item: FormItem, path: string) => {
-    switch (item.type) {
-        case 'field': {
-            checkPathInField(path);
-
-            return item;
-        }
-
-        default:
-            throw new Error('getValueInternal: Not implemented');
+export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
+    fields: F,
+    options?: Partial<FormGroupInit<T>>
+): FormGroup<T, F> => {
+    if (
+        typeof fields !== 'object' ||
+        !(fields instanceof Object) ||
+        fields.constructor !== Object
+    ) {
+        throw new Error('Group fields must be a plain JS object.');
     }
+
+    const {
+        caption,
+        description,
+        coerce: coerceInit,
+        validations: validatorInit,
+        initValue
+    } = assign(
+        <FormGroupInit<T>>{
+            caption: '',
+            description: '',
+            coerce: undefined,
+            validations: undefined,
+            initValue: undefined
+        },
+        options
+    );
+
+    const coerce = coerceAll(coerceInit);
+    const validator = mergeValidators(validatorInit);
+    const theFields = <F>Object.assign({}, fields);
+    const theInitValue = initValue || <T>createGroupValue(theFields);
+    // const value = coerce(theInitValue);
+    // const isDirty = false;
+    // const isTouched = false;
+    // const errors = validator(value);
+    // const isValid = errors.length === 0;
+    // const showErrors = false;
+
+    const result: FormGroup<T, F> = {
+        // Type
+        type: 'group',
+
+        // Config
+        caption,
+        description,
+        initValue: theInitValue,
+        coerce,
+        validator,
+
+        // State
+        value: undefined,
+        errors: [],
+        isDirty: false,
+        isTouched: false,
+
+        // Derived
+        isValid: true,
+        showErrors: false,
+
+        fields: theFields
+    };
+
+    return <FormGroup<T, F>>setValueInternal(result, theInitValue, '', {
+        affectDirty: false,
+        compareValues: false
+    });
 };
 
-export const setValueInternal = (item: FormItem, value: any, path: string) => {
-    switch (item.type) {
-        case 'field': {
-            checkPathInField(path);
-
-            // State
-            const newValue = item.coerce(value);
-            const sameValue = item.value === newValue;
-            if (sameValue && value === item.value) {
-                return item;
-            }
-
-            const errors = item.validator(newValue);
-            const isDirty = !sameValue || item.isDirty;
-            const isTouched = true || isDirty || item.isTouched;
-
-            // Derived
-            const isValid = errors.length === 0;
-            const showErrors = !isValid && isTouched;
-
-            const newItem = assignOrSame(item, {
-                value: newValue,
-                isDirty,
-                isTouched,
-                errors,
-                isValid,
-                showErrors
-            });
-
-            return newItem;
-        }
-
-        default:
-            throw new Error('setValueInternal: Not implemented');
-    }
-};
+////////////////////////////////////////////////////////////////
+//                                                            //
+//                     Form Item Manipulations                //
+//                                                            //
+////////////////////////////////////////////////////////////////
 
 export const getValue = (item: FormItem, path: string = ''): any => {
     const child = getFormItem(item, path);
@@ -132,6 +168,15 @@ export const getFormItem = (item: FormItem, path: string = ''): FormItem => {
             return item;
         }
 
+        case 'group': {
+            if (!path) {
+                return item;
+            }
+
+            const [_, child, restOfPath] = locateInGroupOrFail(item, path);
+            return getFormItem(child, restOfPath);
+        }
+
         default:
             throw new Error('getFormItem: Not implemented');
     }
@@ -144,6 +189,4 @@ export const setValue = <I extends FormItem = FormItem>(
     item: I,
     value: any,
     path: string = ''
-): I => {
-    return <I>setValueInternal(item, value, path);
-};
+): I => <I>setValueInternal(item, value, path);

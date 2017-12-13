@@ -6,7 +6,14 @@ import {
     FormItemType,
     FormField
 } from './forms.interfaces';
-import { field, setValue, getValue, getFormItem, existFormItem } from './forms';
+import {
+    field,
+    group,
+    setValue,
+    getValue,
+    getFormItem,
+    existFormItem
+} from './forms';
 import {
     Coerce,
     mustNotBeBelow,
@@ -15,11 +22,21 @@ import {
 } from './coercion';
 import {
     Validator,
+    shouldNotBeEmpty,
     shouldBeGreaterThanOrEqualTo,
     shouldBeLessThanOrEqualTo,
     shouldBeBetweenValues
 } from './validation';
-import { shallowEqualStrict } from '../mtmobile-lib';
+import {
+    shallowEqualStrict,
+    shouldNotBeGreaterThanOrEqualTo
+} from '../mtmobile-lib';
+
+interface Person {
+    firstName: string;
+    lastName: string;
+    age: number;
+}
 
 const expectType = (item: FormItemConfig, expectedType: FormItemType) => {
     it('it should be defined', () => expect(item).not.toBeUndefined());
@@ -345,6 +362,479 @@ describe('Utils', () => {
     });
 });
 
+// group
+describe('Utils', () => {
+    describe('Forms Tests', () => {
+        describe('group', () => {
+            it('should be a function', () =>
+                expect(group).toBeInstanceOf(Function));
+
+            describe('When a group is created with no fields and default options', () => {
+                const aGroup = group({});
+
+                expectType(aGroup, 'group');
+
+                expectConfig(aGroup, {
+                    caption: '',
+                    description: '',
+                    initValue: {},
+                    coerce: [[{}, {}], [{ x: 1, y: 2 }, { x: 1, y: 2 }]],
+                    validator: [[{}, []], [{ x: 1, y: 2 }, []]]
+                });
+
+                expectState(aGroup, {
+                    value: {},
+                    isDirty: false,
+                    isTouched: false,
+                    errors: []
+                });
+
+                expectDerived(aGroup, {
+                    isValid: true,
+                    showErrors: false
+                });
+            });
+
+            describe('When a group is created with caption and description', () => {
+                const aGroup = group(
+                    {},
+                    {
+                        caption: 'Personal',
+                        description: 'Personal information'
+                    }
+                );
+
+                expectConfig(aGroup, {
+                    caption: 'Personal',
+                    description: 'Personal information'
+                });
+            });
+
+            describe('When a group is created with fields and no initValue', () => {
+                const aGroup = group({
+                    firstName: field(''),
+                    lastName: field(''),
+                    age: field(20)
+                });
+
+                expectType(aGroup, 'group');
+
+                expectConfig(aGroup, {
+                    caption: '',
+                    description: '',
+                    initValue: { firstName: '', lastName: '', age: 20 },
+                    coerce: [[{}, {}], [{ x: 1, y: 2 }, { x: 1, y: 2 }]],
+                    validator: [[{}, []], [{ x: 1, y: 2 }, []]]
+                });
+
+                expectState(aGroup, {
+                    value: { firstName: '', lastName: '', age: 20 },
+                    isDirty: false,
+                    isTouched: false,
+                    errors: []
+                });
+
+                expectDerived(aGroup, {
+                    isValid: true,
+                    showErrors: false
+                });
+            });
+
+            describe('When a group is created with initValue', () => {
+                const aGroup = group(
+                    {
+                        firstName: field(''),
+                        lastName: field(''),
+                        age: field(20)
+                    },
+                    {
+                        initValue: <Person>{
+                            firstName: 'John',
+                            lastName: 'Smith',
+                            age: 40
+                        }
+                    }
+                );
+
+                expectType(aGroup, 'group');
+
+                expectConfig(aGroup, {
+                    caption: '',
+                    description: '',
+                    initValue: { firstName: 'John', lastName: 'Smith', age: 40 }
+                });
+
+                expectState(aGroup, {
+                    value: { firstName: 'John', lastName: 'Smith', age: 40 },
+                    isDirty: false,
+                    isTouched: false,
+                    errors: []
+                });
+
+                expectDerived(aGroup, {
+                    isValid: true,
+                    showErrors: false
+                });
+
+                describe('Then for the field firstName', () => {
+                    expectState(aGroup.fields.firstName, {
+                        value: 'John',
+                        isDirty: false,
+                        isTouched: false,
+                        errors: []
+                    });
+
+                    expectDerived(aGroup.fields.firstName, {
+                        isValid: true,
+                        showErrors: false
+                    });
+                });
+
+                describe('Then for the field lastName', () => {
+                    expectState(aGroup.fields.lastName, {
+                        value: 'Smith',
+                        isDirty: false,
+                        isTouched: false,
+                        errors: []
+                    });
+
+                    expectDerived(aGroup.fields.lastName, {
+                        isValid: true,
+                        showErrors: false
+                    });
+                });
+
+                describe('Then for the field age', () => {
+                    expectState(aGroup.fields.age, {
+                        value: 40,
+                        isDirty: false,
+                        isTouched: false,
+                        errors: []
+                    });
+
+                    expectDerived(aGroup.fields.age, {
+                        isValid: true,
+                        showErrors: false
+                    });
+                });
+            });
+
+            describe('When a group is created with coerce and initValue', () => {
+                const aGroup = group(
+                    {
+                        firstName: field(''),
+                        lastName: field(''),
+                        age: field(10, { coerce: mustNotBeBelow(18) })
+                    },
+                    {
+                        initValue: <Person>{
+                            firstName: '',
+                            lastName: '',
+                            age: -40
+                        },
+                        coerce: person =>
+                            assignIfMany(
+                                person,
+                                [!person.firstName, { firstName: 'Jane' }],
+                                [!person.lastName, { lastName: 'Doe' }],
+                                [person.age < 18, { age: 18 }]
+                            )
+                    }
+                );
+
+                expectType(aGroup, 'group');
+
+                expectConfig(aGroup, {
+                    caption: '',
+                    description: '',
+                    initValue: { firstName: '', lastName: '', age: -40 }
+                });
+
+                expectState(aGroup, {
+                    value: { firstName: 'Jane', lastName: 'Doe', age: 18 },
+                    isDirty: false,
+                    isTouched: false,
+                    errors: []
+                });
+
+                expectDerived(aGroup, {
+                    isValid: true,
+                    showErrors: false
+                });
+
+                describe('Then for the field firstName', () => {
+                    expectState(aGroup.fields.firstName, {
+                        value: 'Jane',
+                        isDirty: false,
+                        isTouched: false,
+                        errors: []
+                    });
+
+                    expectDerived(aGroup.fields.firstName, {
+                        isValid: true,
+                        showErrors: false
+                    });
+                });
+
+                describe('Then for the field lastName', () => {
+                    expectState(aGroup.fields.lastName, {
+                        value: 'Doe',
+                        isDirty: false,
+                        isTouched: false,
+                        errors: []
+                    });
+
+                    expectDerived(aGroup.fields.lastName, {
+                        isValid: true,
+                        showErrors: false
+                    });
+                });
+
+                describe('Then for the field age', () => {
+                    expectState(aGroup.fields.age, {
+                        value: 18,
+                        isDirty: false,
+                        isTouched: false,
+                        errors: []
+                    });
+
+                    expectDerived(aGroup.fields.age, {
+                        isValid: true,
+                        showErrors: false
+                    });
+                });
+            });
+
+            describe('When a group is created with validations and initValue', () => {
+                const aGroup = group(
+                    {
+                        firstName: field(''),
+                        lastName: field(''),
+                        age: field(10, {
+                            validations: shouldBeGreaterThanOrEqualTo(18)
+                        })
+                    },
+                    {
+                        initValue: <Person>{
+                            firstName: '',
+                            lastName: '',
+                            age: -40
+                        },
+                        validations: [
+                            person =>
+                                shouldNotBeEmpty(
+                                    'firstName should not be empty'
+                                )(person.firstName),
+                            person =>
+                                shouldNotBeEmpty(
+                                    'lastName should not be empty'
+                                )(person.lastName),
+                            person =>
+                                shouldBeGreaterThanOrEqualTo(
+                                    18,
+                                    'age should be greater than 18'
+                                )(person.age)
+                        ]
+                    }
+                );
+
+                expectType(aGroup, 'group');
+
+                expectConfig(aGroup, {
+                    caption: '',
+                    description: '',
+                    initValue: { firstName: '', lastName: '', age: -40 }
+                });
+
+                expectState(aGroup, {
+                    value: { firstName: '', lastName: '', age: -40 },
+                    isDirty: false,
+                    isTouched: false,
+                    errors: [
+                        'firstName should not be empty',
+                        'lastName should not be empty',
+                        'age should be greater than 18'
+                    ]
+                });
+
+                expectDerived(aGroup, {
+                    isValid: false,
+                    showErrors: false
+                });
+
+                describe('Then for the field firstName', () => {
+                    expectState(aGroup.fields.firstName, {
+                        value: '',
+                        isDirty: false,
+                        isTouched: false,
+                        errors: []
+                    });
+
+                    expectDerived(aGroup.fields.firstName, {
+                        isValid: true,
+                        showErrors: false
+                    });
+                });
+
+                describe('Then for the field lastName', () => {
+                    expectState(aGroup.fields.lastName, {
+                        value: '',
+                        isDirty: false,
+                        isTouched: false,
+                        errors: []
+                    });
+
+                    expectDerived(aGroup.fields.lastName, {
+                        isValid: true,
+                        showErrors: false
+                    });
+                });
+
+                describe('Then for the field age', () => {
+                    expectState(aGroup.fields.age, {
+                        value: -40,
+                        isDirty: false,
+                        isTouched: false,
+                        errors: ["Should be greater than or equal to 18"]
+                    });
+
+                    expectDerived(aGroup.fields.age, {
+                        isValid: false,
+                        showErrors: false
+                    });
+                });
+            });
+
+            // describe('When a group is created with coerce function and an initValue inside the coercion range', () => {
+            //     const ageField = group(24, { coerce: mustNotBeBelow(18) });
+
+            //     expectConfig(ageField, {
+            //         initValue: 24,
+            //         coerce: [[0, 18], [18, 18], [19, 19], [30, 30]]
+            //     });
+
+            //     expectState(ageField, { value: 24 });
+            // });
+
+            // describe('When a group is created with coerce function and an initValue outside the coercion range', () => {
+            //     const ageField = group(10, { coerce: mustNotBeBelow(18) });
+
+            //     expectConfig(ageField, { initValue: 10 });
+
+            //     expectState(ageField, {
+            //         value: 18,
+            //         isDirty: false,
+            //         isTouched: false,
+            //         errors: []
+            //     });
+
+            //     expectDerived(ageField, {
+            //         isValid: true,
+            //         showErrors: false
+            //     });
+            // });
+
+            // describe('When a group is created with coerce collection and an initValue outside the coercion range', () => {
+            //     const ageField = group(30, {
+            //         coerce: [mustNotBeBelow(18), mustNotBeAbove(20)]
+            //     });
+
+            //     expectConfig(ageField, {
+            //         initValue: 30,
+            //         coerce: [[0, 18], [18, 18], [19, 19], [20, 20], [30, 20]]
+            //     });
+
+            //     expectState(ageField, {
+            //         value: 20,
+            //         isDirty: false,
+            //         isTouched: false,
+            //         errors: []
+            //     });
+
+            //     expectDerived(ageField, {
+            //         isValid: true,
+            //         showErrors: false
+            //     });
+            // });
+
+            // describe('When a group is created with validator function and an initValue inside the validation range', () => {
+            //     const ageField = group(24, {
+            //         validations: shouldBeGreaterThanOrEqualTo(18)
+            //     });
+
+            //     expectConfig(ageField, {
+            //         initValue: 24,
+            //         validator: [
+            //             [0, ['Should be greater than or equal to 18']],
+            //             [18, []],
+            //             [19, []],
+            //             [30, []]
+            //         ]
+            //     });
+
+            //     expectState(ageField, {
+            //         value: 24,
+            //         isDirty: false,
+            //         isTouched: false,
+            //         errors: []
+            //     });
+            // });
+
+            // describe('When a group is created with validator function and an initValue outside the validation range', () => {
+            //     const ageField = group(10, {
+            //         validations: shouldBeGreaterThanOrEqualTo(18)
+            //     });
+
+            //     expectConfig(ageField, { initValue: 10 });
+
+            //     expectState(ageField, {
+            //         value: 10,
+            //         isDirty: false,
+            //         isTouched: false,
+            //         errors: ['Should be greater than or equal to 18']
+            //     });
+
+            //     expectDerived(ageField, {
+            //         isValid: false,
+            //         showErrors: false
+            //     });
+            // });
+
+            // describe('When a group is created with validator collection and an initValue outside the validation range', () => {
+            //     const ageField = group(30, {
+            //         validations: [
+            //             shouldBeGreaterThanOrEqualTo(18),
+            //             shouldBeLessThanOrEqualTo(20)
+            //         ]
+            //     });
+
+            //     expectConfig(ageField, {
+            //         initValue: 30,
+            //         validator: [
+            //             [0, ['Should be greater than or equal to 18']],
+            //             [18, []],
+            //             [19, []],
+            //             [20, []],
+            //             [30, ['Should be less than or equal to 20']]
+            //         ]
+            //     });
+
+            //     expectState(ageField, {
+            //         value: 30,
+            //         isDirty: false,
+            //         isTouched: false,
+            //         errors: ['Should be less than or equal to 20']
+            //     });
+
+            //     expectDerived(ageField, {
+            //         isValid: false,
+            //         showErrors: false
+            //     });
+            // });
+        });
+    });
+});
+
 // setValue
 describe('Utils', () => {
     describe('Forms Tests', () => {
@@ -468,13 +958,13 @@ describe('Utils', () => {
                 expectState(newAgeField, {
                     value: 0,
                     isDirty: false,
-                    isTouched: true,
+                    isTouched: false,
                     errors: ['Should be greater than or equal to 18']
                 });
 
                 expectDerived(newAgeField, {
                     isValid: false,
-                    showErrors: true
+                    showErrors: false
                 });
             });
         });
@@ -515,7 +1005,7 @@ describe('Utils', () => {
     });
 });
 
-// getFormItem
+// existFormItem
 describe('Utils', () => {
     describe('Forms Tests', () => {
         describe('existFormItem', () => {

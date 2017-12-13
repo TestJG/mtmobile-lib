@@ -70,6 +70,10 @@ export interface FormGroupFields {
     [name: string]: FormItem;
 }
 
+export interface FormGroupInit<T = any> extends FormPartInit<T> {
+    initValue: T;
+}
+
 export interface FormGroupConfig<T = any> extends FormPartConfig<T> {
     type: 'group';
 }
@@ -122,8 +126,8 @@ export interface FormListing<T = any> extends FormListingState<T>, FormPart<T> {
 
 export type FormItemType = 'field' | 'group' | 'listing';
 
-export type FormItemConfig<T = any> = FormFieldConfig<T>;
+export type FormItemConfig<T = any> = FormFieldConfig<T> | FormGroupConfig<T>;
 
-export type FormItemState<T = any> = FormFieldState<T>;
+export type FormItemState<T = any> = FormFieldState<T> | FormGroupState<T>;
 
-export type FormItem<T = any> = FormField<T>;
+export type FormItem<T = any> = FormField<T> | FormGroup<T>;

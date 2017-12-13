@@ -42,16 +42,19 @@ export const makeValidator = <T>(
     };
 };
 
-export const mergeValidators = <T>(
-    validators?: ValidatorInit<T>
-): Validator<T> => (value: T) => {
+export const mergeValidators = <T>(validators?: ValidatorInit<T>) => {
     if (validators === undefined) {
         validators = [];
     }
     if (typeof validators === 'function') {
         validators = [validators];
     }
-    return flatMap(validators, v => makeValidator(v)(value));
+    const realValidators = flatMap(validators, v => makeValidator(v));
+    return (value: T) =>
+        realValidators.reduce(
+            (errors, validator) => errors.concat(validator(value)),
+            []
+        );
 };
 
 ////////////////////////////////////////////////////////////////
@@ -85,7 +88,7 @@ export const checkCondition = <T>(
 ) =>
     makeValidator((v: T) => {
         if (!validCondition(v)) {
-            return getMessage(defaultMessage, message)([...args, v]);
+            return getMessage(message, defaultMessage)([...(args || []), v]);
         } else {
             return '';
         }
