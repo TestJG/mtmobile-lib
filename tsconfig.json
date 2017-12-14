@@ -9,13 +9,14 @@
         "allowSyntheticDefaultImports": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "declarationDir": "dist/types",
+        "declarationDir": "compiled/types",
         "outDir": "compiled",
         "typeRoots": [
           "node_modules/@types"
         ]
     },
     "include": [
+        "index.ts",
         "src"
     ]
 }

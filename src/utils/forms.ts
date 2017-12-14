@@ -1,5 +1,4 @@
-import { flatMap } from 'lodash';
-import { assign, assignOrSame, objMapValues } from './common';
+import { assign, assignOrSame, objMapValues, ValueOrFunc } from './common';
 import { coerceAll } from './coercion';
 import { mergeValidators } from './validation';
 import {
@@ -21,7 +20,6 @@ import {
     createGroupValue,
     setGroupFieldInternal
 } from './forms.utils';
-import { ValueOrFunc } from '../mtmobile-lib';
 
 ////////////////////////////////////////////////////////////////
 //                                                            //

@@ -1,4 +1,3 @@
-import { flatMap } from 'lodash';
 import {
     assign,
     assignOrSame,
@@ -12,7 +11,8 @@ import {
     assignOrSameWith,
     joinStr,
     getAsValue,
-    ValueOrFunc
+    ValueOrFunc,
+    shallowEqualStrict
 } from './common';
 import { Coerce, coerceAll } from './coercion';
 import { Validator, EasyValidator, mergeValidators } from './validation';
@@ -25,7 +25,6 @@ import {
     FormItem,
     FormItemState
 } from './forms.interfaces';
-import { shallowEqualStrict } from '../mtmobile-lib';
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
