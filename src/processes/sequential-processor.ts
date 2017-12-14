@@ -1,6 +1,6 @@
 import { Observable, Subject, ReplaySubject } from 'rxjs';
 import { IProcessor, TaskItem, ObsLike } from './processor.interfaces';
-import * as csp from 'js-csp';
+import { alts, chan, go, put, putAsync, spawn, take, timeout } from 'js-csp';
 import { assign } from '../utils/common';
 
 interface WorkState {
@@ -74,9 +74,9 @@ export function startSequentialProcessor(
 
     const options = assign(defaultOptions, opts || {});
 
-    const inputCh = csp.chan(options.bufferSize);
-    const retriesCh = csp.chan();
-    const finishCh = csp.chan(1);
+    const inputCh = chan(options.bufferSize);
+    const retriesCh = chan();
+    const finishCh = chan(1);
     const finishSub = new Subject<void>();
     const finishObs = finishSub.asObservable();
     let _isAlive = true;
@@ -99,7 +99,7 @@ export function startSequentialProcessor(
     const finish = () => {
         if (_isAlive) {
             _isAlive = false;
-            csp.putAsync(finishCh, 'FINISHED');
+            putAsync(finishCh, 'FINISHED');
         }
         return finishObs;
     };
@@ -115,7 +115,7 @@ export function startSequentialProcessor(
             nextDelay: options.minDelay,
             retries: 0
         };
-        csp.putAsync(inputCh, state);
+        putAsync(inputCh, state);
         return sub.asObservable();
     };
 
@@ -152,7 +152,7 @@ export function startSequentialProcessor(
                     options.isTransientError(error, state.retries) &&
                     state.retries < options.maxRetries
                 ) {
-                    csp.putAsync(waitCh, 'RETRY');
+                    putAsync(waitCh, 'RETRY');
                     const delay = state.nextDelay;
                     state.nextDelay = Math.min(
                         Math.max(
@@ -161,18 +161,18 @@ export function startSequentialProcessor(
                         ),
                         options.maxDelay
                     );
-                    csp.go(function*() {
-                        yield csp.timeout(delay);
-                        yield csp.put(retriesCh, state);
+                    go(function*() {
+                        yield timeout(delay);
+                        yield put(retriesCh, state);
                     });
                 } else {
-                    csp.putAsync(waitCh, 'ERROR');
+                    putAsync(waitCh, 'ERROR');
                     state.sub.error(error);
                     onTaskErrorSub.next([state.item, error]);
                 }
             },
             complete: () => {
-                csp.putAsync(waitCh, 'COMPLETE');
+                putAsync(waitCh, 'COMPLETE');
                 state.sub.complete();
                 onTaskCompletedSub.next(state.item);
             }
@@ -181,7 +181,7 @@ export function startSequentialProcessor(
 
     function* loop() {
         while (true) {
-            const result = yield csp.alts([retriesCh, inputCh, finishCh], {
+            const result = yield alts([retriesCh, inputCh, finishCh], {
                 priority: true
             });
 
@@ -191,12 +191,12 @@ export function startSequentialProcessor(
                 break;
             } else {
                 const state = <WorkState>result.value;
-                const waitCh = csp.chan();
-                csp.spawn(runOneTask(state, waitCh));
-                yield csp.take(waitCh);
+                const waitCh = chan();
+                spawn(runOneTask(state, waitCh));
+                yield take(waitCh);
 
                 if (options.interTaskDelay) {
-                    yield csp.timeout(options.interTaskDelay);
+                    yield timeout(options.interTaskDelay);
                 }
             }
         }
@@ -210,7 +210,7 @@ export function startSequentialProcessor(
         onTaskCompletedSub.complete();
     }
 
-    csp.go(loop);
+    go(loop);
 
     return {
         caption: options.caption,

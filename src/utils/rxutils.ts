@@ -3,12 +3,12 @@ import { Subscribable } from 'rxjs/Observable';
 import { normalizeError } from './common';
 import { IScheduler } from 'rxjs/Scheduler';
 
+export type ObsLike<T = any> = Subscribable<T> | PromiseLike<T> | T;
+
 export const normalizeErrorOnCatch = <T>(err: any): Observable<T> =>
     Observable.throw(normalizeError(err));
 
-export const tryTo = <T>(
-    thunk: () => T | Subscribable<T> | PromiseLike<T>
-): Observable<T> => {
+export const tryTo = <T>(thunk: () => ObsLike<T>): Observable<T> => {
     try {
         const result = thunk();
         if (

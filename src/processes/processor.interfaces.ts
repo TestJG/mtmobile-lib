@@ -1,7 +1,5 @@
 import { Observable } from 'rxjs';
-import { objMapValues, toKVMap, id, uuid } from '../utils/common';
-
-export type ObsLike<T> = Observable<T> | PromiseLike<T> | T;
+import { toKVMap, uuid } from '../utils/common';
 
 export interface TaskItem {
     kind: string;

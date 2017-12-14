@@ -1,3 +1,4 @@
+import { deepEqual, shallowEqual, shallowEqualStrict } from './equality';
 import {
     assign,
     assignOrSame,
@@ -6,13 +7,10 @@ import {
     id,
     objMapValues,
     toKVArray,
-    deepEqual,
-    shallowEqual,
     assignOrSameWith,
     joinStr,
     getAsValue,
-    ValueOrFunc,
-    shallowEqualStrict
+    ValueOrFunc
 } from './common';
 import { Coerce, coerceAll } from './coercion';
 import { Validator, EasyValidator, mergeValidators } from './validation';
@@ -297,7 +295,7 @@ export function setValueInternal(
         <SetValueOptions>{
             affectDirty: true,
             compareValues: true,
-            initialization: false,
+            initialization: false
         },
         options
     );
@@ -406,7 +404,7 @@ export const setGroupFieldInternal = (
         <SetValueOptions>{
             affectDirty: true,
             compareValues: true,
-            initialization: false,
+            initialization: false
         },
         options
     );

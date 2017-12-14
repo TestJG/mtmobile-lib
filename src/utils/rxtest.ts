@@ -1,6 +1,6 @@
 import { Observable, Notification } from 'rxjs';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
-import deepequal from 'deep-equal';
+import { deepEqual } from './equality';
 
 export interface DoneCallback {
     (...args: any[]): any;
@@ -51,7 +51,7 @@ export const testObsNotifications = <T = any>(
             done.fail(`Expected ${expStr}, but ${actStr} was received}`);
         } else if (kind === 'N') {
             if (anyValue === undefined || exp.value !== anyValue) {
-                if (!deepequal(act.value, exp.value)) {
+                if (!deepEqual(act.value, exp.value)) {
                     done.fail(
                         `Expected value ${JSON.stringify(
                             exp.value
@@ -63,7 +63,7 @@ export const testObsNotifications = <T = any>(
             }
         } else if (kind === 'E') {
             if (anyError === undefined || exp.error !== anyError) {
-                if (!deepequal(act.error, exp.error)) {
+                if (!deepEqual(act.error, exp.error)) {
                     done.fail(
                         `Expected error ${JSON.stringify(
                             exp.error
