@@ -1,8 +1,8 @@
-import { Observable, Subject, ReplaySubject } from "rxjs";
-import { IProcessor, TaskItem, ObsLike } from "./processor.interfaces";
-import { makeRunTask } from "./makeRunTask";
-import * as csp from "js-csp";
-import { assign, objMapValues } from "../utils/common";
+import { Observable, Subject, ReplaySubject } from 'rxjs';
+import { IProcessor, TaskItem, ObsLike } from './processor.interfaces';
+import { makeRunTask } from './makeRunTask';
+import * as csp from 'js-csp';
+import { assign, objMapValues } from '../utils/common';
 
 export interface DirectProcessorOptions {
     /**
@@ -33,15 +33,15 @@ export interface DirectProcessorOptions {
 
 export function startDirectProcessor(
     runTask: (task: TaskItem) => ObsLike<any>,
-    opts?: Partial<DirectProcessorOptions>)
-    : IProcessor {
+    opts?: Partial<DirectProcessorOptions>
+): IProcessor {
     const defaultOptions: DirectProcessorOptions = {
-        caption: "DirProc",
+        caption: 'DirProc',
         maxRetries: 5,
         minDelay: 10,
         maxDelay: 5000,
         nextDelay: (d: number) => d * 5,
-        isTransientError: (error: any) => true,
+        isTransientError: (error: any) => true
     };
 
     const options = assign(defaultOptions, opts || {});
@@ -83,7 +83,7 @@ export function startDirectProcessor(
         return onFinished$;
     };
 
-    const runOneTask = function (item: TaskItem, sub: Subject<any>) {
+    const runOneTask = function(item: TaskItem, sub: Subject<any>) {
         const runOnce = (retries: number) => {
             let obs: Observable<any> = null;
             if (retries === 1) {
@@ -116,17 +116,20 @@ export function startDirectProcessor(
             Observable.create(obs => {
                 const task = runOnce(retries);
                 task.subscribe({
-                    next: (v) => {
+                    next: v => {
                         sub.next(v);
                         onTaskResultSub.next([item, v]);
                     },
-                    error: (error) => {
-                        if (options.isTransientError(error, retries) &&
-                            retries < options.maxRetries) {
+                    error: error => {
+                        if (
+                            options.isTransientError(error, retries) &&
+                            retries < options.maxRetries
+                        ) {
                             const newDelay = between(
                                 options.nextDelay(delay, retries),
                                 options.minDelay,
-                                options.maxDelay);
+                                options.maxDelay
+                            );
                             Observable.of(1)
                                 .delay(delay)
                                 .flatMap(() => looper(retries + 1, newDelay))
@@ -150,7 +153,7 @@ export function startDirectProcessor(
 
     const process = (item: TaskItem) => {
         if (!isAlive()) {
-            return Observable.throw(new Error("worker:finishing"));
+            return Observable.throw(new Error('worker:finishing'));
         }
         runningCount++;
         const sub = new Subject<any>();
@@ -160,13 +163,15 @@ export function startDirectProcessor(
 
     return {
         caption: options.caption,
-        process, isAlive, finish,
+        process,
+        isAlive,
+        finish,
         onFinished$,
         onTaskStarted$,
         onTaskReStarted$,
         onTaskResult$,
         onTaskError$,
-        onTaskCompleted$,
+        onTaskCompleted$
     };
 }
 
@@ -175,10 +180,15 @@ export function startDirectProcessor(
  * TaskItem of the form { kind: 'method', payload: T } is implemented as
  * service.method(payload).
  */
-export const fromServiceToDirectProcessor =
-    (service: any, caption: string = "ServProc"): IProcessor =>
-        startDirectProcessor(
-            makeRunTask(objMapValues(f => payload =>
-                !!payload ? f(payload) : f()
-            )(service)), { caption }
-        );
+export const fromServiceToDirectProcessor = (
+    service: any,
+    caption: string = 'ServProc'
+): IProcessor =>
+    startDirectProcessor(
+        makeRunTask(
+            objMapValues(f => payload => (!!payload ? f(payload) : f()))(
+                service
+            )
+        ),
+        { caption }
+    );

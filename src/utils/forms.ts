@@ -155,14 +155,6 @@ export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-export const getValue = (item: FormItem, path: string = ''): any => {
-    const child = getFormItem(item, path);
-    if (!child) {
-        return undefined;
-    }
-    return child.value;
-};
-
 export const getFormItem = (item: FormItem, path: string = ''): FormItem => {
     switch (item.type) {
         case 'field': {
@@ -182,6 +174,14 @@ export const getFormItem = (item: FormItem, path: string = ''): FormItem => {
         default:
             throw new Error('getFormItem: Not implemented');
     }
+};
+
+export const getValue = (item: FormItem, path: string = ''): any => {
+    const child = getFormItem(item, path);
+    if (!child) {
+        return undefined;
+    }
+    return child.value;
 };
 
 export const existFormItem = (item: FormItem, path: string = ''): boolean =>

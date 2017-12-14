@@ -440,7 +440,7 @@ describe('Utils', () => {
                         valStr ? ' and ' + valStr : ''
                     } › it should return the ${kind} object`;
                     it(text, () => {
-                        const v1 = getAsValue(original);
+                        const v1 = getAsValue(orig);
                         const copy = JSON.parse(JSON.stringify(v1));
                         const v2 = assignIf(v1, cond, val);
                         if (kind === 'original') {

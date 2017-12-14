@@ -1,7 +1,7 @@
-import { Observable, Subject, ReplaySubject } from "rxjs";
-import { IProcessor, TaskItem, ObsLike } from "./processor.interfaces";
-import * as csp from "js-csp";
-import { assign } from "../utils/common";
+import { Observable, Subject, ReplaySubject } from 'rxjs';
+import { IProcessor, TaskItem, ObsLike } from './processor.interfaces';
+import * as csp from 'js-csp';
+import { assign } from '../utils/common';
 
 interface WorkState {
     item: TaskItem;
@@ -59,17 +59,17 @@ export interface SequentialProcessorOptions {
  */
 export function startSequentialProcessor(
     runTask: (task: TaskItem) => ObsLike<any>,
-    opts?: Partial<SequentialProcessorOptions>)
-    : IProcessor {
+    opts?: Partial<SequentialProcessorOptions>
+): IProcessor {
     const defaultOptions: SequentialProcessorOptions = {
-        caption: "SeqProc",
+        caption: 'SeqProc',
         bufferSize: 1000,
         interTaskDelay: 1,
         maxRetries: 5,
         minDelay: 10,
         maxDelay: 5000,
         nextDelay: (d: number) => d * 5,
-        isTransientError: (error: any) => true,
+        isTransientError: (error: any) => true
     };
 
     const options = assign(defaultOptions, opts || {});
@@ -99,20 +99,21 @@ export function startSequentialProcessor(
     const finish = () => {
         if (_isAlive) {
             _isAlive = false;
-            csp.putAsync(finishCh, "FINISHED");
+            csp.putAsync(finishCh, 'FINISHED');
         }
         return finishObs;
     };
 
     const process = (item: TaskItem) => {
         if (!isAlive()) {
-            return Observable.throw(new Error("worker:finishing"));
+            return Observable.throw(new Error('worker:finishing'));
         }
         const sub = new Subject<any>();
         const state: WorkState = {
-            item, sub,
+            item,
+            sub,
             nextDelay: options.minDelay,
-            retries: 0,
+            retries: 0
         };
         csp.putAsync(inputCh, state);
         return sub.asObservable();
@@ -142,32 +143,36 @@ export function startSequentialProcessor(
         }
 
         obs.subscribe({
-            next: (v) => {
+            next: v => {
                 state.sub.next(v);
                 onTaskResultSub.next([state.item, v]);
             },
-            error: (error) => {
-                if (options.isTransientError(error, state.retries) &&
-                    state.retries < options.maxRetries) {
-                    csp.putAsync(waitCh, "RETRY");
+            error: error => {
+                if (
+                    options.isTransientError(error, state.retries) &&
+                    state.retries < options.maxRetries
+                ) {
+                    csp.putAsync(waitCh, 'RETRY');
                     const delay = state.nextDelay;
                     state.nextDelay = Math.min(
                         Math.max(
                             options.nextDelay(delay, state.retries),
-                            options.minDelay),
-                        options.maxDelay);
-                    csp.go(function* () {
+                            options.minDelay
+                        ),
+                        options.maxDelay
+                    );
+                    csp.go(function*() {
                         yield csp.timeout(delay);
                         yield csp.put(retriesCh, state);
                     });
                 } else {
-                    csp.putAsync(waitCh, "ERROR");
+                    csp.putAsync(waitCh, 'ERROR');
                     state.sub.error(error);
                     onTaskErrorSub.next([state.item, error]);
                 }
             },
             complete: () => {
-                csp.putAsync(waitCh, "COMPLETE");
+                csp.putAsync(waitCh, 'COMPLETE');
                 state.sub.complete();
                 onTaskCompletedSub.next(state.item);
             }
@@ -176,9 +181,9 @@ export function startSequentialProcessor(
 
     function* loop() {
         while (true) {
-            const result = yield csp.alts(
-                [retriesCh, inputCh, finishCh],
-                { priority: true });
+            const result = yield csp.alts([retriesCh, inputCh, finishCh], {
+                priority: true
+            });
 
             if (result.channel === finishCh) {
                 finishSub.next();
@@ -209,12 +214,14 @@ export function startSequentialProcessor(
 
     return {
         caption: options.caption,
-        process, isAlive, finish,
+        process,
+        isAlive,
+        finish,
         onFinished$,
         onTaskStarted$,
         onTaskReStarted$,
         onTaskResult$,
         onTaskError$,
-        onTaskCompleted$,
+        onTaskCompleted$
     };
 }

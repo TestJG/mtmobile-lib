@@ -287,12 +287,12 @@ const setValueInternalRec = (
     }
 };
 
-export const setValueInternal = (
+export function setValueInternal(
     item: FormItem,
     value: ValueOrFunc,
     path: string,
     options?: Partial<SetValueOptions>
-): FormItem => {
+): FormItem {
     const opts: SetValueOptions = Object.assign(
         <SetValueOptions>{
             affectDirty: true,
@@ -303,7 +303,7 @@ export const setValueInternal = (
     );
 
     return setValueInternalRec(item, value, path, opts);
-};
+}
 
 const setGroupFieldInternalRec = (
     item: FormItem,
