@@ -1,4 +1,4 @@
-import { assignIfMany } from './common';
+import { assignIfMany, assignOrSame, shallowEqualStrict } from './common';
 import {
     FormItemConfig,
     FormItemState,
@@ -12,7 +12,8 @@ import {
     setValue,
     getValue,
     getFormItem,
-    existFormItem
+    existFormItem,
+    setGroupField
 } from './forms';
 import {
     Coerce,
@@ -27,16 +28,20 @@ import {
     shouldBeLessThanOrEqualTo,
     shouldBeBetweenValues
 } from './validation';
-import {
-    shallowEqualStrict,
-    shouldNotBeGreaterThanOrEqualTo
-} from '../mtmobile-lib';
 
 interface Person {
     firstName: string;
     lastName: string;
     age: number;
 }
+
+const newPers = (firstName: string, lastName: string, age: number): Person => ({
+    firstName,
+    lastName,
+    age
+});
+
+type PersonArray = [string, string, number];
 
 const expectType = (item: FormItemConfig, expectedType: FormItemType) => {
     it('it should be defined', () => expect(item).not.toBeUndefined());
@@ -246,7 +251,7 @@ describe('Utils', () => {
             describe('When a field is created with coerce function and an initValue outside the coercion range', () => {
                 const ageField = field(10, { coerce: mustNotBeBelow(18) });
 
-                expectConfig(ageField, { initValue: 10 });
+                expectConfig(ageField, { initValue: 18 });
 
                 expectState(ageField, {
                     value: 18,
@@ -267,7 +272,7 @@ describe('Utils', () => {
                 });
 
                 expectConfig(ageField, {
-                    initValue: 30,
+                    initValue: 20,
                     coerce: [[0, 18], [18, 18], [19, 19], [20, 20], [30, 20]]
                 });
 
@@ -422,13 +427,13 @@ describe('Utils', () => {
                 expectConfig(aGroup, {
                     caption: '',
                     description: '',
-                    initValue: { firstName: '', lastName: '', age: 20 },
+                    initValue: newPers('', '', 20),
                     coerce: [[{}, {}], [{ x: 1, y: 2 }, { x: 1, y: 2 }]],
                     validator: [[{}, []], [{ x: 1, y: 2 }, []]]
                 });
 
                 expectState(aGroup, {
-                    value: { firstName: '', lastName: '', age: 20 },
+                    value: newPers('', '', 20),
                     isDirty: false,
                     isTouched: false,
                     errors: []
@@ -448,11 +453,7 @@ describe('Utils', () => {
                         age: field(20)
                     },
                     {
-                        initValue: <Person>{
-                            firstName: 'John',
-                            lastName: 'Smith',
-                            age: 40
-                        }
+                        initValue: newPers('John', 'Smith', 40)
                     }
                 );
 
@@ -461,11 +462,11 @@ describe('Utils', () => {
                 expectConfig(aGroup, {
                     caption: '',
                     description: '',
-                    initValue: { firstName: 'John', lastName: 'Smith', age: 40 }
+                    initValue: newPers('John', 'Smith', 40)
                 });
 
                 expectState(aGroup, {
-                    value: { firstName: 'John', lastName: 'Smith', age: 40 },
+                    value: newPers('John', 'Smith', 40),
                     isDirty: false,
                     isTouched: false,
                     errors: []
@@ -527,11 +528,7 @@ describe('Utils', () => {
                         age: field(10, { coerce: mustNotBeBelow(18) })
                     },
                     {
-                        initValue: <Person>{
-                            firstName: '',
-                            lastName: '',
-                            age: -40
-                        },
+                        initValue: newPers('', '', -40),
                         coerce: person =>
                             assignIfMany(
                                 person,
@@ -547,11 +544,11 @@ describe('Utils', () => {
                 expectConfig(aGroup, {
                     caption: '',
                     description: '',
-                    initValue: { firstName: '', lastName: '', age: -40 }
+                    initValue: newPers('Jane', 'Doe', 18)
                 });
 
                 expectState(aGroup, {
-                    value: { firstName: 'Jane', lastName: 'Doe', age: 18 },
+                    value: newPers('Jane', 'Doe', 18),
                     isDirty: false,
                     isTouched: false,
                     errors: []
@@ -563,6 +560,10 @@ describe('Utils', () => {
                 });
 
                 describe('Then for the field firstName', () => {
+                    expectConfig(aGroup.fields.firstName, {
+                        initValue: 'Jane',
+                    });
+
                     expectState(aGroup.fields.firstName, {
                         value: 'Jane',
                         isDirty: false,
@@ -577,6 +578,10 @@ describe('Utils', () => {
                 });
 
                 describe('Then for the field lastName', () => {
+                    expectConfig(aGroup.fields.lastName, {
+                        initValue: 'Doe',
+                    });
+
                     expectState(aGroup.fields.lastName, {
                         value: 'Doe',
                         isDirty: false,
@@ -591,6 +596,10 @@ describe('Utils', () => {
                 });
 
                 describe('Then for the field age', () => {
+                    expectConfig(aGroup.fields.age, {
+                        initValue: 18,
+                    });
+
                     expectState(aGroup.fields.age, {
                         value: 18,
                         isDirty: false,
@@ -615,11 +624,7 @@ describe('Utils', () => {
                         })
                     },
                     {
-                        initValue: <Person>{
-                            firstName: '',
-                            lastName: '',
-                            age: -40
-                        },
+                        initValue: newPers('', '', -40),
                         validations: [
                             person =>
                                 shouldNotBeEmpty(
@@ -643,11 +648,11 @@ describe('Utils', () => {
                 expectConfig(aGroup, {
                     caption: '',
                     description: '',
-                    initValue: { firstName: '', lastName: '', age: -40 }
+                    initValue: newPers('', '', -40)
                 });
 
                 expectState(aGroup, {
-                    value: { firstName: '', lastName: '', age: -40 },
+                    value: newPers('', '', -40),
                     isDirty: false,
                     isTouched: false,
                     errors: [
@@ -695,7 +700,7 @@ describe('Utils', () => {
                         value: -40,
                         isDirty: false,
                         isTouched: false,
-                        errors: ["Should be greater than or equal to 18"]
+                        errors: ['Should be greater than or equal to 18']
                     });
 
                     expectDerived(aGroup.fields.age, {
@@ -704,133 +709,6 @@ describe('Utils', () => {
                     });
                 });
             });
-
-            // describe('When a group is created with coerce function and an initValue inside the coercion range', () => {
-            //     const ageField = group(24, { coerce: mustNotBeBelow(18) });
-
-            //     expectConfig(ageField, {
-            //         initValue: 24,
-            //         coerce: [[0, 18], [18, 18], [19, 19], [30, 30]]
-            //     });
-
-            //     expectState(ageField, { value: 24 });
-            // });
-
-            // describe('When a group is created with coerce function and an initValue outside the coercion range', () => {
-            //     const ageField = group(10, { coerce: mustNotBeBelow(18) });
-
-            //     expectConfig(ageField, { initValue: 10 });
-
-            //     expectState(ageField, {
-            //         value: 18,
-            //         isDirty: false,
-            //         isTouched: false,
-            //         errors: []
-            //     });
-
-            //     expectDerived(ageField, {
-            //         isValid: true,
-            //         showErrors: false
-            //     });
-            // });
-
-            // describe('When a group is created with coerce collection and an initValue outside the coercion range', () => {
-            //     const ageField = group(30, {
-            //         coerce: [mustNotBeBelow(18), mustNotBeAbove(20)]
-            //     });
-
-            //     expectConfig(ageField, {
-            //         initValue: 30,
-            //         coerce: [[0, 18], [18, 18], [19, 19], [20, 20], [30, 20]]
-            //     });
-
-            //     expectState(ageField, {
-            //         value: 20,
-            //         isDirty: false,
-            //         isTouched: false,
-            //         errors: []
-            //     });
-
-            //     expectDerived(ageField, {
-            //         isValid: true,
-            //         showErrors: false
-            //     });
-            // });
-
-            // describe('When a group is created with validator function and an initValue inside the validation range', () => {
-            //     const ageField = group(24, {
-            //         validations: shouldBeGreaterThanOrEqualTo(18)
-            //     });
-
-            //     expectConfig(ageField, {
-            //         initValue: 24,
-            //         validator: [
-            //             [0, ['Should be greater than or equal to 18']],
-            //             [18, []],
-            //             [19, []],
-            //             [30, []]
-            //         ]
-            //     });
-
-            //     expectState(ageField, {
-            //         value: 24,
-            //         isDirty: false,
-            //         isTouched: false,
-            //         errors: []
-            //     });
-            // });
-
-            // describe('When a group is created with validator function and an initValue outside the validation range', () => {
-            //     const ageField = group(10, {
-            //         validations: shouldBeGreaterThanOrEqualTo(18)
-            //     });
-
-            //     expectConfig(ageField, { initValue: 10 });
-
-            //     expectState(ageField, {
-            //         value: 10,
-            //         isDirty: false,
-            //         isTouched: false,
-            //         errors: ['Should be greater than or equal to 18']
-            //     });
-
-            //     expectDerived(ageField, {
-            //         isValid: false,
-            //         showErrors: false
-            //     });
-            // });
-
-            // describe('When a group is created with validator collection and an initValue outside the validation range', () => {
-            //     const ageField = group(30, {
-            //         validations: [
-            //             shouldBeGreaterThanOrEqualTo(18),
-            //             shouldBeLessThanOrEqualTo(20)
-            //         ]
-            //     });
-
-            //     expectConfig(ageField, {
-            //         initValue: 30,
-            //         validator: [
-            //             [0, ['Should be greater than or equal to 18']],
-            //             [18, []],
-            //             [19, []],
-            //             [20, []],
-            //             [30, ['Should be less than or equal to 20']]
-            //         ]
-            //     });
-
-            //     expectState(ageField, {
-            //         value: 30,
-            //         isDirty: false,
-            //         isTouched: false,
-            //         errors: ['Should be less than or equal to 20']
-            //     });
-
-            //     expectDerived(ageField, {
-            //         isValid: false,
-            //         showErrors: false
-            //     });
-            // });
         });
     });
 });
@@ -842,7 +720,8 @@ describe('Utils', () => {
             it('should be a function', () =>
                 expect(setValue).toBeInstanceOf(Function));
 
-            describe('When a field is created and a the same init value is assigned', () => {
+            // field
+            describe('When a field is created and the same init value is assigned', () => {
                 const ageField = field(40, {
                     coerce: [mustNotBeBelow(0), mustNotBeAbove(100)],
                     validations: [
@@ -967,6 +846,127 @@ describe('Utils', () => {
                     showErrors: false
                 });
             });
+
+            // group
+            describe('When a group is created and the same init value is assigned', () => {
+                const aGroup = group(
+                    {
+                        firstName: field(''),
+                        lastName: field(''),
+                        age: field(20)
+                    },
+                    { initValue: <Person>undefined }
+                );
+                const aGroupCopy = Object.assign({}, aGroup);
+                const newGroup = setValue(aGroup, newPers('', '', 20));
+
+                it('the new group should be the same as the original one', () =>
+                    expect(newGroup).toBe(aGroup));
+
+                it('the original group should no be changed in place', () =>
+                    expect(aGroup).toEqual(aGroupCopy));
+            });
+
+            describe('When a group is created and a copy of the same value is assigned', () => {
+                const aGroup = group(
+                    {
+                        firstName: field(''),
+                        lastName: field(''),
+                        age: field(20)
+                    },
+                    { initValue: <Person>undefined }
+                );
+                const aGroupCopy = Object.assign({}, aGroup);
+                const newGroup = setValue(aGroup, newPers('', '', 20));
+
+                it('the new group should be the same as the original one', () =>
+                    expect(newGroup).toBe(aGroup));
+
+                it('the original group should no be changed in place', () =>
+                    expect(aGroup).toEqual(aGroupCopy));
+            });
+
+            describe('When a group is created and a modified value is assigned', () => {
+                const aGroup = group(
+                    {
+                        firstName: field(''),
+                        lastName: field(''),
+                        age: field(20)
+                    },
+                    { initValue: <Person>undefined }
+                );
+                const aGroupCopy = Object.assign({}, aGroup);
+                const newGroup = setValue(aGroup, (p: Person) =>
+                    assignOrSame(p, {
+                        age: p.age + 10
+                    })
+                );
+
+                it('the new group should be distinct from the original one', () =>
+                    expect(newGroup).not.toBe(aGroup));
+
+                it('the original group should no be changed in place', () =>
+                    expect(aGroup).toEqual(aGroupCopy));
+
+                expectConfig(newGroup, {
+                    initValue: newPers('', '', 20),
+                    coerce: aGroup.coerce,
+                    validator: aGroup.validator
+                });
+
+                expectState(newGroup, {
+                    value: newPers('', '', 30),
+                    isDirty: true,
+                    isTouched: true,
+                    errors: []
+                });
+
+                expectDerived(newGroup, {
+                    isValid: true,
+                    showErrors: false
+                });
+            });
+
+            describe('When a group is created and a modified value is assigned to one of its fields', () => {
+                const aGroup = group(
+                    {
+                        firstName: field(''),
+                        lastName: field(''),
+                        age: field(20)
+                    },
+                    { initValue: <Person>undefined }
+                );
+                const aGroupCopy = Object.assign({}, aGroup);
+                const newGroup = setValue(
+                    aGroup,
+                    (age: number) => age + 10,
+                    'age'
+                );
+
+                it('the new group should be distinct from the original one', () =>
+                    expect(newGroup).not.toBe(aGroup));
+
+                it('the original group should no be changed in place', () =>
+                    expect(aGroup).toEqual(aGroupCopy));
+
+                expectConfig(newGroup, {
+                    initValue: newPers('', '', 20),
+                    coerce: aGroup.coerce,
+                    validator: aGroup.validator
+                });
+
+                expectState(newGroup, {
+                    value: newPers('', '', 30),
+                    isDirty: true,
+                    isTouched: true,
+                    errors: []
+                });
+
+                expectDerived(newGroup, {
+                    isValid: true,
+                    showErrors: false
+                });
+            });
         });
     });
 });
@@ -1017,6 +1017,52 @@ describe('Utils', () => {
 
                 it("with path '' it should return the field itself", () =>
                     expect(existFormItem(ageField, '')).toBeTruthy());
+            });
+        });
+    });
+});
+
+// setGroupField
+describe('Utils', () => {
+    describe('Forms Tests', () => {
+        describe('setGroupField', () => {
+            it('should be a function', () =>
+                expect(setGroupField).toBeInstanceOf(Function));
+
+            describe('When a group is created and a new field is added', () => {
+                const aGroup = group(
+                    {
+                        firstName: field('John'),
+                        age: field(20)
+                    },
+                    { initValue: <Person>undefined }
+                );
+                const aGroupCopy = Object.assign({}, aGroup);
+                const newGroup = setGroupField(aGroup, 'lastName', field('Smith'));
+
+                it('the new group should be distinct from the original one', () =>
+                    expect(newGroup).not.toBe(aGroup));
+
+                it('the original group should no be changed in place', () =>
+                    expect(aGroup).toEqual(aGroupCopy));
+
+                expectConfig(newGroup, {
+                    initValue: newPers('John', 'Smith', 20),
+                    coerce: aGroup.coerce,
+                    validator: aGroup.validator
+                });
+
+                expectState(newGroup, {
+                    value: newPers('John', 'Smith', 20),
+                    isDirty: false,
+                    isTouched: false,
+                    errors: []
+                });
+
+                expectDerived(newGroup, {
+                    isValid: true,
+                    showErrors: false
+                });
             });
         });
     });

@@ -18,8 +18,10 @@ import {
     matchGroupPath,
     matchListingPath,
     locateInGroupOrFail,
-    createGroupValue
+    createGroupValue,
+    setGroupFieldInternal
 } from './forms.utils';
+import { ValueOrFunc } from '../mtmobile-lib';
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -73,7 +75,8 @@ export const field = <T = any>(
 
     return <FormField<T>>setValueInternal(result, initValue, '', {
         affectDirty: false,
-        compareValues: false
+        compareValues: false,
+        initialization: true,
     });
 };
 
@@ -143,7 +146,8 @@ export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
 
     return <FormGroup<T, F>>setValueInternal(result, theInitValue, '', {
         affectDirty: false,
-        compareValues: false
+        compareValues: false,
+        initialization: true,
     });
 };
 
@@ -187,6 +191,12 @@ export const existFormItem = (item: FormItem, path: string = ''): boolean =>
 
 export const setValue = <I extends FormItem = FormItem>(
     item: I,
-    value: any,
+    value: ValueOrFunc,
     path: string = ''
 ): I => <I>setValueInternal(item, value, path);
+
+export const setGroupField = <I extends FormItem = FormItem>(
+    item: I,
+    path: string,
+    formItem: ValueOrFunc<FormItem>
+): I => <I>setGroupFieldInternal(item, path, formItem);
