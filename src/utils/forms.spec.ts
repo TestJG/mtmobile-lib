@@ -1,10 +1,11 @@
-import { assignIfMany, assignOrSame, shallowEqualStrict } from './common';
+import { assignIfMany, assignOrSame } from './common';
 import {
     FormItemConfig,
     FormItemState,
     FormItem,
     FormItemType,
-    FormField
+    FormField,
+    FormError
 } from './forms.interfaces';
 import {
     field,
@@ -13,7 +14,8 @@ import {
     getValue,
     getFormItem,
     existFormItem,
-    setGroupField
+    setGroupField,
+    getAllErrors
 } from './forms';
 import {
     Coerce,
@@ -23,11 +25,14 @@ import {
 } from './coercion';
 import {
     Validator,
+    shouldBe,
     shouldNotBeEmpty,
     shouldBeGreaterThanOrEqualTo,
     shouldBeLessThanOrEqualTo,
-    shouldBeBetweenValues
+    shouldBeBetweenValues,
+    shouldNotBeBlank
 } from './validation';
+import { shouldBeLongerThan } from '../../index';
 
 interface Person {
     firstName: string;
@@ -561,7 +566,7 @@ describe('Utils', () => {
 
                 describe('Then for the field firstName', () => {
                     expectConfig(aGroup.fields.firstName, {
-                        initValue: 'Jane',
+                        initValue: 'Jane'
                     });
 
                     expectState(aGroup.fields.firstName, {
@@ -579,7 +584,7 @@ describe('Utils', () => {
 
                 describe('Then for the field lastName', () => {
                     expectConfig(aGroup.fields.lastName, {
-                        initValue: 'Doe',
+                        initValue: 'Doe'
                     });
 
                     expectState(aGroup.fields.lastName, {
@@ -597,7 +602,7 @@ describe('Utils', () => {
 
                 describe('Then for the field age', () => {
                     expectConfig(aGroup.fields.age, {
-                        initValue: 18,
+                        initValue: 18
                     });
 
                     expectState(aGroup.fields.age, {
@@ -1038,7 +1043,11 @@ describe('Utils', () => {
                     { initValue: <Person>undefined }
                 );
                 const aGroupCopy = Object.assign({}, aGroup);
-                const newGroup = setGroupField(aGroup, 'lastName', field('Smith'));
+                const newGroup = setGroupField(
+                    aGroup,
+                    'lastName',
+                    field('Smith')
+                );
 
                 it('the new group should be distinct from the original one', () =>
                     expect(newGroup).not.toBe(aGroup));
@@ -1063,6 +1072,103 @@ describe('Utils', () => {
                     isValid: true,
                     showErrors: false
                 });
+            });
+        });
+    });
+});
+
+// getAllErrors
+describe('Utils', () => {
+    describe('Forms Tests', () => {
+        describe('getAllErrors', () => {
+            it('should be a function', () =>
+                expect(getAllErrors).toBeInstanceOf(Function));
+
+            describe('When a group with valid fields is created', () => {
+                const aGroup = group(
+                    {
+                        firstName: field('John', {
+                            validations: shouldNotBeBlank()
+                        }),
+                        lastName: field('Smith', {
+                            validations: [
+                                shouldNotBeBlank(),
+                                shouldBeLongerThan(3)
+                            ]
+                        }),
+                        age: field(20, {
+                            validations: shouldBeBetweenValues(18, 35)
+                        })
+                    },
+                    {
+                        initValue: <Person>undefined,
+                        validations: [
+                            shouldBe<Person>(
+                                p => p.firstName.length <= p.age,
+                                'Should meet this weird condition'
+                            )
+                        ]
+                    }
+                );
+
+                it('getAllErrors should return an empty array', () =>
+                    expect(getAllErrors(aGroup)).toEqual([]));
+            });
+
+            describe('When a group with invalid fields is created', () => {
+                const aGroup = group(
+                    {
+                        firstName: field('', {
+                            validations: shouldNotBeBlank('not blank')
+                        }),
+                        lastName: field('', {
+                            validations: [
+                                shouldNotBeBlank('not blank'),
+                                shouldBeLongerThan(3, 'too short')
+                            ]
+                        }),
+                        age: field(10, {
+                            validations: shouldBeBetweenValues(
+                                18,
+                                35,
+                                'outside'
+                            )
+                        })
+                    },
+                    {
+                        initValue: <Person>undefined,
+                        validations: [
+                            shouldBe<Person>(
+                                p => p.firstName.length >= p.age,
+                                'weird'
+                            )
+                        ]
+                    }
+                );
+
+                it('getAllErrors should return all errors in the group', () =>
+                    expect(getAllErrors(aGroup)).toEqual(<FormError[]>[
+                        {
+                            path: '',
+                            item: aGroup,
+                            errors: ['weird']
+                        },
+                        {
+                            path: 'firstName',
+                            item: aGroup.fields.firstName,
+                            errors: ['not blank']
+                        },
+                        {
+                            path: 'lastName',
+                            item: aGroup.fields.lastName,
+                            errors: ['not blank', 'too short']
+                        },
+                        {
+                            path: 'age',
+                            item: aGroup.fields.age,
+                            errors: ['outside']
+                        }
+                    ]));
             });
         });
     });

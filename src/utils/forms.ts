@@ -9,7 +9,8 @@ import {
     FormGroupInit,
     FormGroup,
     FormGroupState,
-    FormGroupFields
+    FormGroupFields,
+    FormError,
 } from './forms.interfaces';
 import {
     checkPathInField,
@@ -18,7 +19,8 @@ import {
     matchListingPath,
     locateInGroupOrFail,
     createGroupValue,
-    setGroupFieldInternal
+    setGroupFieldInternal,
+    getAllErrorsInternal
 } from './forms.utils';
 
 ////////////////////////////////////////////////////////////////
@@ -198,3 +200,5 @@ export const setGroupField = <I extends FormItem = FormItem>(
     path: string,
     formItem: ValueOrFunc<FormItem>
 ): I => <I>setGroupFieldInternal(item, path, formItem);
+
+export const getAllErrors = (item: FormItem) => getAllErrorsInternal(item);

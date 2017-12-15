@@ -131,3 +131,9 @@ export type FormItemConfig<T = any> = FormFieldConfig<T> | FormGroupConfig<T>;
 export type FormItemState<T = any> = FormFieldState<T> | FormGroupState<T>;
 
 export type FormItem<T = any> = FormField<T> | FormGroup<T>;
+
+export interface FormError {
+    path: string;
+    item: FormItem;
+    errors: string[];
+}

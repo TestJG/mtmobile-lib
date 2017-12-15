@@ -8,15 +8,15 @@ import {
 
 export type EasyValidationResult = string | string[];
 
-export type EasyValidator<T> = (value: T) => EasyValidationResult;
+export type EasyValidator<T = any> = (value: T) => EasyValidationResult;
 
-export type ValidatorInit<T> = EasyValidator<T> | EasyValidator<T>[];
+export type ValidatorInit<T = any> = EasyValidator<T> | EasyValidator<T>[];
 
 export type ValidationResult = string[];
 
-export type Validator<T> = (value: T) => ValidationResult;
+export type Validator<T = any> = (value: T) => ValidationResult;
 
-export type MessageSource = ValueOrFunc<string> | undefined;
+export type MessageSource = ValueOrFunc<string | string[]> | undefined;
 
 export const emptyValidator = <T>(value: T) => [];
 
@@ -65,19 +65,21 @@ export const mergeValidators = <T>(validators?: ValidatorInit<T>) => {
 
 const stringFromSource = (source: MessageSource) => (args: any[]) => {
     if (source === undefined || source === null) {
-        return '';
+        return [];
     }
     return getAsValueOrError(source, errorToString, ...args);
 };
 
-const getMessage = (...sources: MessageSource[]) => (args: any[]) => {
+const getMessages = (...sources: MessageSource[]) => (args: any[]) => {
     for (const source of sources) {
         const str = stringFromSource(source)(args);
-        if (!!str) {
+        if (typeof str === 'string' && !!str.trim()) {
+            return [str.trim()];
+        } else if (str instanceof Array && str.length > 0) {
             return str;
         }
     }
-    return '';
+    return [];
 };
 
 export const checkCondition = <T>(
@@ -88,11 +90,17 @@ export const checkCondition = <T>(
 ) =>
     makeValidator((v: T) => {
         if (!validCondition(v)) {
-            return getMessage(message, defaultMessage)([...(args || []), v]);
+            return getMessages(message, defaultMessage)([...(args || []), v]);
         } else {
-            return '';
+            return [];
         }
     });
+
+export const shouldBe = <T>(
+    validCondition: (v: T) => boolean,
+    message: MessageSource,
+    ...args: any[]) =>
+    checkCondition(validCondition, message, undefined, args);
 
 ////////////////////////////////////////////////////////////////
 //                                                            //

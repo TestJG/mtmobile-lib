@@ -1,3 +1,4 @@
+import * as _ from 'lodash';
 import { deepEqual, shallowEqual, shallowEqualStrict } from './equality';
 import {
     assign,
@@ -21,7 +22,8 @@ import {
     FormGroup,
     FormGroupFields,
     FormItem,
-    FormItemState
+    FormItemState,
+    FormError
 } from './forms.interfaces';
 
 ////////////////////////////////////////////////////////////////
@@ -49,6 +51,21 @@ export const matchListingPath = (path: string) => {
     const rest = match[3] || match[4] || match[5];
     return { step, rest };
 };
+
+export const appendGroupPath = (groupPath: string, fieldName: string) =>
+    joinStr('.', [groupPath, fieldName]);
+
+export const appendListingPath = (listingPath: string, childIndex: number) =>
+    joinStr('', [listingPath, `[${childIndex}]`]);
+
+export const createPath = (...steps: (string | number)[]) =>
+    steps.reduce<string>(
+        (path, step) =>
+            typeof step === 'number'
+                ? appendListingPath(path, step)
+                : appendGroupPath(path, step),
+        ''
+    );
 
 export const checkPathInField = (path: string) => {
     if (!!path) {
@@ -411,3 +428,30 @@ export const setGroupFieldInternal = (
 
     return setGroupFieldInternalRec(item, path, formItem, opts);
 };
+
+export const getAllErrorsInternalRec = (
+    item: FormItem,
+    path: string
+): FormError[] => {
+    const currentErrors = !item.errors.length
+        ? []
+        : [<FormError>{ path, item, errors: item.errors }];
+    switch (item.type) {
+        case 'field': {
+            return currentErrors;
+        }
+
+        case 'group': {
+            const fieldErrors = _.flatMap(Object.keys(item.fields), key =>
+                getAllErrorsInternalRec(
+                    item.fields[key],
+                    appendGroupPath(path, key)
+                )
+            );
+            return currentErrors.concat(fieldErrors);
+        }
+    }
+};
+
+export const getAllErrorsInternal = (item: FormItem) =>
+    getAllErrorsInternalRec(item, '');
