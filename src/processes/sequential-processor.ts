@@ -1,7 +1,8 @@
 import { Observable, Subject, ReplaySubject } from 'rxjs';
-import { IProcessor, TaskItem, ObsLike } from './processor.interfaces';
-import { alts, chan, go, put, putAsync, spawn, take, timeout } from 'js-csp';
 import { assign } from '../utils/common';
+import { ObsLike } from '../utils/rxutils';
+import { IProcessor, TaskItem } from './processor.interfaces';
+import { alts, chan, go, put, putAsync, spawn, take, timeout } from 'js-csp';
 
 interface WorkState {
     item: TaskItem;

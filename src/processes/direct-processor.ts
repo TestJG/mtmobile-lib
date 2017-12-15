@@ -1,7 +1,8 @@
 import { Observable, Subject, ReplaySubject } from 'rxjs';
-import { IProcessor, TaskItem, ObsLike } from './processor.interfaces';
+import { assign, objMapValues,  } from '../utils/common';
+import { ObsLike } from '../utils/rxutils';
+import { IProcessor, TaskItem } from './processor.interfaces';
 import { makeRunTask } from './makeRunTask';
-import { assign, objMapValues } from '../utils/common';
 
 export interface DirectProcessorOptions {
     /**
