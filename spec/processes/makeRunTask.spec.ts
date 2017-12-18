@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 import { testObs } from '../utils/rxtest';
-import { TaskItem } from './processor.interfaces';
-import { makeRunTask } from './makeRunTask';
+import { TaskItem } from '../../src/processes/processor.interfaces';
+import { makeRunTask } from '../../src/processes/makeRunTask';
 
 describe('Processes', () => {
     describe('makeRunTask', () => {

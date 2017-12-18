@@ -6,8 +6,8 @@ import {
     shallowEqual,
     shallowEqualStrict,
     strictEqual
-} from './equality';
-import { ValueOrFunc, getAsValue } from './common';
+} from '../../src/utils/equality';
+import { ValueOrFunc, getAsValue } from '../../src/utils/common';
 
 function testEquivalenceClasses(
     fun: EqualityComparer<any>,

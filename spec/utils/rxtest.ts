@@ -1,6 +1,6 @@
 import { Observable, Notification } from 'rxjs';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
-import { deepEqual } from './equality';
+import { deepEqual } from '../../src/utils/equality';
 
 export interface DoneCallback {
     (...args: any[]): any;

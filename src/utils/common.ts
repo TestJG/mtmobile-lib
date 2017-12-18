@@ -7,6 +7,23 @@ import {
 export const assign = <T>(s: T, ...u: Partial<T>[]): T =>
     Object.assign({}, s, ...u);
 
+export const assignArray = <T>(s: T[], ...u: [number, T[]][]): T[] => {
+    const arr = s.slice();
+    for (let index = 0; index < u.length; index++) {
+        if (!(u[index] instanceof Array)) { continue; }
+        const [pos, other] = u[index];
+        if (!(typeof pos === 'number') || !(other instanceof Array)) { continue; }
+        for (let p = 0; p < other.length; p++) {
+            if (pos + p < arr.length) {
+                arr[pos + p] = other[p];
+            } else {
+                arr.push(other[p]);
+            }
+        }
+    }
+    return arr;
+};
+
 export type ValueOrFunc<T = any> = T | ((...args: any[]) => T);
 
 export const getAsValue = <T>(valueOrFunc: ValueOrFunc<T>, ...args: any[]) => {
@@ -67,6 +84,44 @@ export const assignIfMany = <T>(
     stages.reduce(
         (prev, [condition, thenAssign]) =>
             assignIf(prev, condition, thenAssign),
+        s
+    );
+
+export const assignArrayOrSameWith = <T>(
+    equality: EqualityComparer<T[]>,
+    s: T[],
+    ...u: [number, T[]][]
+): T[] => {
+    const would = assignArray(s, ...u);
+    if (equality(would, s) === true) {
+        return s;
+    }
+    return would;
+};
+
+export const assignArrayOrSame = <T>(s: T[],
+    ...u: [number, T[]][]): T[] =>
+    assignArrayOrSameWith(shallowEqualStrict, s, ...u);
+
+export const assignArrayIf = <T>(
+    s: T[],
+    condition: ValueOrFunc<boolean>,
+    thenAssign: ValueOrFunc<[number, T[]]>
+): T[] => {
+    if (getAsValue(condition, s)) {
+        return assignArrayOrSame(s, getAsValue(thenAssign, s));
+    } else {
+        return s;
+    }
+};
+
+export const assignArrayIfMany = <T>(
+    s: T[],
+    ...stages: Array<[ValueOrFunc<boolean>, ValueOrFunc<[number, T[]]>]>
+): T[] =>
+    stages.reduce(
+        (prev, [condition, thenAssign]) =>
+            assignArrayIf(prev, condition, thenAssign),
         s
     );
 

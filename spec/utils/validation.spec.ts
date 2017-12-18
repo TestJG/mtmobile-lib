@@ -1,4 +1,4 @@
-import * as common from './common';
+import * as common from '../../src/utils/common';
 import {
     Validator,
     emptyValidator,
@@ -18,6 +18,7 @@ import {
     shouldBeLongerThan,
     shouldBeANumber,
     shouldBeGreaterThan,
+    shouldBeGreaterThanOrEqualTo,
     shouldBeLessThan,
     shouldBeLessThanOrEqualTo,
     shouldBeBetweenValues,
@@ -26,8 +27,7 @@ import {
     shouldNotBeLessThan,
     shouldNotBeLessThanOrEqualTo,
     shouldNotBeBetweenValues
-} from './validation';
-import { joinStr, shouldBeGreaterThanOrEqualTo } from '../../index';
+} from '../../src/utils/validation';
 
 function expectErrors(
     fun: Validator,
@@ -78,7 +78,7 @@ function expectParamErrors(
                         paramArr[index] = paramStr[index];
                     }
                 }
-                paramStr = joinStr(', ', paramArr);
+                paramStr = common.joinStr(', ', paramArr);
             }
         }
         expectErrors(fun(...(params || [])), `${name}(${paramStr})`, [

@@ -100,22 +100,30 @@ export interface FormGroup<
 
 export type FormListingValuesMapping = Array<any>;
 
-export type FormListingFieldStates = Array<FormItemState>;
+export interface FormListingFieldStates { [index: number]: FormItemState; }
 
-export type FormListingFields = Array<FormItem>;
+export interface FormListingFields { [index: number]: FormItem; }
+
+export interface FormListingInit<T = any> extends FormPartInit<T> {
+    initValue: T;
+}
 
 export interface FormListingConfig<T = any> extends FormPartConfig<T> {
     type: 'listing';
 }
 
-export interface FormListingState<T = any>
-    extends FormListingConfig<T>,
-        FormPartState<T> {
-    fields: FormListingFieldStates;
+export interface FormListingState<
+    T = any,
+    F extends FormListingFieldStates = FormListingFieldStates
+> extends FormListingConfig<T>, FormPartState<T> {
+    fields: F;
 }
 
-export interface FormListing<T = any> extends FormListingState<T>, FormPart<T> {
-    fields: FormListingFields;
+export interface FormListing<
+    T = any,
+    F extends FormListingFields = FormListingFields
+> extends FormListingState<T>, FormPart<T> {
+    fields: F;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -126,11 +134,17 @@ export interface FormListing<T = any> extends FormListingState<T>, FormPart<T> {
 
 export type FormItemType = 'field' | 'group' | 'listing';
 
-export type FormItemConfig<T = any> = FormFieldConfig<T> | FormGroupConfig<T>;
+export type FormItemConfig<T = any> =
+    | FormFieldConfig<T>
+    | FormGroupConfig<T>
+    | FormListingConfig<T>;
 
-export type FormItemState<T = any> = FormFieldState<T> | FormGroupState<T>;
+export type FormItemState<T = any> =
+    | FormFieldState<T>
+    | FormGroupState<T>
+    | FormListingState<T>;
 
-export type FormItem<T = any> = FormField<T> | FormGroup<T>;
+export type FormItem<T = any> = FormField<T> | FormGroup<T> | FormListing<T>;
 
 export interface FormError {
     path: string;

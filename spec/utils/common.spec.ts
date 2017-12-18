@@ -1,12 +1,13 @@
 import {
+    id,
     assign,
+    assignArray,
     assignOrSame,
     assignOrSameWith,
     assignIf,
     errorToString,
     getAsValue,
     getAsValueOrError,
-    id,
     joinStr,
     normalizeError,
     objFlatMap,
@@ -16,7 +17,7 @@ import {
     toKVMap,
     uuid,
     ValueOrFunc
-} from './common';
+} from '../../src/utils/common';
 
 describe('Utils', () => {
     describe('Common Tests', () => {
@@ -138,6 +139,32 @@ describe('Utils', () => {
                     age: 40
                 };
                 expect(assign(init, undefined, null)).toEqual(init);
+            });
+        });
+
+        describe('assignArray', () => {
+            it('should be a function', () => {
+                expect(assignArray).toBeInstanceOf(Function);
+            });
+            it('should return the merged arrays when no new position is needed', () => {
+                const init = [1, 2, 3, 4, 5, 6];
+                const actual = assignArray(init, [0, [10, 20, 30]], [5, [60]]);
+                const expected = [10, 20, 30, 4, 5, 60];
+                expect(actual).toEqual(expected);
+            });
+            it('should return the merged arrays when new positions are needed', () => {
+                const init = [1, 2, 3, 4, 5, 6];
+                const actual = assignArray(
+                    init,
+                    [0, [10, 20, 30, 4, 5, 6, 7, 8, 9]],
+                    [15, [100, 110, 120]]
+                );
+                const expected = [10, 20, 30, 4, 5, 6, 7, 8, 9, 100, 110, 120];
+                expect(actual).toEqual(expected);
+            });
+            it('should accept null or undefined partials', () => {
+                const init = [1, 2, 3, 4, 5, 6];
+                expect(assignArray(init, undefined, null)).toEqual(init);
             });
         });
 

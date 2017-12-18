@@ -1,4 +1,4 @@
-import { fromProcessorToService } from './processor.interfaces';
+import { fromProcessorToService } from '../../src/processes/processor.interfaces';
 
 describe('Processes', () => {
     describe('Processor Interfaces', () => {

@@ -1,8 +1,8 @@
 import { Observable, Notification } from 'rxjs';
 import { testObs } from './rxtest';
-import * as common from './common';
-import * as rxutils from './rxutils';
-import * as redux from './redux';
+import * as common from '../../src/utils/common';
+import * as rxutils from '../../src/utils/rxutils';
+import * as redux from '../../src/utils/redux';
 import { setTimeout } from 'timers';
 
 interface Person {

@@ -1,10 +1,10 @@
-import * as common from './common';
+import * as common from '../../src/utils/common';
 import {
     coerceAll,
     mustNotBeBelow,
     mustNotBeAbove,
     mustBeBetween
-} from './coercion';
+} from '../../src/utils/coercion';
 
 describe('Utils', () => {
     describe('Coercion Tests', () => {

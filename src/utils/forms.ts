@@ -10,7 +10,11 @@ import {
     FormGroup,
     FormGroupState,
     FormGroupFields,
-    FormError,
+    FormListingInit,
+    FormListing,
+    FormListingState,
+    FormListingFields,
+    FormError
 } from './forms.interfaces';
 import {
     checkPathInField,
@@ -20,7 +24,9 @@ import {
     locateInGroupOrFail,
     createGroupValue,
     setGroupFieldInternal,
-    getAllErrorsInternal
+    getAllErrorsInternal,
+    createListingValue,
+    locateInListingOrFail
 } from './forms.utils';
 
 ////////////////////////////////////////////////////////////////
@@ -76,7 +82,7 @@ export const field = <T = any>(
     return <FormField<T>>setValueInternal(result, initValue, '', {
         affectDirty: false,
         compareValues: false,
-        initialization: true,
+        initialization: true
     });
 };
 
@@ -84,11 +90,7 @@ export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
     fields: F,
     options?: Partial<FormGroupInit<T>>
 ): FormGroup<T, F> => {
-    if (
-        typeof fields !== 'object' ||
-        !(fields instanceof Object) ||
-        fields.constructor !== Object
-    ) {
+    if (!(fields instanceof Object) || fields.constructor !== Object) {
         throw new Error('Group fields must be a plain JS object.');
     }
 
@@ -113,12 +115,6 @@ export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
     const validator = mergeValidators(validatorInit);
     const theFields = <F>Object.assign({}, fields);
     const theInitValue = initValue || <T>createGroupValue(theFields);
-    // const value = coerce(theInitValue);
-    // const isDirty = false;
-    // const isTouched = false;
-    // const errors = validator(value);
-    // const isValid = errors.length === 0;
-    // const showErrors = false;
 
     const result: FormGroup<T, F> = {
         // Type
@@ -147,7 +143,71 @@ export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
     return <FormGroup<T, F>>setValueInternal(result, theInitValue, '', {
         affectDirty: false,
         compareValues: false,
-        initialization: true,
+        initialization: true
+    });
+};
+
+export const listing = <
+    T = any,
+    F extends FormListingFields = FormListingFields
+>(
+    fields: F,
+    options?: Partial<FormListingInit<T>>
+): FormListing<T, F> => {
+    if (!(fields instanceof Array)) {
+        throw new Error('Listing fields must be a plain JS Array.');
+    }
+
+    const {
+        caption,
+        description,
+        coerce: coerceInit,
+        validations: validatorInit,
+        initValue
+    } = assign(
+        <FormListingInit<T>>{
+            caption: '',
+            description: '',
+            coerce: undefined,
+            validations: undefined,
+            initValue: undefined
+        },
+        options
+    );
+
+    const coerce = coerceAll(coerceInit);
+    const validator = mergeValidators(validatorInit);
+    const theFields = <F><any>fields.slice();
+    const theInitValue = initValue || <T>createListingValue(theFields);
+
+    const result: FormListing<T, F> = {
+        // Type
+        type: 'listing',
+
+        // Config
+        caption,
+        description,
+        initValue: theInitValue,
+        coerce,
+        validator,
+
+        // State
+        value: undefined,
+        errors: [],
+        isDirty: false,
+        isTouched: false,
+
+        // Derived
+        isValid: true,
+        showErrors: false,
+
+        fields: theFields
+    };
+
+    return <FormListing<T, F>>setValueInternal(result, theInitValue, '', {
+        affectDirty: false,
+        compareValues: false,
+        initialization: true
     });
 };
 
@@ -173,6 +233,15 @@ export const getFormItem = (item: FormItem, path: string = ''): FormItem => {
             return getFormItem(child, restOfPath);
         }
 
+        case 'listing': {
+            if (!path) {
+                return item;
+            }
+
+            const [_, child, restOfPath] = locateInListingOrFail(item, path);
+            return getFormItem(child, restOfPath);
+        }
+
         default:
             throw new Error('getFormItem: Not implemented');
     }
@@ -186,8 +255,13 @@ export const getValue = (item: FormItem, path: string = ''): any => {
     return child.value;
 };
 
-export const existFormItem = (item: FormItem, path: string = ''): boolean =>
-    !!getFormItem(item, path);
+export const existFormItem = (item: FormItem, path: string): boolean => {
+    try {
+        return !!getFormItem(item, path);
+    } catch (error) {
+        return false;
+    }
+};
 
 export const setValue = <I extends FormItem = FormItem>(
     item: I,

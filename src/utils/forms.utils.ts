@@ -3,6 +3,7 @@ import { deepEqual, shallowEqual, shallowEqualStrict } from './equality';
 import {
     assign,
     assignOrSame,
+    assignArrayOrSame,
     assignIf,
     assignIfMany,
     id,
@@ -21,6 +22,9 @@ import {
     FormGroupInit,
     FormGroup,
     FormGroupFields,
+    FormListingInit,
+    FormListing,
+    FormListingFields,
     FormItem,
     FormItemState,
     FormError
@@ -104,13 +108,38 @@ export const locateInGroupOrFail = (
     return <[string, FormItem, string]>[match.step, child, match.rest];
 };
 
+export const locateInListingOrFail = (
+    item: FormListing,
+    path: string,
+    failIfNoChild: boolean = true
+) => {
+    const match = matchListingPath(path);
+    if (!match) {
+        throw new Error(
+            `Unexpected path accessing this listing: ${JSON.stringify(path)}`
+        );
+    }
+
+    const child = item.fields[match.step];
+    if (!child && failIfNoChild) {
+        throw new Error(
+            `Unexpected field name accessing this group: ${JSON.stringify(
+                match.step
+            )}`
+        );
+    }
+    return <[number, FormItem, string]>[match.step, child, match.rest];
+};
+
 const checkGroupValue = (value: any) => {
-    if (
-        typeof value !== 'object' ||
-        !(value instanceof Object) ||
-        value.constructor !== Object
-    ) {
+    if (!(value instanceof Object) || value.constructor !== Object) {
         throw new Error('Group value must be a plain JS object.');
+    }
+};
+
+const checkListingValue = (value: any) => {
+    if (!(value instanceof Array)) {
+        throw new Error('Listing value must be a plain JS array.');
     }
 };
 
@@ -131,13 +160,31 @@ const validateGroupValue = (value: any, fields: FormGroupFields) => {
     );
 };
 
-export const createGroupValue = (fields: FormGroupFields): any => {
-    return objMapValues((f: FormItem) => f.value)(fields);
+const validateListingValue = (value: any, fields: FormListingFields) => {
+    checkListingValue(value);
+    const valueArr = <any[]>value;
+    const fieldsArr = <FormItem[]>fields;
+    if (valueArr.length !== fieldsArr.length) {
+        throw new Error(
+            `A listing value must have the same length than the listing fields. ` +
+                `Expected fields length ${JSON.stringify(
+                    fieldsArr.length
+                )} but got values length ${JSON.stringify(valueArr.length)}`
+        );
+    }
 };
 
-export const createGroupInitValue = (fields: FormGroupFields): any => {
-    return objMapValues((f: FormItem) => f.initValue)(fields);
-};
+export const createGroupValue = (fields: FormGroupFields): any =>
+    objMapValues((f: FormItem) => f.value)(fields);
+
+export const createGroupInitValue = (fields: FormGroupFields): any =>
+    objMapValues((f: FormItem) => f.initValue)(fields);
+
+export const createListingValue = (fields: FormListingFields): any =>
+    (<FormItem[]>fields).map(f => f.value);
+
+export const createListingInitValue = (fields: FormListingFields): any =>
+    (<FormItem[]>fields).map(f => f.initValue);
 
 export interface SetValueOptions {
     affectDirty: boolean;
@@ -157,6 +204,18 @@ const updateGroupFields = (
             }),
         fields
     );
+
+const updateListingFields = (
+    value: any,
+    fields: FormListingFields,
+    opts: SetValueOptions
+) =>
+    assignArrayOrSame(<FormItem[]>fields, [
+        0,
+        (<FormItem[]>fields).map((f, index) =>
+            setValueInternal(f, value[index], '', opts)
+        )
+    ]);
 
 const setFieldValueInternal = (
     item: FormItem,
@@ -214,6 +273,28 @@ const createNewGroupFieldsFromDirectValue = (
     return updateGroupFields(newValue, item.fields, opts);
 };
 
+const createNewListingFieldsFromDirectValue = (
+    item: FormListing,
+    value: ValueOrFunc,
+    opts: SetValueOptions
+): FormListingFields => {
+    // If path is empty, the assignment is directed to this group
+    const theValue = getAsValue(value, item.value);
+
+    validateListingValue(theValue, item.fields);
+    const newValue = item.coerce(theValue);
+    validateListingValue(newValue, item.fields);
+
+    const sameValue = opts.compareValues && deepEqual(item.value, newValue);
+    if (sameValue && deepEqual(theValue, item.value)) {
+        return null;
+    }
+
+    // compute the new fields array, assigning values to the
+    // listing's children
+    return updateListingFields(newValue, item.fields, opts);
+};
+
 const createNewGroupFieldsFromChildValue = (
     item: FormGroup,
     value: ValueOrFunc,
@@ -223,6 +304,17 @@ const createNewGroupFieldsFromChildValue = (
     const [name, child, restOfPath] = locateInGroupOrFail(item, path);
     const newChild = setValueInternal(child, value, restOfPath, opts);
     return assignOrSame(item.fields, { [name]: newChild });
+};
+
+const createNewListingFieldsFromChildValue = (
+    item: FormListing,
+    value: ValueOrFunc,
+    path: string,
+    opts: SetValueOptions
+): FormListingFields => {
+    const [index, child, restOfPath] = locateInListingOrFail(item, path);
+    const newChild = setValueInternal(child, value, restOfPath, opts);
+    return assignArrayOrSame(<FormItem[]>item.fields, [index, [newChild]]);
 };
 
 const updateFinalGroupFields = (item: FormGroup) => {
@@ -238,6 +330,34 @@ const updateFinalGroupFields = (item: FormGroup) => {
     const isValid =
         errors.length === 0 &&
         Object.keys(item.fields).every(k => item.fields[k].isValid);
+    const showErrors = !isValid && isTouched;
+
+    return assignOrSame(item, {
+        // Config
+        initValue: computedInitValue,
+
+        // State
+        value: computedValue,
+        errors,
+        isDirty,
+        isTouched,
+
+        // Derived
+        isValid,
+        showErrors
+    });
+};
+
+const updateFinalListingFields = (item: FormListing) => {
+    const computedValue = createListingValue(item.fields);
+    const computedInitValue = createListingInitValue(item.fields);
+    const errors = item.validator(computedValue);
+    const isDirty = (<FormItem[]>item.fields).some(f => f.isDirty);
+    const isTouched = (<FormItem[]>item.fields).some(f => f.isTouched);
+
+    // Derived
+    const isValid =
+        errors.length === 0 && (<FormItem[]>item.fields).every(f => f.isValid);
     const showErrors = !isValid && isTouched;
 
     return assignOrSame(item, {
@@ -286,6 +406,34 @@ const setValueInternalRec = (
                 return updateFinalGroupFields(item);
             } else {
                 const computedValue = createGroupValue(newFields);
+                return setValueInternal(
+                    assignOrSame(item, {
+                        fields: newFields
+                    }),
+                    computedValue,
+                    '',
+                    assign(opts, { compareValues: true })
+                );
+            }
+        }
+
+        case 'listing': {
+            const newFields = !path
+                ? createNewListingFieldsFromDirectValue(item, value, opts)
+                : createNewListingFieldsFromChildValue(item, value, path, opts);
+            if (newFields === null) {
+                return item;
+            }
+
+            // If none of the listings' children changed after the assignment,
+            // then, and only then can the listing evaluate the rest of it's
+            // state. Much care must be taken to avoid a stack overflow.
+            // Later some protection must be added to prevent an infinite
+            // loop.
+            if (newFields === item.fields) {
+                return updateFinalListingFields(item);
+            } else {
+                const computedValue = createListingValue(newFields);
                 return setValueInternal(
                     assignOrSame(item, {
                         fields: newFields
@@ -406,6 +554,65 @@ const setGroupFieldInternalRec = (
             }
         }
 
+        case 'listing': {
+            if (!path) {
+                throw new Error(
+                    `Unexpected end of path. A field name is missing.`
+                );
+            }
+
+            const [index, child, restOfPath] = locateInListingOrFail(
+                item,
+                path
+            );
+
+            const newField = setGroupFieldInternalRec(
+                child,
+                restOfPath,
+                formItem,
+                opts
+            );
+
+            let newFields: FormListingFields = null;
+            if (newField) {
+                // If newField is not null and not the same as previous
+                // child, then set [name] to newField
+                newFields = assignArrayOrSame(<FormItem[]>item.fields, [
+                    index,
+                    [newField]
+                ]);
+            } else if (!newField) {
+                // If newField is null and there was a previous child,
+                // then remove child from fields
+                newFields = (<FormItem[]>item.fields)
+                    .slice(0, index)
+                    .concat((<FormItem[]>item.fields).slice(index + 1));
+            }
+
+            if (newFields === null) {
+                return item;
+            }
+
+            // If none of the listings' children changed after the assignment,
+            // then, and only then can the listing evaluate the rest of it's
+            // state. Much care must be taken to avoid a stack overflow.
+            // Later some protection must be added to prevent an infinite
+            // loop.
+            if (newFields === item.fields) {
+                return updateFinalListingFields(item);
+            } else {
+                const computedValue = createListingValue(newFields);
+                return setValueInternal(
+                    assignOrSame(item, {
+                        fields: newFields
+                    }),
+                    computedValue,
+                    '',
+                    assign(opts, { compareValues: true, initialization: true })
+                );
+            }
+        }
+
         default:
             throw new Error('setValueInternal: Not implemented');
     }
@@ -446,6 +653,16 @@ export const getAllErrorsInternalRec = (
                 getAllErrorsInternalRec(
                     item.fields[key],
                     appendGroupPath(path, key)
+                )
+            );
+            return currentErrors.concat(fieldErrors);
+        }
+
+        case 'listing': {
+            const fieldErrors = _.flatMap(item.fields, (field, index) =>
+                getAllErrorsInternalRec(
+                    field,
+                    appendListingPath(path, index)
                 )
             );
             return currentErrors.concat(fieldErrors);

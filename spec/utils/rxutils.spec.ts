@@ -1,7 +1,7 @@
 import { Observable, Notification } from 'rxjs';
 import { testObs } from './rxtest';
-import * as common from './common';
-import * as rxutils from './rxutils';
+import * as common from '../../src/utils/common';
+import * as rxutils from '../../src/utils/rxutils';
 import { setTimeout } from 'timers';
 
 describe('Utils', () => {
