@@ -80,7 +80,7 @@ function expectParamErrors(
             }
         }
         expectErrors(fun(...(params || [])), `${name}(${paramStr})`, [
-            [value, (errors || [])]
+            [value, errors || []]
         ]);
     });
 }
@@ -110,79 +110,84 @@ describe('Utils', () => {
             it('should be a function', () =>
                 expect(makeValidator).toBeInstanceOf(Function));
 
-            expectErrors(makeValidator(undefined), 'makeValidator(undefined)', [
-                'any value'
+            expectParamErrors(makeValidator, 'makeValidator', [
+                {
+                    value: 'any value',
+                    params: [undefined]
+                },
+                {
+                    value: 'any value',
+                    params: [() => ''],
+                    paramStr: ["() => ''"]
+                },
+                {
+                    value: 'any value',
+                    params: [() => '    '],
+                    paramStr: ["() => '    '"]
+                },
+                {
+                    value: 'any value',
+                    params: [() => []],
+                    paramStr: ['() => []']
+                },
+                {
+                    value: 'any value',
+                    params: [() => 'mistake'],
+                    paramStr: ['() => \'mistake\''],
+                    errors: ['mistake']
+                },
+                {
+                    value: 'any value',
+                    params: [() => ['mistake1', 'mistake2']],
+                    paramStr: ['() => [errors]'],
+                    errors: ['mistake1', 'mistake2']
+                },
+                {
+                    value: 'any value',
+                    params: [() => {
+                        throw new Error('mistake');
+                    }],
+                    paramStr: ['() => {throw}'],
+                    errors: ['mistake']
+                },
             ]);
-
-            expectErrors(makeValidator(() => ''), "makeValidator(() => '')", [
-                'any value'
-            ]);
-
-            expectErrors(
-                makeValidator(() => '   '),
-                "makeValidator(() => '   ')",
-                ['any value']
-            );
-
-            expectErrors(makeValidator(() => []), 'makeValidator(() => [])', [
-                'any value'
-            ]);
-
-            expectErrors(
-                makeValidator(() => 'mistake'),
-                'makeValidator(() => error)',
-                [['any value', ['mistake']]]
-            );
-
-            expectErrors(
-                makeValidator(() => ['mistake1', 'mistake2']),
-                'makeValidator(() => [errors])',
-                [['any value', ['mistake1', 'mistake2']]]
-            );
-
-            expectErrors(
-                makeValidator(() => {
-                    throw new Error('mistake');
-                }),
-                'makeValidator(() => {throw})',
-                [['any value', ['mistake']]]
-            );
         });
 
         describe('mergeValidators', () => {
             it('should be a function', () =>
                 expect(mergeValidators).toBeInstanceOf(Function));
 
-            expectErrors(mergeValidators([]), 'mergeValidators([])', [
-                'any value'
+            expectParamErrors(mergeValidators, 'mergeValidators', [
+                {
+                    value: 'any value',
+                    params: [[]],
+                    paramStr: ['[]']
+                },
+                {
+                    value: 'any value',
+                    params: [() => ''],
+                    paramStr: ['no error']
+                },
+                {
+                    value: 'any value',
+                    params: [() => 'mistake'],
+                    paramStr: ['error'],
+                    errors: ['mistake']
+                },
+                {
+                    value: 'any value',
+                    params: [[() => '', () => []]],
+                    paramStr: ['no errors']
+                },
+                {
+                    value: 'any value',
+                    params: [
+                        [() => 'mistake1', () => ['mistake2', 'mistake3']]
+                    ],
+                    paramStr: ['multiple errors'],
+                    errors: ['mistake1', 'mistake2', 'mistake3']
+                }
             ]);
-
-            expectErrors(
-                mergeValidators(() => ''),
-                "mergeValidators(() => '')",
-                ['any value']
-            );
-
-            expectErrors(
-                mergeValidators(() => 'mistake'),
-                'mergeValidators(() => error)',
-                [['any value', ['mistake']]]
-            );
-
-            expectErrors(
-                mergeValidators([() => '', () => []]),
-                'mergeValidators([...ok])',
-                ['any value']
-            );
-
-            expectErrors(
-                mergeValidators([
-                    () => 'mistake1',
-                    () => ['mistake2', 'mistake3']
-                ]),
-                'mergeValidators([...errors])',
-                [['any value', ['mistake1', 'mistake2', 'mistake3']]]
-            );
         });
 
         describe('checkCondition', () => {
@@ -193,12 +198,12 @@ describe('Utils', () => {
                 {
                     value: 10,
                     params: [x => true, 'default'],
-                    paramStr: ['...true'],
+                    paramStr: ['...true']
                 },
                 {
                     value: 10,
                     params: [x => true, 'default', 'mistake'],
-                    paramStr: ['...true'],
+                    paramStr: ['...true']
                 },
                 {
                     value: 10,
@@ -214,10 +219,15 @@ describe('Utils', () => {
                 },
                 {
                     value: 10,
-                    params: [x => false, 'default', (a, b, v) => `${a} + ${b} = ${v}`, [3, 7]],
+                    params: [
+                        x => false,
+                        'default',
+                        (a, b, v) => `${a} + ${b} = ${v}`,
+                        [3, 7]
+                    ],
                     paramStr: ['...false', null, 'param. message'],
                     errors: ['3 + 7 = 10']
-                },
+                }
             ]);
         });
 
@@ -235,14 +245,19 @@ describe('Utils', () => {
                 {
                     value: 10,
                     params: [x => true, 'mistake'],
-                    paramStr: ['...true'],
+                    paramStr: ['...true']
                 },
                 {
                     value: 10,
-                    params: [x => false, (a, b, v) => `${a} + ${b} = ${v}`, 3, 7],
+                    params: [
+                        x => false,
+                        (a, b, v) => `${a} + ${b} = ${v}`,
+                        3,
+                        7
+                    ],
                     paramStr: ['...false'],
                     errors: ['3 + 7 = 10']
-                },
+                }
             ]);
         });
 
@@ -260,14 +275,19 @@ describe('Utils', () => {
                 {
                     value: 10,
                     params: [x => false, 'mistake'],
-                    paramStr: ['...false'],
+                    paramStr: ['...false']
                 },
                 {
                     value: 10,
-                    params: [x => true, (a, b, v) => `${a} + ${b} = ${v}`, 3, 7],
+                    params: [
+                        x => true,
+                        (a, b, v) => `${a} + ${b} = ${v}`,
+                        3,
+                        7
+                    ],
                     paramStr: ['...true'],
                     errors: ['3 + 7 = 10']
-                },
+                }
             ]);
         });
 
