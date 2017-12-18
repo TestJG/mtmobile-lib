@@ -90,13 +90,31 @@ export const checkCondition = <T>(
 ) =>
     makeValidator((v: T) => {
         if (!validCondition(v)) {
-            if (!(args instanceof Array)) {
-                args = [];
-            }
-            return getMessages(message, defaultMessage)([...(args || []), v]);
+            const msgArgs = args instanceof Array ? [...(args || []), v] : [v];
+            return getMessages(message, defaultMessage)(msgArgs);
         } else {
             return [];
         }
+    });
+
+export const validateEvery = <T>(...validators: Validator<T>[]) =>
+    makeValidator((v: T) =>
+        validators.reduce(
+            (errors, validator) => errors.concat(validator(v)),
+            []
+        )
+    );
+
+export const validateSome = <T>(...validators: Validator<T>[]) =>
+    makeValidator((v: T) => {
+        for (let index = 0; index < validators.length; index++) {
+            const validator = validators[index];
+            const errors = validator(v);
+            if (errors && errors.length) {
+                return errors;
+            }
+        }
+        return [];
     });
 
 export const shouldBe = <T>(
@@ -117,71 +135,124 @@ export const shouldNotBe = <T>(
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-export const shouldNotBeEmpty = (message?: MessageSource, ...args: any[]) =>
+export const shouldBeAString = (message?: MessageSource, ...args: any[]) =>
     checkCondition(
-        (v: string) => typeof v === 'string' && v !== '',
-        'Should not be empty',
+        (v: string) => typeof v === 'string',
+        'Should be a string',
         message,
         args
     );
 
-export const shouldNotBeBlank = (message?: MessageSource) =>
-    checkCondition(
-        (v: string) => typeof v === 'string' && (v || '').trim() !== '',
-        'Should not be blank',
-        message
+export const shouldNotBeEmpty = (message?: MessageSource, ...args: any[]) =>
+    validateSome(
+        shouldBeAString(message, ...args),
+        checkCondition(
+            (v: string) => v !== '',
+            'Should not be empty',
+            message,
+            args
+        )
     );
 
-export const shouldMatch = (pattern: RegExp, message?: MessageSource) =>
-    checkCondition(
-        (v: string) => typeof v === 'string' && !!(v || '').match(pattern),
-        'Should match given pattern',
-        message
+export const shouldNotBeBlank = (message?: MessageSource, ...args: any[]) =>
+    validateSome(
+        shouldBeAString(message, ...args),
+        checkCondition(
+            (v: string) => (v || '').trim() !== '',
+            'Should not be blank',
+            message,
+            args
+        )
     );
 
-export const shouldNotMatch = (pattern: RegExp, message?: MessageSource) =>
-    checkCondition(
-        (v: string) => typeof v === 'string' && !(v || '').match(pattern),
-        'Should not match given pattern',
-        message
+export const shouldMatch = (
+    pattern: RegExp,
+    message?: MessageSource,
+    ...args: any[]
+) =>
+    validateSome(
+        shouldBeAString(message, ...args),
+        checkCondition(
+            (v: string) => !!(v || '').match(pattern),
+            'Should match given pattern',
+            message,
+            args
+        )
+    );
+
+export const shouldNotMatch = (
+    pattern: RegExp,
+    message?: MessageSource,
+    ...args: any[]
+) =>
+    validateSome(
+        shouldBeAString(message, ...args),
+        checkCondition(
+            (v: string) => !(v || '').match(pattern),
+            'Should not match given pattern',
+            message,
+            args
+        )
     );
 
 export const shouldNotBeShorterThan = (
     length: number,
-    message?: MessageSource
+    message?: MessageSource,
+    ...args: any[]
 ) =>
-    checkCondition(
-        (v: string) => typeof v === 'string' && (v || '').length >= length,
-        (l: number) => `Should not be shorter than ${l} characters`,
-        message,
-        [length]
+    validateSome(
+        shouldBeAString(message, ...args),
+        checkCondition(
+            (v: string) => (v || '').length >= length,
+            () => `Should not be shorter than ${length} characters`,
+            message,
+            [...args, length]
+        )
     );
 
-export const shouldBeShorterThan = (length: number, message?: MessageSource) =>
-    checkCondition(
-        (v: string) => typeof v === 'string' && (v || '').length < length,
-        (l: number) => `Should be shorter than ${l} characters`,
-        message,
-        [length]
+export const shouldBeShorterThan = (
+    length: number,
+    message?: MessageSource,
+    ...args: any[]
+) =>
+    validateSome(
+        shouldBeAString(message, ...args),
+        checkCondition(
+            (v: string) => (v || '').length < length,
+            () => `Should be shorter than ${length} characters`,
+            message,
+            [...args, length]
+        )
     );
 
 export const shouldNotBeLongerThan = (
     length: number,
-    message?: MessageSource
+    message?: MessageSource,
+    ...args: any[]
 ) =>
-    checkCondition(
-        (v: string) => typeof v === 'string' && (v || '').length <= length,
-        (l: number) => `Should not be longer than ${l} characters`,
-        message,
-        [length]
+    validateSome(
+        shouldBeAString(message, ...args),
+        checkCondition(
+            (v: string) => (v || '').length <= length,
+            () => `Should not be longer than ${length} characters`,
+            message,
+            [...args, length]
+        )
     );
 
-export const shouldBeLongerThan = (length: number, message?: MessageSource) =>
-    checkCondition(
-        (v: string) => typeof v === 'string' && (v || '').length > length,
-        (l: number) => `Should be longer than ${l} characters`,
-        message,
-        [length]
+export const shouldBeLongerThan = (
+    length: number,
+    message?: MessageSource,
+    ...args: any[]
+) =>
+    validateSome(
+        shouldBeAString(message, ...args),
+        checkCondition(
+            (v: string) => (v || '').length > length,
+            () => `Should be longer than ${length} characters`,
+            message,
+            [...args, length]
+        )
     );
 
 ////////////////////////////////////////////////////////////////
@@ -190,108 +261,164 @@ export const shouldBeLongerThan = (length: number, message?: MessageSource) =>
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-export const shouldBeGreaterThan = (value: number, message?: MessageSource) =>
+export const shouldBeANumber = (message?: MessageSource, ...args: any[]) =>
     checkCondition(
-        (v: number) => typeof v === 'number' && v > value,
-        (l: number) => `Should be greater than ${l}`,
+        (v: number) => typeof v === 'number',
+        'Should be a number',
         message,
-        [value]
+        args
+    );
+
+export const shouldBeGreaterThan = (
+    value: number,
+    message?: MessageSource,
+    ...args: any[]
+) =>
+    validateSome(
+        shouldBeANumber(message, ...args),
+        checkCondition(
+            (v: number) => v > value,
+            () => `Should be greater than ${value}`,
+            message,
+            [...args, value]
+        )
     );
 
 export const shouldBeGreaterThanOrEqualTo = (
     value: number,
-    message?: MessageSource
+    message?: MessageSource,
+    ...args: any[]
 ) =>
-    checkCondition(
-        (v: number) => typeof v === 'number' && v >= value,
-        (l: number) => `Should be greater than or equal to ${l}`,
-        message,
-        [value]
+    validateSome(
+        shouldBeANumber(message, ...args),
+        checkCondition(
+            (v: number) => v >= value,
+            () => `Should be greater than or equal to ${value}`,
+            message,
+            [...args, value]
+        )
     );
 
-export const shouldBeLessThan = (value: number, message?: MessageSource) =>
-    checkCondition(
-        (v: number) => typeof v === 'number' && v < value,
-        (l: number) => `Should be less than ${l}`,
-        message,
-        [value]
+export const shouldBeLessThan = (
+    value: number,
+    message?: MessageSource,
+    ...args: any[]
+) =>
+    validateSome(
+        shouldBeANumber(message, ...args),
+        checkCondition(
+            (v: number) => v < value,
+            () => `Should be less than ${value}`,
+            message,
+            [...args, value]
+        )
     );
 
 export const shouldBeLessThanOrEqualTo = (
     value: number,
-    message?: MessageSource
+    message?: MessageSource,
+    ...args: any[]
 ) =>
-    checkCondition(
-        (v: number) => typeof v === 'number' && v <= value,
-        (l: number) => `Should be less than or equal to ${l}`,
-        message,
-        [value]
+    validateSome(
+        shouldBeANumber(message, ...args),
+        checkCondition(
+            (v: number) => v <= value,
+            () => `Should be less than or equal to ${value}`,
+            message,
+            [...args, value]
+        )
     );
 
 export const shouldBeBetweenValues = (
     minValue: number,
     maxValue: number,
-    message?: MessageSource
+    message?: MessageSource,
+    ...args: any[]
 ) =>
-    checkCondition(
-        (v: number) => typeof v === 'number' && minValue <= v && v <= maxValue,
-        (min: number, max: number) => `Should be between ${min} and ${max}`,
-        message,
-        [minValue, maxValue]
+    validateSome(
+        shouldBeANumber(message, ...args),
+        checkCondition(
+            (v: number) => minValue <= v && v <= maxValue,
+            () => `Should be between ${minValue} and ${maxValue}`,
+            message,
+            [...args, minValue, maxValue]
+        )
     );
 
 export const shouldNotBeGreaterThan = (
     value: number,
-    message?: MessageSource
+    message?: MessageSource,
+    ...args: any[]
 ) =>
-    checkCondition(
-        (v: number) => typeof v === 'number' && v <= value,
-        (l: number) => `Should not be greater than ${l}`,
-        message,
-        [value]
+    validateSome(
+        shouldBeANumber(message, ...args),
+        checkCondition(
+            (v: number) => v <= value,
+            () => `Should not be greater than ${value}`,
+            message,
+            [...args, value]
+        )
     );
 
 export const shouldNotBeGreaterThanOrEqualTo = (
     value: number,
-    message?: MessageSource
+    message?: MessageSource,
+    ...args: any[]
 ) =>
-    checkCondition(
-        (v: number) => typeof v === 'number' && v < value,
-        (l: number) => `Should not be greater than or equal to ${l}`,
-        message,
-        [value]
+    validateSome(
+        shouldBeANumber(message, ...args),
+        checkCondition(
+            (v: number) => v < value,
+            () => `Should not be greater than or equal to ${value}`,
+            message,
+            [...args, value]
+        )
     );
 
-export const shouldNotBeLessThan = (value: number, message?: MessageSource) =>
-    checkCondition(
-        (v: number) => typeof v === 'number' && v >= value,
-        (l: number) => `Should not be less than ${l}`,
-        message,
-        [value]
+export const shouldNotBeLessThan = (
+    value: number,
+    message?: MessageSource,
+    ...args: any[]
+) =>
+    validateSome(
+        shouldBeANumber(message, ...args),
+        checkCondition(
+            (v: number) => v >= value,
+            () => `Should not be less than ${value}`,
+            message,
+            [...args, value]
+        )
     );
 
 export const shouldNotBeLessThanOrEqualTo = (
     value: number,
-    message?: MessageSource
+    message?: MessageSource,
+    ...args: any[]
 ) =>
-    checkCondition(
-        (v: number) => typeof v === 'number' && v > value,
-        (l: number) => `Should not be less than or equal to ${l}`,
-        message,
-        [value]
+    validateSome(
+        shouldBeANumber(message, ...args),
+        checkCondition(
+            (v: number) => v > value,
+            () => `Should not be less than or equal to ${value}`,
+            message,
+            [...args, value]
+        )
     );
 
 export const shouldNotBeBetweenValues = (
     minValue: number,
     maxValue: number,
-    message?: MessageSource
+    message?: MessageSource,
+    ...args: any[]
 ) =>
-    checkCondition(
-        (v: number) =>
-            typeof v === 'number' && !(minValue <= v && v <= maxValue),
-        (min: number, max: number) => `Should not be between ${min} and ${max}`,
-        message,
-        [minValue, maxValue]
+    validateSome(
+        shouldBeANumber(message, ...args),
+        checkCondition(
+            (v: number) => !(minValue <= v && v <= maxValue),
+            () => `Should not be between ${minValue} and ${maxValue}`,
+            message,
+            [...args, minValue, maxValue]
+        )
     );
 
 ////////////////////////////////////////////////////////////////
