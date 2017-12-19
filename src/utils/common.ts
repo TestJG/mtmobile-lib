@@ -1,8 +1,5 @@
 import * as _ from 'lodash';
-import {
-    EqualityComparer,
-    shallowEqualStrict
-} from './equality';
+import { EqualityComparer, shallowEqualStrict } from './equality';
 
 export const assign = <T>(s: T, ...u: Partial<T>[]): T =>
     Object.assign({}, s, ...u);
@@ -10,9 +7,13 @@ export const assign = <T>(s: T, ...u: Partial<T>[]): T =>
 export const assignArray = <T>(s: T[], ...u: [number, T[]][]): T[] => {
     const arr = s.slice();
     for (let index = 0; index < u.length; index++) {
-        if (!(u[index] instanceof Array)) { continue; }
+        if (!(u[index] instanceof Array)) {
+            continue;
+        }
         const [pos, other] = u[index];
-        if (!(typeof pos === 'number') || !(other instanceof Array)) { continue; }
+        if (!(typeof pos === 'number') || !(other instanceof Array)) {
+            continue;
+        }
         for (let p = 0; p < other.length; p++) {
             if (pos + p < arr.length) {
                 arr[pos + p] = other[p];
@@ -99,8 +100,7 @@ export const assignArrayOrSameWith = <T>(
     return would;
 };
 
-export const assignArrayOrSame = <T>(s: T[],
-    ...u: [number, T[]][]): T[] =>
+export const assignArrayOrSame = <T>(s: T[], ...u: [number, T[]][]): T[] =>
     assignArrayOrSameWith(shallowEqualStrict, s, ...u);
 
 export const assignArrayIf = <T>(
@@ -134,30 +134,18 @@ export const joinStr = (sep: string, strs: string[]) =>
     );
 
 export function uuid(separator: string = '-'): string {
-    const s4 = () => {
-        return Math.floor((1 + Math.random()) * 0x10000)
+    const s4 = () =>
+        Math.floor((1 + Math.random()) * 0x10000)
             .toString(16)
             .substring(1);
-    };
 
-    if (!separator) {
-        separator = '';
-    }
-
-    return (
-        s4() +
-        s4() +
-        separator +
-        s4() +
-        separator +
-        s4() +
-        separator +
-        s4() +
-        separator +
-        s4() +
-        s4() +
-        s4()
-    );
+    return joinStr(separator || '', [
+        s4() + s4(),
+        s4(),
+        s4(),
+        s4(),
+        s4() + s4() + s4()
+    ]);
 }
 
 export type KeyValuePair = [string, any];
