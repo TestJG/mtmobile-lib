@@ -28,6 +28,7 @@ import {
     updateListingFieldsInternal
 } from './forms.utils';
 import { assignArrayOrSame, getAsValue } from '../../index';
+import { skip } from 'rxjs/operator/skip';
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -266,8 +267,10 @@ export const existFormItem = (item: FormItem, path: string): boolean => {
 export const setValue = <I extends FormItem = FormItem>(
     item: I,
     value: ValueOrFunc,
-    pathToField: string = ''
-): I => <I>setValueInternal(item, value, pathToField);
+    pathToField: string = '',
+    skipTouch: boolean = false
+): I =>
+    <I>setValueInternal(item, value, pathToField, { affectDirty: !skipTouch });
 
 export const setGroupField = <I extends FormItem = FormItem>(
     item: I,
@@ -296,7 +299,10 @@ export const insertListingFields = <I extends FormItem = FormItem>(
                 if (pos === 0) {
                     return theNewFields.concat(fields);
                 } else {
-                    return fields.slice(0, pos).concat(theNewFields).concat(fields.slice(pos));
+                    return fields
+                        .slice(0, pos)
+                        .concat(theNewFields)
+                        .concat(fields.slice(pos));
                 }
             }
         }
@@ -313,7 +319,8 @@ export const removeListingFields = <I extends FormItem = FormItem>(
         item,
         pathToListing,
         (fields: FormListingFields & Array<FormItem>) => {
-            return fields.slice(0, atPosition)
+            return fields
+                .slice(0, atPosition)
                 .concat(fields.slice(atPosition + count));
         }
     );
