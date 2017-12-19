@@ -17,6 +17,8 @@ import {
     getFormItem,
     existFormItem,
     setGroupField,
+    insertListingFields,
+    removeListingFields,
     getAllErrors,
     Coerce,
     mustNotBeBelow,
@@ -173,7 +175,6 @@ const expectConfig = <T>(
         )}`, () => expect(item.showErrors).toBe(expected.showErrors));
     }
 };
-
 
 // field
 describe('Utils', () => {
@@ -1433,7 +1434,7 @@ describe('Utils', () => {
                 });
             });
 
-            describe('When a group is created and a new field is added', () => {
+            describe('When a form is created and a new field is added', () => {
                 const aForm = group(
                     {
                         firstName: field('John'),
@@ -1468,6 +1469,293 @@ describe('Utils', () => {
                         newPet('fido', 'dog'),
                         Object.assign(newPet('garfield', 'cat'), { age: 3 })
                     ]),
+                    isDirty: false,
+                    isTouched: false,
+                    errors: [],
+                    isValid: true,
+                    showErrors: false
+                });
+            });
+        });
+    });
+});
+
+// insertListingFields
+describe('Utils', () => {
+    describe('Forms Tests', () => {
+        describe('insertListingFields', () => {
+            it('should be a function', () =>
+                expect(insertListingFields).toBeInstanceOf(Function));
+
+            describe('When a listing is created and a new field is inserted last as a single value', () => {
+                const aListing = listing([field(1), field(2)]);
+                const aListingCopy = Object.assign({}, aListing);
+                const newListing = insertListingFields(aListing, '', field(5));
+
+                it('the new listing should be distinct from the original one', () =>
+                    expect(newListing).not.toBe(aListing));
+
+                it('the original listing should no be changed in place', () =>
+                    expect(aListing).toEqual(aListingCopy));
+
+                expectConfig(newListing, {
+                    initValue: [1, 2, 5],
+                    coerce: aListing.coerce,
+                    validator: aListing.validator,
+                    value: [1, 2, 5],
+                    isDirty: false,
+                    isTouched: false,
+                    errors: [],
+                    isValid: true,
+                    showErrors: false
+                });
+            });
+
+            describe('When a listing is created and new fields are inserted last as an array', () => {
+                const aListing = listing([field(1), field(2)]);
+                const aListingCopy = Object.assign({}, aListing);
+                const newListing = insertListingFields(aListing, '', [
+                    field(5),
+                    field(6),
+                    field(7)
+                ]);
+
+                it('the new listing should be distinct from the original one', () =>
+                    expect(newListing).not.toBe(aListing));
+
+                it('the original listing should no be changed in place', () =>
+                    expect(aListing).toEqual(aListingCopy));
+
+                expectConfig(newListing, {
+                    initValue: [1, 2, 5, 6, 7],
+                    coerce: aListing.coerce,
+                    validator: aListing.validator,
+                    value: [1, 2, 5, 6, 7],
+                    isDirty: false,
+                    isTouched: false,
+                    errors: [],
+                    isValid: true,
+                    showErrors: false
+                });
+            });
+
+            describe('When a listing is created and a new field is inserted last as a single value func', () => {
+                const aListing = listing([field(1), field(2)]);
+                const aListingCopy = Object.assign({}, aListing);
+                const newListing = insertListingFields(aListing, '', () =>
+                    field(5)
+                );
+
+                it('the new listing should be distinct from the original one', () =>
+                    expect(newListing).not.toBe(aListing));
+
+                it('the original listing should no be changed in place', () =>
+                    expect(aListing).toEqual(aListingCopy));
+
+                expectConfig(newListing, {
+                    initValue: [1, 2, 5],
+                    coerce: aListing.coerce,
+                    validator: aListing.validator,
+                    value: [1, 2, 5],
+                    isDirty: false,
+                    isTouched: false,
+                    errors: [],
+                    isValid: true,
+                    showErrors: false
+                });
+            });
+
+            describe('When a listing is created and new fields are inserted last as an array func', () => {
+                const aListing = listing([field(1), field(2)]);
+                const aListingCopy = Object.assign({}, aListing);
+                const newListing = insertListingFields(aListing, '', () => [
+                    field(5),
+                    field(6),
+                    field(7)
+                ]);
+
+                it('the new listing should be distinct from the original one', () =>
+                    expect(newListing).not.toBe(aListing));
+
+                it('the original listing should no be changed in place', () =>
+                    expect(aListing).toEqual(aListingCopy));
+
+                expectConfig(newListing, {
+                    initValue: [1, 2, 5, 6, 7],
+                    coerce: aListing.coerce,
+                    validator: aListing.validator,
+                    value: [1, 2, 5, 6, 7],
+                    isDirty: false,
+                    isTouched: false,
+                    errors: [],
+                    isValid: true,
+                    showErrors: false
+                });
+            });
+
+            describe('When a listing is created and new fields are inserted mid as an array func', () => {
+                const aListing = listing([field(1), field(2)]);
+                const aListingCopy = Object.assign({}, aListing);
+                const newListing = insertListingFields(
+                    aListing,
+                    '',
+                    () => [field(5), field(6), field(7)],
+                    1
+                );
+
+                it('the new listing should be distinct from the original one', () =>
+                    expect(newListing).not.toBe(aListing));
+
+                it('the original listing should no be changed in place', () =>
+                    expect(aListing).toEqual(aListingCopy));
+
+                expectConfig(newListing, {
+                    initValue: [1, 5, 6, 7, 2],
+                    coerce: aListing.coerce,
+                    validator: aListing.validator,
+                    value: [1, 5, 6, 7, 2],
+                    isDirty: false,
+                    isTouched: false,
+                    errors: [],
+                    isValid: true,
+                    showErrors: false
+                });
+            });
+
+            describe('When a form is created and new fields are inserted to a listing, mid as an array func', () => {
+                const aForm = group(
+                    {
+                        firstName: field('John'),
+                        lastName: field('Smith'),
+                        age: field(20),
+                        pets: listing(
+                            [
+                                group(
+                                    { name: field(''), kind: field('') },
+                                    { initValue: newPet('fido', 'dog') }
+                                ),
+                                group(
+                                    { name: field(''), kind: field('') },
+                                    { initValue: newPet('garfield', 'cat') }
+                                )
+                            ],
+                            { initValue: <Pet[]>undefined }
+                        )
+                    },
+                    { initValue: <Person & { pet: Pet[] }>undefined }
+                );
+                const newForm = insertListingFields(
+                    aForm,
+                    'pets',
+                    () => [field(5), field(6), field(7)],
+                    1
+                );
+
+                it('the new listing should be distinct from the original one', () =>
+                    expect(newForm).not.toBe(aForm));
+
+                const expectedValue = <any>{
+                    age: 20,
+                    firstName: 'John',
+                    lastName: 'Smith',
+                    pets: [
+                        { kind: 'dog', name: 'fido' },
+                        5,
+                        6,
+                        7,
+                        { kind: 'cat', name: 'garfield' }
+                    ]
+                };
+                expectConfig(newForm, {
+                    initValue: expectedValue,
+                    coerce: aForm.coerce,
+                    validator: aForm.validator,
+                    value: expectedValue,
+                    isDirty: false,
+                    isTouched: false,
+                    errors: [],
+                    isValid: true,
+                    showErrors: false
+                });
+            });
+        });
+    });
+});
+
+// removeListingFields
+describe('Utils', () => {
+    describe('Forms Tests', () => {
+        describe('removeListingFields', () => {
+            it('should be a function', () =>
+                expect(removeListingFields).toBeInstanceOf(Function));
+
+            describe('When a listing is created and a single field is removed', () => {
+                const aListing = listing([
+                    field(1),
+                    field(2),
+                    field(3),
+                    field(4),
+                    field(5)
+                ]);
+                const aListingCopy = Object.assign({}, aListing);
+                const newListing = removeListingFields(aListing, '', 1);
+
+                it('the new listing should be distinct from the original one', () =>
+                    expect(newListing).not.toBe(aListing));
+
+                it('the original listing should no be changed in place', () =>
+                    expect(aListing).toEqual(aListingCopy));
+
+                expectConfig(newListing, {
+                    initValue: [1, 3, 4, 5],
+                    coerce: aListing.coerce,
+                    validator: aListing.validator,
+                    value: [1, 3, 4, 5],
+                    isDirty: false,
+                    isTouched: false,
+                    errors: [],
+                    isValid: true,
+                    showErrors: false
+                });
+            });
+            describe('When a form is created and fields are removed from a listing', () => {
+                const aForm = group(
+                    {
+                        firstName: field('John'),
+                        lastName: field('Smith'),
+                        age: field(20),
+                        pets: listing(
+                            [
+                                group(
+                                    { name: field(''), kind: field('') },
+                                    { initValue: newPet('fido', 'dog') }
+                                ),
+                                group(
+                                    { name: field(''), kind: field('') },
+                                    { initValue: newPet('garfield', 'cat') }
+                                )
+                            ],
+                            { initValue: <Pet[]>undefined }
+                        )
+                    },
+                    { initValue: <Person & { pet: Pet[] }>undefined }
+                );
+                const newForm = removeListingFields(aForm, 'pets', 0);
+
+                it('the new listing should be distinct from the original one', () =>
+                    expect(newForm).not.toBe(aForm));
+
+                const expectedValue = <any>{
+                    age: 20,
+                    firstName: 'John',
+                    lastName: 'Smith',
+                    pets: [{ kind: 'cat', name: 'garfield' }]
+                };
+                expectConfig(newForm, {
+                    initValue: expectedValue,
+                    coerce: aForm.coerce,
+                    validator: aForm.validator,
+                    value: expectedValue,
                     isDirty: false,
                     isTouched: false,
                     errors: [],

@@ -29,12 +29,14 @@ import {
     FormItemState,
     FormError
 } from './forms.interfaces';
+import { FormListingFieldStates } from '../../index';
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
 //                     Path Utilities                         //
 //                                                            //
 ////////////////////////////////////////////////////////////////
+export type PathStep = string | number;
 
 export const matchGroupPath = (path: string) => {
     const match = path.match(/^([^\[\.]+)(\.([^\.].*)|(\[.*)|())$/);
@@ -62,7 +64,7 @@ export const appendGroupPath = (groupPath: string, fieldName: string) =>
 export const appendListingPath = (listingPath: string, childIndex: number) =>
     joinStr('', [listingPath, `[${childIndex}]`]);
 
-export const createPath = (...steps: (string | number)[]) =>
+export const createPath = (steps: PathStep[]) =>
     steps.reduce<string>(
         (path, step) =>
             typeof step === 'number'
@@ -70,6 +72,21 @@ export const createPath = (...steps: (string | number)[]) =>
                 : appendGroupPath(path, step),
         ''
     );
+
+export const createPathOf = (...steps: PathStep[]) => createPath(steps);
+
+export const extractPath = (path: string): PathStep[] => {
+    const arr: PathStep[] = [];
+    while (path !== '') {
+        const match = matchListingPath(path) || matchGroupPath(path);
+        if (match === null) {
+            throw new Error('Invalid form path: ' + JSON.stringify(path));
+        }
+        arr.push(match.step);
+        path = match.rest;
+    }
+    return arr;
+};
 
 export const checkPathInField = (path: string) => {
     if (!!path) {
@@ -376,77 +393,212 @@ const updateFinalListingFields = (item: FormListing) => {
     });
 };
 
-const setValueInternalRec = (
+const updateGroupFieldsAux = (
+    item: FormGroup,
+    newFields: FormGroupFields,
+    opts: SetValueOptions
+) => {
+    if (newFields === null) {
+        return item;
+    }
+
+    // If none of the group's children changed after the assignment,
+    // then, and only then can the group evaluate the rest of it's
+    // state. Much care must be taken to avoid a stack overflow.
+    // Later some protection must be added to prevent an infinite
+    // loop.
+    if (newFields === item.fields) {
+        return updateFinalGroupFields(item);
+    } else {
+        const computedValue = createGroupValue(newFields);
+        return setValueInternal(
+            assignOrSame(item, {
+                fields: newFields
+            }),
+            computedValue,
+            '',
+            assign(opts, {
+                compareValues: true,
+                initialization: true
+            })
+        );
+    }
+};
+
+const updateListingFieldsAux = (
+    item: FormListing,
+    newFields: FormListingFields,
+    opts: SetValueOptions
+) => {
+    if (newFields === null) {
+        return item;
+    }
+
+    // If none of the listings' children changed after the assignment,
+    // then, and only then can the listing evaluate the rest of it's
+    // state. Much care must be taken to avoid a stack overflow.
+    // Later some protection must be added to prevent an infinite
+    // loop.
+    if (newFields === item.fields) {
+        return updateFinalListingFields(item);
+    } else {
+        const computedValue = createListingValue(newFields);
+        return setValueInternal(
+            assignOrSame(item, {
+                fields: newFields
+            }),
+            computedValue,
+            '',
+            assign(opts, {
+                compareValues: true,
+                initialization: true
+            })
+        );
+    }
+};
+
+const updateFormItemInternalRec = (
     item: FormItem,
-    value: ValueOrFunc,
-    path: string,
+    path: PathStep[],
+    updater: ValueOrFunc<FormItem>,
     opts: SetValueOptions
 ): FormItem => {
-    switch (item.type) {
-        case 'field': {
-            checkPathInField(path);
-
-            return setFieldValueInternal(item, value, opts);
+    if (path.length === 0) {
+        const newItem = getAsValue(updater, item);
+        if (!newItem || shallowEqualStrict(newItem, item)) {
+            return item;
         }
-
-        case 'group': {
-            const newFields = !path
-                ? createNewGroupFieldsFromDirectValue(item, value, opts)
-                : createNewGroupFieldsFromChildValue(item, value, path, opts);
-            if (newFields === null) {
-                return item;
-            }
-
-            // If none of the group's children changed after the assignment,
-            // then, and only then can the group evaluate the rest of it's
-            // state. Much care must be taken to avoid a stack overflow.
-            // Later some protection must be added to prevent an infinite
-            // loop.
-            if (newFields === item.fields) {
-                return updateFinalGroupFields(item);
-            } else {
-                const computedValue = createGroupValue(newFields);
-                return setValueInternal(
-                    assignOrSame(item, {
-                        fields: newFields
-                    }),
-                    computedValue,
-                    '',
-                    assign(opts, { compareValues: true })
+        return newItem;
+    } else {
+        switch (item.type) {
+            case 'field': {
+                throw new Error(
+                    'Unexpected path accessing this field: ' +
+                        JSON.stringify(createPath(path))
                 );
             }
+
+            case 'group': {
+                const name = path[0];
+                if (typeof name !== 'string') {
+                    throw new Error(
+                        'Unexpected path accessing this group: ' +
+                            JSON.stringify(createPath(path))
+                    );
+                }
+
+                const restOfPath = path.slice(1);
+                const child = item.fields[name];
+                if (!child) {
+                    throw new Error(
+                        `Unexpected field name accessing this group: ` +
+                            JSON.stringify(name)
+                    );
+                }
+
+                const newField = updateFormItemInternalRec(
+                    child,
+                    restOfPath,
+                    updater,
+                    opts
+                );
+
+                let newFields: FormGroupFields = null;
+                if (newField && newField !== child) {
+                    // If newField is not null and not the same as previous
+                    // child, then set [name] to newField
+                    newFields = assignOrSame(item.fields, { [name]: newField });
+                } else if (!newField && child) {
+                    // If newField is null and there was a previous child,
+                    // then remove child from fields
+                    newFields = Object.keys(item.fields)
+                        .filter(key => key !== name)
+                        .reduce(
+                            (fs, key) => Object.assign(fs, { [key]: newField }),
+                            {}
+                        );
+                }
+
+                return updateGroupFieldsAux(item, newFields, opts);
+            }
+
+            case 'listing': {
+                const index = path[0];
+                if (typeof index !== 'number') {
+                    throw new Error(
+                        'Unexpected path accessing this listing: ' +
+                            JSON.stringify(createPath(path))
+                    );
+                }
+
+                const restOfPath = path.slice(1);
+                const child = item.fields[index];
+                if (!child) {
+                    throw new Error(
+                        `Unexpected field index accessing this listing: ` +
+                            JSON.stringify(index)
+                    );
+                }
+
+                const newField = updateFormItemInternalRec(
+                    child,
+                    restOfPath,
+                    updater,
+                    opts
+                );
+
+                let newFields: FormListingFields = null;
+                if (newField) {
+                    // If newField is not null and not the same as previous
+                    // child, then set [name] to newField
+                    newFields = assignArrayOrSame(<FormItem[]>item.fields, [
+                        index,
+                        [newField]
+                    ]);
+                } else if (!newField) {
+                    // If newField is null and there was a previous child,
+                    // then remove child from fields
+                    newFields = (<FormItem[]>item.fields)
+                        .slice(0, index)
+                        .concat((<FormItem[]>item.fields).slice(index + 1));
+                }
+
+                return updateListingFieldsAux(item, newFields, opts);
+            }
+
+            default:
+                break;
+        }
+    }
+};
+
+const setValueUpdater = (value: ValueOrFunc, opts: SetValueOptions) => (
+    item: FormItem
+): FormItem => {
+    switch (item.type) {
+        case 'field':
+            return setFieldValueInternal(item, value, opts);
+
+        case 'group': {
+            return updateGroupFieldsAux(
+                item,
+                createNewGroupFieldsFromDirectValue(item, value, opts),
+                opts
+            );
         }
 
         case 'listing': {
-            const newFields = !path
-                ? createNewListingFieldsFromDirectValue(item, value, opts)
-                : createNewListingFieldsFromChildValue(item, value, path, opts);
-            if (newFields === null) {
-                return item;
-            }
-
-            // If none of the listings' children changed after the assignment,
-            // then, and only then can the listing evaluate the rest of it's
-            // state. Much care must be taken to avoid a stack overflow.
-            // Later some protection must be added to prevent an infinite
-            // loop.
-            if (newFields === item.fields) {
-                return updateFinalListingFields(item);
-            } else {
-                const computedValue = createListingValue(newFields);
-                return setValueInternal(
-                    assignOrSame(item, {
-                        fields: newFields
-                    }),
-                    computedValue,
-                    '',
-                    assign(opts, { compareValues: true })
-                );
-            }
+            return updateListingFieldsAux(
+                item,
+                createNewListingFieldsFromDirectValue(item, value, opts),
+                opts
+            );
         }
 
         default:
-            throw new Error('setValueInternal: Not implemented');
+            throw new Error(
+                'Unknown form item type: ' + JSON.stringify((<any>item).type)
+            );
     }
 };
 
@@ -465,156 +617,51 @@ export function setValueInternal(
         options
     );
 
-    return setValueInternalRec(item, value, path, opts);
+    return updateFormItemInternalRec(
+        item,
+        extractPath(path),
+        setValueUpdater(value, opts),
+        opts
+    );
 }
 
-const setGroupFieldInternalRec = (
-    item: FormItem,
-    path: string,
+const setGroupFieldUpdater = (
+    fieldName: string,
     formItem: ValueOrFunc<FormItem>,
     opts: SetValueOptions
-): FormItem => {
+) => (item: FormItem): FormItem => {
     switch (item.type) {
-        case 'field': {
-            throw new Error(
-                `Cannot reach a group with given path: ${JSON.stringify(path)}`
-            );
-        }
+        case 'field':
+            throw new Error('Expected to find a group but found a field');
 
         case 'group': {
-            if (!path) {
-                throw new Error(
-                    `Unexpected end of path. A field name is missing.`
-                );
-            }
-
-            const [name, child, restOfPath] = locateInGroupOrFail(
-                item,
-                path,
-                false
-            );
-
-            let newField: FormItem = null;
-            if (!restOfPath) {
-                newField = getAsValue(formItem);
-            } else if (!child) {
-                if (!path) {
-                    throw new Error(
-                        `Unexpected end of descendants. A field named ${JSON.stringify(
-                            name
-                        )} is missing looking for path ${JSON.stringify(path)}.`
-                    );
-                }
-            } else {
-                newField = setGroupFieldInternalRec(
-                    child,
-                    restOfPath,
-                    formItem,
-                    opts
-                );
-            }
-
+            const child = item.fields[fieldName];
+            const newField = getAsValue(formItem, child);
             let newFields: FormGroupFields = null;
             if (newField && newField !== child) {
                 // If newField is not null and not the same as previous
-                // child, then set [name] to newField
-                newFields = assignOrSame(item.fields, { [name]: newField });
+                // child, then set [fieldName] to newField
+                newFields = assignOrSame(item.fields, { [fieldName]: newField });
             } else if (!newField && child) {
                 // If newField is null and there was a previous child,
                 // then remove child from fields
                 newFields = Object.keys(item.fields)
-                    .filter(key => key !== name)
+                    .filter(key => key !== fieldName)
                     .reduce(
                         (fs, key) => Object.assign(fs, { [key]: newField }),
                         {}
                     );
             }
-
-            if (newFields === null) {
-                return item;
-            }
-
-            // If none of the group's children changed after the assignment,
-            // then, and only then can the group evaluate the rest of it's
-            // state. Much care must be taken to avoid a stack overflow.
-            // Later some protection must be added to prevent an infinite
-            // loop.
-            if (newFields === item.fields) {
-                return updateFinalGroupFields(item);
-            } else {
-                const computedValue = createGroupValue(newFields);
-                return setValueInternal(
-                    assignOrSame(item, {
-                        fields: newFields
-                    }),
-                    computedValue,
-                    '',
-                    assign(opts, { compareValues: true, initialization: true })
-                );
-            }
+            return updateGroupFieldsAux(item, newFields, opts);
         }
 
-        case 'listing': {
-            if (!path) {
-                throw new Error(
-                    `Unexpected end of path. A field name is missing.`
-                );
-            }
-
-            const [index, child, restOfPath] = locateInListingOrFail(
-                item,
-                path
-            );
-
-            const newField = setGroupFieldInternalRec(
-                child,
-                restOfPath,
-                formItem,
-                opts
-            );
-
-            let newFields: FormListingFields = null;
-            if (newField) {
-                // If newField is not null and not the same as previous
-                // child, then set [name] to newField
-                newFields = assignArrayOrSame(<FormItem[]>item.fields, [
-                    index,
-                    [newField]
-                ]);
-            } else if (!newField) {
-                // If newField is null and there was a previous child,
-                // then remove child from fields
-                newFields = (<FormItem[]>item.fields)
-                    .slice(0, index)
-                    .concat((<FormItem[]>item.fields).slice(index + 1));
-            }
-
-            if (newFields === null) {
-                return item;
-            }
-
-            // If none of the listings' children changed after the assignment,
-            // then, and only then can the listing evaluate the rest of it's
-            // state. Much care must be taken to avoid a stack overflow.
-            // Later some protection must be added to prevent an infinite
-            // loop.
-            if (newFields === item.fields) {
-                return updateFinalListingFields(item);
-            } else {
-                const computedValue = createListingValue(newFields);
-                return setValueInternal(
-                    assignOrSame(item, {
-                        fields: newFields
-                    }),
-                    computedValue,
-                    '',
-                    assign(opts, { compareValues: true, initialization: true })
-                );
-            }
-        }
+        case 'listing':
+            throw new Error('Expected to find a group but found a listing');
 
         default:
-            throw new Error('setValueInternal: Not implemented');
+            throw new Error(
+                'Unknown form item type: ' + JSON.stringify((<any>item).type)
+            );
     }
 };
 
@@ -633,7 +680,70 @@ export const setGroupFieldInternal = (
         options
     );
 
-    return setGroupFieldInternalRec(item, path, formItem, opts);
+    let newPath = extractPath(path);
+    const fieldName =
+        newPath.length >= 1
+            ? newPath[newPath.length - 1]
+            : undefined;
+    if (typeof fieldName !== 'string') {
+        throw new Error(
+            'Missing field name at the end of path: ' + JSON.stringify(path)
+        );
+    }
+    newPath = newPath.slice(0, newPath.length - 1);
+
+    return updateFormItemInternalRec(
+        item,
+        newPath,
+        setGroupFieldUpdater(fieldName, formItem, opts),
+        opts
+    );
+};
+
+const updateListingFieldsUpdater = (
+    fields: ValueOrFunc<FormListingFields & Array<FormItem>>,
+    opts: SetValueOptions
+) => (item: FormItem): FormItem => {
+    switch (item.type) {
+        case 'field':
+            throw new Error('Expected to find a group but found a field');
+
+        case 'listing': {
+            const newFields = getAsValue(fields, item.fields);
+            return updateListingFieldsAux(item, newFields, opts);
+        }
+
+        case 'group':
+            throw new Error('Expected to find a listing but found a group');
+
+        default:
+            throw new Error(
+                'Unknown form item type: ' + JSON.stringify((<any>item).type)
+            );
+    }
+};
+
+export const updateListingFieldsInternal = (
+    item: FormItem,
+    path: string,
+    fields: ValueOrFunc<FormListingFields & Array<FormItem>>,
+    options?: Partial<SetValueOptions>
+): FormItem => {
+    const opts: SetValueOptions = Object.assign(
+        <SetValueOptions>{
+            affectDirty: true,
+            compareValues: true,
+            initialization: false
+        },
+        options
+    );
+
+    return updateFormItemInternalRec(
+        item,
+        extractPath(path),
+        updateListingFieldsUpdater(fields, opts),
+        opts
+    );
 };
 
 export const getAllErrorsInternalRec = (
@@ -660,10 +770,7 @@ export const getAllErrorsInternalRec = (
 
         case 'listing': {
             const fieldErrors = _.flatMap(item.fields, (field, index) =>
-                getAllErrorsInternalRec(
-                    field,
-                    appendListingPath(path, index)
-                )
+                getAllErrorsInternalRec(field, appendListingPath(path, index))
             );
             return currentErrors.concat(fieldErrors);
         }

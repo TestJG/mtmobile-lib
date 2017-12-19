@@ -18,16 +18,16 @@ import {
 } from './forms.interfaces';
 import {
     checkPathInField,
-    setValueInternal,
-    matchGroupPath,
-    matchListingPath,
-    locateInGroupOrFail,
     createGroupValue,
-    setGroupFieldInternal,
-    getAllErrorsInternal,
     createListingValue,
-    locateInListingOrFail
+    getAllErrorsInternal,
+    locateInGroupOrFail,
+    locateInListingOrFail,
+    setGroupFieldInternal,
+    setValueInternal,
+    updateListingFieldsInternal
 } from './forms.utils';
+import { assignArrayOrSame, getAsValue } from '../../index';
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -177,7 +177,7 @@ export const listing = <
 
     const coerce = coerceAll(coerceInit);
     const validator = mergeValidators(validatorInit);
-    const theFields = <F><any>fields.slice();
+    const theFields = <F>(<any>fields.slice());
     const theInitValue = initValue || <T>createListingValue(theFields);
 
     const result: FormListing<T, F> = {
@@ -266,13 +266,57 @@ export const existFormItem = (item: FormItem, path: string): boolean => {
 export const setValue = <I extends FormItem = FormItem>(
     item: I,
     value: ValueOrFunc,
-    path: string = ''
-): I => <I>setValueInternal(item, value, path);
+    pathToField: string = ''
+): I => <I>setValueInternal(item, value, pathToField);
 
 export const setGroupField = <I extends FormItem = FormItem>(
     item: I,
-    path: string,
+    pathToGroupField: string,
     formItem: ValueOrFunc<FormItem>
-): I => <I>setGroupFieldInternal(item, path, formItem);
+): I => <I>setGroupFieldInternal(item, pathToGroupField, formItem);
+
+export const insertListingFields = <I extends FormItem = FormItem>(
+    item: I,
+    pathToListing: string,
+    newFields: ValueOrFunc<FormItem | FormItem[]>,
+    atPosition?: number
+): I => {
+    return <I>updateListingFieldsInternal(
+        item,
+        pathToListing,
+        (fields: FormListingFields & Array<FormItem>) => {
+            let theNewFields = getAsValue(newFields);
+            if (!(theNewFields instanceof Array)) {
+                theNewFields = [theNewFields];
+            }
+            if (typeof atPosition !== 'number' || atPosition >= fields.length) {
+                return fields.concat(theNewFields);
+            } else {
+                const pos = atPosition < 0 ? 0 : atPosition;
+                if (pos === 0) {
+                    return theNewFields.concat(fields);
+                } else {
+                    return fields.slice(0, pos).concat(theNewFields).concat(fields.slice(pos));
+                }
+            }
+        }
+    );
+};
+
+export const removeListingFields = <I extends FormItem = FormItem>(
+    item: I,
+    pathToListing: string,
+    atPosition: number,
+    count: number = 1
+): I => {
+    return <I>updateListingFieldsInternal(
+        item,
+        pathToListing,
+        (fields: FormListingFields & Array<FormItem>) => {
+            return fields.slice(0, atPosition)
+                .concat(fields.slice(atPosition + count));
+        }
+    );
+};
 
 export const getAllErrors = (item: FormItem) => getAllErrorsInternal(item);
