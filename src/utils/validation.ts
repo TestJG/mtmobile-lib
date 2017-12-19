@@ -158,7 +158,7 @@ export const shouldNotBeBlank = (message?: MessageSource, ...args: any[]) =>
     validateSome(
         shouldBeAString(message, ...args),
         checkCondition(
-            (v: string) => (v || '').trim() !== '',
+            (v: string) => v.trim() !== '',
             'Should not be blank',
             message,
             args
@@ -173,7 +173,7 @@ export const shouldMatch = (
     validateSome(
         shouldBeAString(message, ...args),
         checkCondition(
-            (v: string) => !!(v || '').match(pattern),
+            (v: string) => !!v.match(pattern),
             'Should match given pattern',
             message,
             args
@@ -188,7 +188,7 @@ export const shouldNotMatch = (
     validateSome(
         shouldBeAString(message, ...args),
         checkCondition(
-            (v: string) => !(v || '').match(pattern),
+            (v: string) => !v.match(pattern),
             'Should not match given pattern',
             message,
             args
@@ -203,7 +203,7 @@ export const shouldNotBeShorterThan = (
     validateSome(
         shouldBeAString(message, ...args),
         checkCondition(
-            (v: string) => (v || '').length >= length,
+            (v: string) => v.length >= length,
             () => `Should not be shorter than ${length} characters`,
             message,
             [...args, length]
@@ -218,7 +218,7 @@ export const shouldBeShorterThan = (
     validateSome(
         shouldBeAString(message, ...args),
         checkCondition(
-            (v: string) => (v || '').length < length,
+            (v: string) => v.length < length,
             () => `Should be shorter than ${length} characters`,
             message,
             [...args, length]
@@ -233,7 +233,7 @@ export const shouldNotBeLongerThan = (
     validateSome(
         shouldBeAString(message, ...args),
         checkCondition(
-            (v: string) => (v || '').length <= length,
+            (v: string) => v.length <= length,
             () => `Should not be longer than ${length} characters`,
             message,
             [...args, length]
@@ -248,7 +248,7 @@ export const shouldBeLongerThan = (
     validateSome(
         shouldBeAString(message, ...args),
         checkCondition(
-            (v: string) => (v || '').length > length,
+            (v: string) => v.length > length,
             () => `Should be longer than ${length} characters`,
             message,
             [...args, length]
@@ -420,6 +420,94 @@ export const shouldNotBeBetweenValues = (
             [...args, minValue, maxValue]
         )
     );
+
+////////////////////////////////////////////////////////////////
+//                                                            //
+//                     Array validators                       //
+//                                                            //
+////////////////////////////////////////////////////////////////
+
+
+export const shouldBeAnArray = (message?: MessageSource, ...args: any[]) =>
+    checkCondition(
+        (v: any[]) => v instanceof Array,
+        'Should be an array',
+        message,
+        args
+    );
+
+export const shouldNotBeAnEmptyArray = (message?: MessageSource, ...args: any[]) =>
+    validateSome(
+        shouldBeAList(message, ...args),
+        checkCondition(
+            (v: any[]) => v.length > 0,
+            'Should not be an empty array',
+            message,
+            args
+        )
+    );
+
+export const shouldNotBeAnArrayShorterThan = (
+    length: number,
+    message?: MessageSource,
+    ...args: any[]
+) =>
+    validateSome(
+        shouldBeAList(message, ...args),
+        checkCondition(
+            (v: any[]) => v.length >= length,
+            () => `Should not be an array shorter than ${length} elements`,
+            message,
+            [...args, length]
+        )
+    );
+
+export const shouldBeAnArrayShorterThan = (
+    length: number,
+    message?: MessageSource,
+    ...args: any[]
+) =>
+    validateSome(
+        shouldBeAList(message, ...args),
+        checkCondition(
+            (v: any[]) => v.length < length,
+            () => `Should be an array shorter than ${length} elements`,
+            message,
+            [...args, length]
+        )
+    );
+
+export const shouldNotBeAnArrayLongerThan = (
+    length: number,
+    message?: MessageSource,
+    ...args: any[]
+) =>
+    validateSome(
+        shouldBeAList(message, ...args),
+        checkCondition(
+            (v: any[]) => v.length <= length,
+            () => `Should not be an array longer than ${length} elements`,
+            message,
+            [...args, length]
+        )
+    );
+
+export const shouldBeAnArrayLongerThan = (
+    length: number,
+    message?: MessageSource,
+    ...args: any[]
+) =>
+    validateSome(
+        shouldBeAList(message, ...args),
+        checkCondition(
+            (v: any[]) => v.length > length,
+            () => `Should be an array longer than ${length} elements`,
+            message,
+            [...args, length]
+        )
+    );
+
+
 
 ////////////////////////////////////////////////////////////////
 //                                                            //

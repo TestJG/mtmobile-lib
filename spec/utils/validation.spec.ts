@@ -26,7 +26,13 @@ import {
     shouldNotBeGreaterThanOrEqualTo,
     shouldNotBeLessThan,
     shouldNotBeLessThanOrEqualTo,
-    shouldNotBeBetweenValues
+    shouldNotBeBetweenValues,
+    shouldBeAnArray,
+    shouldNotBeAnEmptyArray,
+    shouldNotBeAnArrayShorterThan,
+    shouldBeAnArrayShorterThan,
+    shouldNotBeAnArrayLongerThan,
+    shouldBeAnArrayLongerThan,
 } from '../../src/utils/validation';
 
 function expectErrors(
