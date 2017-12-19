@@ -1,5 +1,3 @@
-import { isMaster } from 'cluster';
-
 export type EqualityComparer<T = any> = (x: T, y: T) => boolean;
 export type EqualityComparerFactory<T = any> = (
     childComparer: EqualityComparer
