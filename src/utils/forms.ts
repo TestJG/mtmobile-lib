@@ -267,10 +267,27 @@ export const existFormItem = (item: FormItem, path: string): boolean => {
 export const setValue = <I extends FormItem = FormItem>(
     item: I,
     value: ValueOrFunc,
-    pathToField: string = '',
-    skipTouch: boolean = false
+    pathToField: string = ''
 ): I =>
-    <I>setValueInternal(item, value, pathToField, { affectDirty: !skipTouch });
+    <I>setValueInternal(item, value, pathToField);
+
+export const setValueDoNotTouch = <I extends FormItem = FormItem>(
+    item: I,
+    value: ValueOrFunc,
+    pathToField: string = ''
+): I =>
+    <I>setValueInternal(item, value, pathToField, {
+        affectDirty: false
+    });
+
+export const resetValue = <I extends FormItem = FormItem>(
+    item: I,
+    value: ValueOrFunc,
+    pathToField: string = ''
+): I =>
+    <I>setValueInternal(item, value, pathToField, {
+        initialization: true
+    });
 
 export const setGroupField = <I extends FormItem = FormItem>(
     item: I,

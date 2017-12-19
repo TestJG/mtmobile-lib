@@ -248,8 +248,8 @@ const setFieldValueInternal = (
 
     const initValue = opts.initialization ? newValue : item.initValue;
     const errors = item.validator(newValue);
-    const isDirty = item.isDirty || (opts.affectDirty ? !sameValue : false);
-    const isTouched = isDirty || item.isTouched;
+    const isDirty = opts.initialization ? false : item.isDirty || (opts.affectDirty ? !sameValue : false);
+    const isTouched = opts.initialization ? false : isDirty || item.isTouched;
 
     // Derived
     const isValid = errors.length === 0;

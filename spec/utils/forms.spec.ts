@@ -13,6 +13,8 @@ import {
     group,
     listing,
     setValue,
+    setValueDoNotTouch,
+    resetValue,
     getValue,
     getFormItem,
     existFormItem,
@@ -998,10 +1000,10 @@ describe('Utils', () => {
                 });
             });
 
-            describe('When a field is created and a new distinct valid value is assigned with skipTouch', () => {
+            describe('When a field is created and a new distinct valid value is assigned with mode untouched', () => {
                 const ageField = field(40);
                 const ageFieldCopy = Object.assign({}, ageField);
-                const newAgeField = setValue(ageField, 50, '', true);
+                const newAgeField = setValueDoNotTouch(ageField, 50);
 
                 it('the new field should be distinct from the original one', () =>
                     expect(newAgeField).not.toBe(ageField));
@@ -1019,6 +1021,35 @@ describe('Utils', () => {
                     errors: [],
                     isValid: true,
                     showErrors: false
+                });
+            });
+
+            describe('When a field is created and a new distinct valid value is assigned with mode reset', () => {
+                const ageField = field(40);
+                const ageFieldCopy = Object.assign({}, ageField);
+                const newAgeFieldDirty = setValue(ageField, 60, '');
+                const newAgeField = resetValue(newAgeFieldDirty, 50);
+
+                it('the new field should be distinct from the original one', () =>
+                    expect(newAgeField).not.toBe(ageField));
+
+                it('the original field should no be changed in place', () =>
+                    expect(ageField).toEqual(ageFieldCopy));
+
+                expectConfig(newAgeFieldDirty, {
+                    initValue: 40,
+                    value: 60,
+                    isDirty: true,
+                    isTouched: true
+                });
+
+                expectConfig(newAgeField, {
+                    initValue: 50,
+                    coerce: ageField.coerce,
+                    validator: ageField.validator,
+                    value: 50,
+                    isDirty: false,
+                    isTouched: false
                 });
             });
 
@@ -1112,7 +1143,7 @@ describe('Utils', () => {
                 });
             });
 
-            describe('When a group is created and a modified value is assigned with skipTouch', () => {
+            describe('When a group is created and a modified value is assigned with mode untouched', () => {
                 const aGroup = group(
                     {
                         firstName: field(''),
@@ -1122,11 +1153,11 @@ describe('Utils', () => {
                     { initValue: <Person>undefined }
                 );
                 const aGroupCopy = Object.assign({}, aGroup);
-                const newGroup = setValue(aGroup, (p: Person) =>
+                const newGroup = setValueDoNotTouch(aGroup, (p: Person) =>
                     assignOrSame(p, {
                         age: p.age + 10
                     })
-                , '', true);
+                );
 
                 it('the new group should be distinct from the original one', () =>
                     expect(newGroup).not.toBe(aGroup));
@@ -1223,15 +1254,16 @@ describe('Utils', () => {
                 });
             });
 
-            describe('When a listing is created and a modified value is assigned with skipTouch', () => {
+            describe('When a listing is created and a modified value is assigned with mode untouched', () => {
                 const aListing = listing(
                     <PersonArrayForm>[field(''), field(''), field(20)],
                     { initValue: <PersonArray>undefined }
                 );
                 const aListingCopy = Object.assign({}, aListing);
-                const newListing = setValue(aListing, (p: PersonArray) =>
-                    assignArrayOrSame(p, [2, [p[2] + 10]])
-                , '', true);
+                const newListing = setValueDoNotTouch(
+                    aListing,
+                    (p: PersonArray) => assignArrayOrSame(p, [2, [p[2] + 10]]),
+                );
 
                 it('the new listing should be distinct from the original one', () =>
                     expect(newListing).not.toBe(aListing));
@@ -1308,7 +1340,7 @@ describe('Utils', () => {
                 });
             });
 
-            describe('When a form is created and a modified value is assigned to one of its fields with skipTouch', () => {
+            describe('When a form is created and a modified value is assigned to one of its fields with mode untouched', () => {
                 const aForm = group(
                     {
                         firstName: field(''),
@@ -1331,11 +1363,10 @@ describe('Utils', () => {
                     { initValue: <Person & { pet: Pet[] }>undefined }
                 );
                 const aGroupCopy = Object.assign({}, aForm);
-                const newGroup = setValue(
+                const newGroup = setValueDoNotTouch(
                     aForm,
                     (name: string) => name.toUpperCase(),
-                    'pets[0].name',
-                    true
+                    'pets[0].name'
                 );
 
                 it('the new form should be distinct from the original one', () =>
