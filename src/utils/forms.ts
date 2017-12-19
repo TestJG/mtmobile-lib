@@ -282,7 +282,7 @@ export const setValueDoNotTouch = <I extends FormItem = FormItem>(
 
 export const resetValue = <I extends FormItem = FormItem>(
     item: I,
-    value: ValueOrFunc,
+    value: ValueOrFunc = undefined,
     pathToField: string = ''
 ): I =>
     <I>setValueInternal(item, value, pathToField, {

@@ -1053,6 +1053,35 @@ describe('Utils', () => {
                 });
             });
 
+            describe('When a field is created and a new distinct valid value is assigned with mode reset', () => {
+                const ageField = field(40);
+                const ageFieldCopy = Object.assign({}, ageField);
+                const newAgeFieldDirty = setValue(ageField, 60, '');
+                const newAgeField = resetValue(newAgeFieldDirty);
+
+                it('the new field should be distinct from the original one', () =>
+                    expect(newAgeField).not.toBe(ageField));
+
+                it('the original field should no be changed in place', () =>
+                    expect(ageField).toEqual(ageFieldCopy));
+
+                expectConfig(newAgeFieldDirty, {
+                    initValue: 40,
+                    value: 60,
+                    isDirty: true,
+                    isTouched: true
+                });
+
+                expectConfig(newAgeField, {
+                    initValue: 40,
+                    coerce: ageField.coerce,
+                    validator: ageField.validator,
+                    value: 40,
+                    isDirty: false,
+                    isTouched: false
+                });
+            });
+
             // group
             describe('When a group is created and the same init value is assigned', () => {
                 const aGroup = group(
@@ -1097,14 +1126,9 @@ describe('Utils', () => {
 
                 expectConfig(newGroup, {
                     initValue: newPers('', '', 20),
-                    coerce: aGroup.coerce,
-                    validator: aGroup.validator,
                     value: newPers('', '', 30),
                     isDirty: true,
-                    isTouched: true,
-                    errors: [],
-                    isValid: true,
-                    showErrors: false
+                    isTouched: true
                 });
             });
 
@@ -1132,14 +1156,9 @@ describe('Utils', () => {
 
                 expectConfig(newGroup, {
                     initValue: newPers('', '', 20),
-                    coerce: aGroup.coerce,
-                    validator: aGroup.validator,
                     value: newPers('', '', 30),
                     isDirty: true,
-                    isTouched: true,
-                    errors: [],
-                    isValid: true,
-                    showErrors: false
+                    isTouched: true
                 });
             });
 
@@ -1167,14 +1186,47 @@ describe('Utils', () => {
 
                 expectConfig(newGroup, {
                     initValue: newPers('', '', 20),
-                    coerce: aGroup.coerce,
-                    validator: aGroup.validator,
                     value: newPers('', '', 30),
                     isDirty: false,
-                    isTouched: false,
-                    errors: [],
-                    isValid: true,
-                    showErrors: false
+                    isTouched: false
+                });
+            });
+
+            describe('When a group is created and a modified value is assigned with mode reset', () => {
+                const aGroup = group(
+                    {
+                        firstName: field(''),
+                        lastName: field(''),
+                        age: field(20)
+                    },
+                    { initValue: <Person>undefined }
+                );
+                const aGroupCopy = Object.assign({}, aGroup);
+                const newGroupDirty = setValue(
+                    aGroup,
+                    (age: number) => age + 10,
+                    'age'
+                );
+                const newGroup = resetValue(newGroupDirty);
+
+                it('the new group should be distinct from the original one', () =>
+                    expect(newGroup).not.toBe(aGroup));
+
+                it('the original group should no be changed in place', () =>
+                    expect(aGroup).toEqual(aGroupCopy));
+
+                expectConfig(newGroupDirty, {
+                    initValue: newPers('', '', 20),
+                    value: newPers('', '', 30),
+                    isDirty: true,
+                    isTouched: true
+                });
+
+                expectConfig(newGroup, {
+                    initValue: newPers('', '', 20),
+                    value: newPers('', '', 20),
+                    isDirty: false,
+                    isTouched: false
                 });
             });
 
@@ -1212,14 +1264,9 @@ describe('Utils', () => {
 
                 expectConfig(newListing, {
                     initValue: ['', '', 20],
-                    coerce: aListing.coerce,
-                    validator: aListing.validator,
                     value: ['', '', 30],
                     isDirty: true,
-                    isTouched: true,
-                    errors: [],
-                    isValid: true,
-                    showErrors: false
+                    isTouched: true
                 });
             });
 
@@ -1243,14 +1290,9 @@ describe('Utils', () => {
 
                 expectConfig(newListing, {
                     initValue: ['', '', 20],
-                    coerce: aListing.coerce,
-                    validator: aListing.validator,
                     value: ['', '', 30],
                     isDirty: true,
-                    isTouched: true,
-                    errors: [],
-                    isValid: true,
-                    showErrors: false
+                    isTouched: true
                 });
             });
 
@@ -1262,7 +1304,7 @@ describe('Utils', () => {
                 const aListingCopy = Object.assign({}, aListing);
                 const newListing = setValueDoNotTouch(
                     aListing,
-                    (p: PersonArray) => assignArrayOrSame(p, [2, [p[2] + 10]]),
+                    (p: PersonArray) => assignArrayOrSame(p, [2, [p[2] + 10]])
                 );
 
                 it('the new listing should be distinct from the original one', () =>
@@ -1273,14 +1315,43 @@ describe('Utils', () => {
 
                 expectConfig(newListing, {
                     initValue: ['', '', 20],
-                    coerce: aListing.coerce,
-                    validator: aListing.validator,
                     value: ['', '', 30],
                     isDirty: false,
-                    isTouched: false,
-                    errors: [],
-                    isValid: true,
-                    showErrors: false
+                    isTouched: false
+                });
+            });
+
+            describe('When a listing is created and a modified value is assigned with mode reset', () => {
+                const aListing = listing(
+                    <PersonArrayForm>[field(''), field(''), field(20)],
+                    { initValue: <PersonArray>undefined }
+                );
+                const aListingCopy = Object.assign({}, aListing);
+                const newListingDirty = setValue(
+                    aListing,
+                    (age: number) => age + 10,
+                    '[2]'
+                );
+                const newListing = resetValue(newListingDirty);
+
+                it('the new listing should be distinct from the original one', () =>
+                    expect(newListing).not.toBe(aListing));
+
+                it('the original listing should no be changed in place', () =>
+                    expect(aListing).toEqual(aListingCopy));
+
+                expectConfig(newListingDirty, {
+                    initValue: ['', '', 20],
+                    value: ['', '', 30],
+                    isDirty: true,
+                    isTouched: true
+                });
+
+                expectConfig(newListing, {
+                    initValue: ['', '', 20],
+                    value: ['', '', 20],
+                    isDirty: false,
+                    isTouched: false
                 });
             });
 
@@ -1326,17 +1397,12 @@ describe('Utils', () => {
                         newPet('fido', 'dog'),
                         newPet('garfield', 'cat')
                     ]),
-                    coerce: aForm.coerce,
-                    validator: aForm.validator,
                     value: <any>newPersPets('', '', 20, [
                         newPet('FIDO', 'dog'),
                         newPet('garfield', 'cat')
                     ]),
                     isDirty: true,
                     isTouched: true,
-                    errors: [],
-                    isValid: true,
-                    showErrors: false
                 });
             });
 
@@ -1380,17 +1446,75 @@ describe('Utils', () => {
                         newPet('fido', 'dog'),
                         newPet('garfield', 'cat')
                     ]),
-                    coerce: aForm.coerce,
-                    validator: aForm.validator,
                     value: <any>newPersPets('', '', 20, [
                         newPet('FIDO', 'dog'),
                         newPet('garfield', 'cat')
                     ]),
                     isDirty: false,
                     isTouched: false,
-                    errors: [],
-                    isValid: true,
-                    showErrors: false
+                });
+            });
+
+            describe('When a form is created and a modified value is assigned to one of its fields with mode reset', () => {
+                const aForm = group(
+                    {
+                        firstName: field(''),
+                        lastName: field(''),
+                        age: field(20),
+                        pets: listing(
+                            [
+                                group(
+                                    { name: field(''), kind: field('') },
+                                    { initValue: newPet('fido', 'dog') }
+                                ),
+                                group(
+                                    { name: field(''), kind: field('') },
+                                    { initValue: newPet('garfield', 'cat') }
+                                )
+                            ],
+                            { initValue: <Pet[]>undefined }
+                        )
+                    },
+                    { initValue: <Person & { pet: Pet[] }>undefined }
+                );
+                const aGroupCopy = Object.assign({}, aForm);
+                const newGroupDirty = setValue(
+                    aForm,
+                    (name: string) => name.toUpperCase(),
+                    'pets[0].name'
+                );
+                const newGroup = resetValue(aForm);
+
+                it('the new form should be distinct from the original one', () =>
+                    expect(newGroupDirty).not.toBe(aForm));
+
+                it('the original form should no be changed in place', () =>
+                    expect(aForm).toEqual(aGroupCopy));
+
+                expectConfig(newGroupDirty, {
+                    initValue: <any>newPersPets('', '', 20, [
+                        newPet('fido', 'dog'),
+                        newPet('garfield', 'cat')
+                    ]),
+                    value: <any>newPersPets('', '', 20, [
+                        newPet('FIDO', 'dog'),
+                        newPet('garfield', 'cat')
+                    ]),
+                    isDirty: true,
+                    isTouched: true
+                });
+
+                expectConfig(newGroup, {
+                    initValue: <any>newPersPets('', '', 20, [
+                        newPet('fido', 'dog'),
+                        newPet('garfield', 'cat')
+                    ]),
+                    value: <any>newPersPets('', '', 20, [
+                        newPet('fido', 'dog'),
+                        newPet('garfield', 'cat')
+                    ]),
+                    isDirty: false,
+                    isTouched: false
                 });
             });
         });
