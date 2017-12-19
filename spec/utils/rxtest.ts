@@ -66,9 +66,9 @@ export const testObsNotifications = <T = any>(
                 if (!deepEqual(act.error, exp.error)) {
                     done.fail(
                         `Expected error ${JSON.stringify(
-                            exp.error
+                            exp.error.message || exp.error
                         )}, but error ${JSON.stringify(
-                            act.error
+                            act.error.message || act.error
                         )} was received}`
                     );
                 }
