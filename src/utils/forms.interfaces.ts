@@ -7,16 +7,18 @@ import { Validator, ValidatorInit } from './validation';
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-export interface FormPartInit<T = any> {
+export interface ExtraFormInfo {
     caption: string;
     description: string;
+    info: any;
+}
+
+export interface FormPartInit<T = any> extends ExtraFormInfo {
     validations: ValidatorInit<T>;
     coerce: CoerceInit<T>;
 }
 
-export interface FormPartConfig<T = any> {
-    caption: string;
-    description: string;
+export interface FormPartConfig<T = any> extends ExtraFormInfo {
     initValue: T;
     validator: Validator<T>;
     coerce: Coerce<T>;

@@ -27,7 +27,8 @@ import {
     FormListingFields,
     FormItem,
     FormItemState,
-    FormError
+    FormError,
+    ExtraFormInfo
 } from './forms.interfaces';
 import { FormListingFieldStates } from '../../index';
 
@@ -248,7 +249,9 @@ const setFieldValueInternal = (
 
     const initValue = opts.initialization ? newValue : item.initValue;
     const errors = item.validator(newValue);
-    const isDirty = opts.initialization ? false : item.isDirty || (opts.affectDirty ? !sameValue : false);
+    const isDirty = opts.initialization
+        ? false
+        : item.isDirty || (opts.affectDirty ? !sameValue : false);
     const isTouched = opts.initialization ? false : isDirty || item.isTouched;
 
     // Derived
@@ -641,7 +644,9 @@ const setGroupFieldUpdater = (
             if (newField && newField !== child) {
                 // If newField is not null and not the same as previous
                 // child, then set [fieldName] to newField
-                newFields = assignOrSame(item.fields, { [fieldName]: newField });
+                newFields = assignOrSame(item.fields, {
+                    [fieldName]: newField
+                });
             } else if (!newField && child) {
                 // If newField is null and there was a previous child,
                 // then remove child from fields
@@ -682,9 +687,7 @@ export const setGroupFieldInternal = (
 
     let newPath = extractPath(path);
     const fieldName =
-        newPath.length >= 1
-            ? newPath[newPath.length - 1]
-            : undefined;
+        newPath.length >= 1 ? newPath[newPath.length - 1] : undefined;
     if (typeof fieldName !== 'string') {
         throw new Error(
             'Missing field name at the end of path: ' + JSON.stringify(path)
@@ -775,6 +778,33 @@ export const getAllErrorsInternalRec = (
             return currentErrors.concat(fieldErrors);
         }
     }
+};
+
+export const updateFormInfoInternal = <I extends FormItem = FormItem>(
+    item: I,
+    pathToFormItem: string,
+    updater: ValueOrFunc<Partial<ExtraFormInfo>>
+): I => {
+    return <I>updateFormItemInternalRec(
+        item,
+        extractPath(pathToFormItem),
+        (formItem: FormItem) => {
+            const newInfo = getAsValue(updater, {
+                caption: formItem.caption,
+                description: formItem.description,
+                info: formItem.info,
+            });
+            return assignIfMany(
+                formItem,
+                [newInfo.caption !== undefined, { caption: newInfo.caption }],
+                [
+                    newInfo.description !== undefined,
+                    { description: newInfo.description }
+                ],
+                [newInfo.info !== undefined, { info: newInfo.info }]
+            );
+        },
+        { affectDirty: false, initialization: false, compareValues: false });
 };
 
 export const getAllErrorsInternal = (item: FormItem) =>

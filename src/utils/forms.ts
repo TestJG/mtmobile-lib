@@ -1,4 +1,10 @@
-import { assign, assignOrSame, objMapValues, ValueOrFunc } from './common';
+import {
+    assign,
+    assignOrSame,
+    objMapValues,
+    ValueOrFunc,
+    getAsValue
+} from './common';
 import { coerceAll } from './coercion';
 import { mergeValidators } from './validation';
 import {
@@ -14,7 +20,8 @@ import {
     FormListing,
     FormListingState,
     FormListingFields,
-    FormError
+    FormError,
+    ExtraFormInfo
 } from './forms.interfaces';
 import {
     checkPathInField,
@@ -25,9 +32,9 @@ import {
     locateInListingOrFail,
     setGroupFieldInternal,
     setValueInternal,
-    updateListingFieldsInternal
+    updateListingFieldsInternal,
+    updateFormInfoInternal
 } from './forms.utils';
-import { assignArrayOrSame, getAsValue } from '../../index';
 import { skip } from 'rxjs/operator/skip';
 
 ////////////////////////////////////////////////////////////////
@@ -43,12 +50,14 @@ export const field = <T = any>(
     const {
         caption,
         description,
+        info,
         coerce: coerceInit,
         validations: validatorInit
     } = assign(
         <FormFieldInit<T>>{
             caption: '',
             description: '',
+            info: undefined,
             coerce: undefined,
             validations: undefined
         },
@@ -65,6 +74,7 @@ export const field = <T = any>(
         // Config
         caption,
         description,
+        info,
         initValue,
         coerce,
         validator,
@@ -98,6 +108,7 @@ export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
     const {
         caption,
         description,
+        info,
         coerce: coerceInit,
         validations: validatorInit,
         initValue
@@ -105,6 +116,7 @@ export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
         <FormGroupInit<T>>{
             caption: '',
             description: '',
+            info: undefined,
             coerce: undefined,
             validations: undefined,
             initValue: undefined
@@ -124,6 +136,7 @@ export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
         // Config
         caption,
         description,
+        info,
         initValue: theInitValue,
         coerce,
         validator,
@@ -162,6 +175,7 @@ export const listing = <
     const {
         caption,
         description,
+        info,
         coerce: coerceInit,
         validations: validatorInit,
         initValue
@@ -169,6 +183,7 @@ export const listing = <
         <FormListingInit<T>>{
             caption: '',
             description: '',
+            info: undefined,
             coerce: undefined,
             validations: undefined,
             initValue: undefined
@@ -188,6 +203,7 @@ export const listing = <
         // Config
         caption,
         description,
+        info,
         initValue: theInitValue,
         coerce,
         validator,
@@ -268,8 +284,7 @@ export const setValue = <I extends FormItem = FormItem>(
     item: I,
     value: ValueOrFunc,
     pathToField: string = ''
-): I =>
-    <I>setValueInternal(item, value, pathToField);
+): I => <I>setValueInternal(item, value, pathToField);
 
 export const setValueDoNotTouch = <I extends FormItem = FormItem>(
     item: I,
@@ -342,5 +357,11 @@ export const removeListingFields = <I extends FormItem = FormItem>(
         }
     );
 };
+
+export const updateFormInfo = <I extends FormItem = FormItem>(
+    item: I,
+    pathToFormItem: string,
+    updater: ValueOrFunc<Partial<ExtraFormInfo>>
+): I => updateFormInfoInternal<I>(item, pathToFormItem, updater);
 
 export const getAllErrors = (item: FormItem) => getAllErrorsInternal(item);

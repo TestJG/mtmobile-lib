@@ -21,6 +21,7 @@ import {
     setGroupField,
     insertListingFields,
     removeListingFields,
+    updateFormInfo,
     getAllErrors,
     Coerce,
     mustNotBeBelow,
@@ -33,7 +34,8 @@ import {
     shouldBeLessThanOrEqualTo,
     shouldBeBetweenValues,
     shouldNotBeBlank,
-    shouldBeLongerThan
+    shouldBeLongerThan,
+    ExtraFormInfo
 } from '../../src/utils';
 
 interface Person {
@@ -81,6 +83,7 @@ const expectConfig = <T>(
     expected: Partial<{
         caption: string;
         description: string;
+        info: any;
         initValue: T;
         validator: [T, string[]][] | Function;
         coerce: [T, T][] | Function;
@@ -100,6 +103,10 @@ const expectConfig = <T>(
         it(`it's description should be ${JSON.stringify(
             expected.description
         )}`, () => expect(item.description).toBe(expected.description));
+    }
+    if (expected.info !== undefined) {
+        it(`it's info should be ${JSON.stringify(expected.info)}`, () =>
+            expect(item.info).toEqual(expected.info));
     }
     if (expected.initValue !== undefined) {
         it(`it's initValue should be ${JSON.stringify(
@@ -228,12 +235,14 @@ describe('Utils', () => {
             describe('When a field is created with caption and description', () => {
                 const ageField = field(10, {
                     caption: 'Age',
-                    description: 'Age of the person'
+                    description: 'Age of the person',
+                    info: 'Some information'
                 });
 
                 expectConfig(ageField, {
                     caption: 'Age',
-                    description: 'Age of the person'
+                    description: 'Age of the person',
+                    info: 'Some information'
                 });
             });
 
@@ -375,13 +384,15 @@ describe('Utils', () => {
                     {},
                     {
                         caption: 'Personal',
-                        description: 'Personal information'
+                        description: 'Personal information',
+                        info: 'Some information'
                     }
                 );
 
                 expectConfig(aGroup, {
                     caption: 'Personal',
-                    description: 'Personal information'
+                    description: 'Personal information',
+                    info: 'Some information'
                 });
             });
 
@@ -653,12 +664,14 @@ describe('Utils', () => {
             describe('When a listing is created with caption and description', () => {
                 const aListing = listing([], {
                     caption: 'Personal',
-                    description: 'Personal information'
+                    description: 'Personal information',
+                    info: 'Some information'
                 });
 
                 expectConfig(aListing, {
                     caption: 'Personal',
-                    description: 'Personal information'
+                    description: 'Personal information',
+                    info: 'Some information'
                 });
             });
 
@@ -1402,7 +1415,7 @@ describe('Utils', () => {
                         newPet('garfield', 'cat')
                     ]),
                     isDirty: true,
-                    isTouched: true,
+                    isTouched: true
                 });
             });
 
@@ -1451,7 +1464,7 @@ describe('Utils', () => {
                         newPet('garfield', 'cat')
                     ]),
                     isDirty: false,
-                    isTouched: false,
+                    isTouched: false
                 });
             });
 
@@ -1515,6 +1528,59 @@ describe('Utils', () => {
                     ]),
                     isDirty: false,
                     isTouched: false
+                });
+            });
+        });
+    });
+});
+
+// updateFormInfo
+describe('Utils', () => {
+    describe('Forms Tests', () => {
+        describe('updateFormInfo', () => {
+            it('should be a function', () =>
+                expect(updateFormInfo).toBeInstanceOf(Function));
+
+            // field
+            describe('Given a field is created with custom info', () => {
+                const aField = field(40, {
+                    caption: 'Caption',
+                    description: 'Desc',
+                    info: 'Info'
+                });
+
+                it('When no changes are requested the new field should be the same as the original one', () =>
+                    expect(updateFormInfo(aField, '', {})).toBe(aField));
+
+                it('When caption change is requested the new caption should be be the given one', () => {
+                    const newField = updateFormInfo(aField, '', { caption: 'New Caption' });
+                    expect(newField.caption).toBe('New Caption');
+                });
+
+                it('When description change is requested the new description should be be the given one', () => {
+                    const newField = updateFormInfo(aField, '', { description: 'New Description' });
+                    expect(newField.description).toBe('New Description');
+                });
+
+                it('When info change is requested the new info should be be the given one', () => {
+                    const newField = updateFormInfo(aField, '', { info: 'New Info' });
+                    expect(newField.info).toBe('New Info');
+                });
+
+                it('When changes are requested as a function it should receive the previous extra form item info', () => {
+                    const newField = updateFormInfo(aField, '', (d: ExtraFormInfo) => ({
+                        caption: 'New ' + d.caption.toLowerCase(),
+                        description: 'New ' + d.description.toLowerCase(),
+                        info: 'New ' + d.info.toLowerCase(),
+                    }));
+                    expect(newField.caption).toBe('New caption');
+                    expect(newField.description).toBe('New desc');
+                    expect(newField.info).toBe('New info');
+                });
+
+                it('When caption change is requested the field should not be dirty', () => {
+                    const newField = updateFormInfo(aField, '', { caption: 'New Caption' });
+                    expect(newField.isDirty).toBe(false);
                 });
             });
         });
