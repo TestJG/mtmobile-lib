@@ -2,7 +2,8 @@ import { Observable, Subject, ReplaySubject } from 'rxjs';
 import { assign } from '../utils/common';
 import { ObsLike } from '../utils/rxutils';
 import { IProcessor, TaskItem } from './processor.interfaces';
-import { alts, chan, go, put, putAsync, spawn, take, timeout } from 'js-csp';
+import { setTimeout } from 'timers';
+// import { alts, chan, go, put, putAsync, spawn, take, timeout } from 'js-csp';
 
 interface WorkState {
     item: TaskItem;
@@ -60,27 +61,29 @@ export interface SequentialProcessorOptions {
  */
 export function startSequentialProcessor(
     runTask: (task: TaskItem) => ObsLike<any>,
-    opts?: Partial<SequentialProcessorOptions>
+    options?: Partial<SequentialProcessorOptions>
 ): IProcessor {
-    const defaultOptions: SequentialProcessorOptions = {
-        caption: 'SeqProc',
-        bufferSize: 1000,
-        interTaskDelay: 1,
-        maxRetries: 5,
-        minDelay: 10,
-        maxDelay: 5000,
-        nextDelay: (d: number) => d * 5,
-        isTransientError: (error: any) => true
-    };
+    const opts = assign(
+        <SequentialProcessorOptions>{
+            caption: 'SeqProc',
+            bufferSize: 1000,
+            interTaskDelay: 1,
+            maxRetries: 5,
+            minDelay: 10,
+            maxDelay: 5000,
+            nextDelay: (d: number) => d * 5,
+            isTransientError: (error: any) => true
+        },
+        options
+    );
 
-    const options = assign(defaultOptions, opts || {});
-
-    const inputCh = chan(options.bufferSize);
-    const retriesCh = chan();
-    const finishCh = chan(1);
+    const inputCh: WorkState[] = [];
+    const retriesCh: WorkState[] = [];
     const finishSub = new Subject<void>();
     const finishObs = finishSub.asObservable();
     let _isAlive = true;
+    let _isActive = false;
+    let _pickedRetry = false;
 
     const onFinishedSub = new ReplaySubject<void>(1);
     const onFinished$ = onFinishedSub.asObservable();
@@ -98,123 +101,81 @@ export function startSequentialProcessor(
     const isAlive = () => _isAlive;
 
     const finish = () => {
-        if (_isAlive) {
-            _isAlive = false;
-            putAsync(finishCh, 'FINISHED');
-        }
+        _isAlive = false;
         return finishObs;
     };
 
+    const pickWork = () => {
+        const pickRetry = () => {
+            if (retriesCh.length) {
+                _pickedRetry = true;
+                return retriesCh.shift();
+            }
+            return undefined;
+        };
+
+        const pickInput = () => {
+            if (inputCh.length) {
+                _pickedRetry = false;
+                return inputCh.shift();
+            }
+            return undefined;
+        };
+        return _pickedRetry
+            ? pickInput() || pickRetry()
+            : pickRetry() || pickInput();
+    };
+
+    const runTaskOnce = (work: WorkState) => {
+
+    };
+
+    const loop = () => {
+        const work = pickWork();
+        if (work) {
+            runTaskOnce(work);
+
+            // setTimeout(loop, 1);
+        } else if (!_isAlive) {
+            // Only once all input and retries has been processed
+            _isActive = false;
+            finishSub.next();
+            finishSub.complete();
+            onFinishedSub.next(null);
+            onFinishedSub.complete();
+            onTaskStartedSub.complete();
+            onTaskReStartedSub.complete();
+            onTaskResultSub.complete();
+            onTaskErrorSub.complete();
+            onTaskCompletedSub.complete();
+        } else {
+            _isActive = false;
+        }
+    };
+
     const process = (item: TaskItem) => {
-        if (!isAlive()) {
+        if (!_isAlive) {
             return Observable.throw(new Error('worker:finishing'));
         }
+
         const sub = new Subject<any>();
-        const state: WorkState = {
+        inputCh.push({
             item,
             sub,
-            nextDelay: options.minDelay,
+            nextDelay: opts.minDelay,
             retries: 0
-        };
-        putAsync(inputCh, state);
+        });
+
+        if (!_isActive) {
+            _isActive = true;
+            setTimeout(loop, 1);
+        }
+
         return sub.asObservable();
     };
 
-    function* runOneTask(state: WorkState, waitCh: any) {
-        let obs: Observable<any> = null;
-        if (state.retries === 0) {
-            onTaskStartedSub.next(state.item);
-        } else {
-            onTaskReStartedSub.next(state.item);
-        }
-        state.retries++;
-
-        try {
-            obs = runTask(state.item);
-        } catch (error) {
-            obs = Observable.throw(error);
-        }
-
-        if (obs instanceof Observable) {
-            // It is already an observable, let it be!
-        } else if (Promise.resolve(obs) === obs) {
-            obs = Observable.fromPromise(obs);
-        } else {
-            obs = Observable.of(obs);
-        }
-
-        obs.subscribe({
-            next: v => {
-                state.sub.next(v);
-                onTaskResultSub.next([state.item, v]);
-            },
-            error: error => {
-                if (
-                    options.isTransientError(error, state.retries) &&
-                    state.retries < options.maxRetries
-                ) {
-                    putAsync(waitCh, 'RETRY');
-                    const delay = state.nextDelay;
-                    state.nextDelay = Math.min(
-                        Math.max(
-                            options.nextDelay(delay, state.retries),
-                            options.minDelay
-                        ),
-                        options.maxDelay
-                    );
-                    go(function*() {
-                        yield timeout(delay);
-                        yield put(retriesCh, state);
-                    });
-                } else {
-                    putAsync(waitCh, 'ERROR');
-                    state.sub.error(error);
-                    onTaskErrorSub.next([state.item, error]);
-                }
-            },
-            complete: () => {
-                putAsync(waitCh, 'COMPLETE');
-                state.sub.complete();
-                onTaskCompletedSub.next(state.item);
-            }
-        });
-    }
-
-    function* loop() {
-        while (true) {
-            const result = yield alts([retriesCh, inputCh, finishCh], {
-                priority: true
-            });
-
-            if (result.channel === finishCh) {
-                finishSub.next();
-                finishSub.complete();
-                break;
-            } else {
-                const state = <WorkState>result.value;
-                const waitCh = chan();
-                spawn(runOneTask(state, waitCh));
-                yield take(waitCh);
-
-                if (options.interTaskDelay) {
-                    yield timeout(options.interTaskDelay);
-                }
-            }
-        }
-
-        onFinishedSub.next(null);
-        onFinishedSub.complete();
-        onTaskStartedSub.complete();
-        onTaskReStartedSub.complete();
-        onTaskResultSub.complete();
-        onTaskErrorSub.complete();
-        onTaskCompletedSub.complete();
-    }
-
-    go(loop);
-
     return {
-        caption: options.caption,
+        caption: opts.caption,
         process,
         isAlive,
         finish,
@@ -226,3 +187,177 @@ export function startSequentialProcessor(
         onTaskCompleted$
     };
 }
+
+// /**
+//  * Creates a Processor that executes sequentially the given tasks
+//  * @param runTask
+//  * @param opts
+//  */
+// export function startSequentialProcessor(
+//     runTask: (task: TaskItem) => ObsLike<any>,
+//     opts?: Partial<SequentialProcessorOptions>
+// ): IProcessor {
+//     const defaultOptions: SequentialProcessorOptions = {
+//         caption: 'SeqProc',
+//         bufferSize: 1000,
+//         interTaskDelay: 1,
+//         maxRetries: 5,
+//         minDelay: 10,
+//         maxDelay: 5000,
+//         nextDelay: (d: number) => d * 5,
+//         isTransientError: (error: any) => true
+//     };
+
+//     const options = assign(defaultOptions, opts || {});
+
+//     const inputCh = chan(options.bufferSize);
+//     const retriesCh = chan();
+//     const finishCh = chan(1);
+//     const finishSub = new Subject<void>();
+//     const finishObs = finishSub.asObservable();
+//     let _isAlive = true;
+
+//     const onFinishedSub = new ReplaySubject<void>(1);
+//     const onFinished$ = onFinishedSub.asObservable();
+//     const onTaskStartedSub = new Subject<TaskItem>();
+//     const onTaskStarted$ = onTaskStartedSub.asObservable();
+//     const onTaskReStartedSub = new Subject<TaskItem>();
+//     const onTaskReStarted$ = onTaskReStartedSub.asObservable();
+//     const onTaskResultSub = new Subject<[TaskItem, any]>();
+//     const onTaskResult$ = onTaskResultSub.asObservable();
+//     const onTaskErrorSub = new Subject<[TaskItem, any]>();
+//     const onTaskError$ = onTaskErrorSub.asObservable();
+//     const onTaskCompletedSub = new Subject<TaskItem>();
+//     const onTaskCompleted$ = onTaskCompletedSub.asObservable();
+
+//     const isAlive = () => _isAlive;
+
+//     const finish = () => {
+//         if (_isAlive) {
+//             _isAlive = false;
+//             putAsync(finishCh, 'FINISHED');
+//         }
+//         return finishObs;
+//     };
+
+//     const process = (item: TaskItem) => {
+//         if (!isAlive()) {
+//             return Observable.throw(new Error('worker:finishing'));
+//         }
+//         const sub = new Subject<any>();
+//         const state: WorkState = {
+//             item,
+//             sub,
+//             nextDelay: options.minDelay,
+//             retries: 0
+//         };
+//         putAsync(inputCh, state);
+//         return sub.asObservable();
+//     };
+
+//     function* runOneTask(state: WorkState, waitCh: any) {
+//         let obs: Observable<any> = null;
+//         if (state.retries === 0) {
+//             onTaskStartedSub.next(state.item);
+//         } else {
+//             onTaskReStartedSub.next(state.item);
+//         }
+//         state.retries++;
+
+//         try {
+//             obs = runTask(state.item);
+//         } catch (error) {
+//             obs = Observable.throw(error);
+//         }
+
+//         if (obs instanceof Observable) {
+//             // It is already an observable, let it be!
+//         } else if (Promise.resolve(obs) === obs) {
+//             obs = Observable.fromPromise(obs);
+//         } else {
+//             obs = Observable.of(obs);
+//         }
+
+//         obs.subscribe({
+//             next: v => {
+//                 state.sub.next(v);
+//                 onTaskResultSub.next([state.item, v]);
+//             },
+//             error: error => {
+//                 if (
+//                     options.isTransientError(error, state.retries) &&
+//                     state.retries < options.maxRetries
+//                 ) {
+//                     putAsync(waitCh, 'RETRY');
+//                     const delay = state.nextDelay;
+//                     state.nextDelay = Math.min(
+//                         Math.max(
+//                             options.nextDelay(delay, state.retries),
+//                             options.minDelay
+//                         ),
+//                         options.maxDelay
+//                     );
+//                     go(function*() {
+//                         yield timeout(delay);
+//                         yield put(retriesCh, state);
+//                     });
+//                 } else {
+//                     putAsync(waitCh, 'ERROR');
+//                     state.sub.error(error);
+//                     onTaskErrorSub.next([state.item, error]);
+//                 }
+//             },
+//             complete: () => {
+//                 putAsync(waitCh, 'COMPLETE');
+//                 state.sub.complete();
+//                 onTaskCompletedSub.next(state.item);
+//             }
+//         });
+//     }
+
+//     function* loop() {
+//         while (true) {
+//             const result = yield alts([retriesCh, inputCh, finishCh], {
+//                 priority: true
+//             });
+
+//             if (result.channel === finishCh) {
+//                 finishSub.next();
+//                 finishSub.complete();
+//                 break;
+//             } else {
+//                 const state = <WorkState>result.value;
+//                 const waitCh = chan();
+//                 spawn(runOneTask(state, waitCh));
+//                 yield take(waitCh);
+
+//                 if (options.interTaskDelay) {
+//                     yield timeout(options.interTaskDelay);
+//                 }
+//             }
+//         }
+
+//         onFinishedSub.next(null);
+//         onFinishedSub.complete();
+//         onTaskStartedSub.complete();
+//         onTaskReStartedSub.complete();
+//         onTaskResultSub.complete();
+//         onTaskErrorSub.complete();
+//         onTaskCompletedSub.complete();
+//     }
+
+//     go(loop);
+
+//     return {
+//         caption: options.caption,
+//         process,
+//         isAlive,
+//         finish,
+//         onFinished$,
+//         onTaskStarted$,
+//         onTaskReStarted$,
+//         onTaskResult$,
+//         onTaskError$,
+//         onTaskCompleted$
+//     };
+// }
