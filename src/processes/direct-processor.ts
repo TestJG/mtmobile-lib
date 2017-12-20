@@ -1,5 +1,5 @@
 import { Observable, Subject, ReplaySubject } from 'rxjs';
-import { assign, objMapValues,  } from '../utils/common';
+import { assign, objMapValues } from '../utils/common';
 import { ObsLike } from '../utils/rxutils';
 import { IProcessor, TaskItem } from './processor.interfaces';
 import { makeRunTask } from './makeRunTask';
@@ -33,18 +33,19 @@ export interface DirectProcessorOptions {
 
 export function startDirectProcessor(
     runTask: (task: TaskItem) => ObsLike<any>,
-    opts?: Partial<DirectProcessorOptions>
+    options?: Partial<DirectProcessorOptions>
 ): IProcessor {
-    const defaultOptions: DirectProcessorOptions = {
-        caption: 'DirProc',
-        maxRetries: 5,
-        minDelay: 10,
-        maxDelay: 5000,
-        nextDelay: (d: number) => d * 5,
-        isTransientError: (error: any) => true
-    };
-
-    const options = assign(defaultOptions, opts || {});
+    const opts = assign(
+        <DirectProcessorOptions>{
+            caption: 'DirProc',
+            maxRetries: 5,
+            minDelay: 10,
+            maxDelay: 5000,
+            nextDelay: (d: number) => d * 5,
+            isTransientError: (error: any) => true
+        },
+        options || {}
+    );
 
     const onFinishedSub = new ReplaySubject<void>(1);
     const onFinished$ = onFinishedSub.asObservable();
@@ -112,43 +113,37 @@ export function startDirectProcessor(
         const between = (value: number, min: number, max: number) =>
             Math.min(Math.max(value, min), max);
 
-        const looper = (retries: number, delay: number): Observable<void> =>
-            Observable.create(obs => {
-                const task = runOnce(retries);
-                task.subscribe({
-                    next: v => {
-                        sub.next(v);
-                        onTaskResultSub.next([item, v]);
-                    },
-                    error: error => {
-                        if (
-                            options.isTransientError(error, retries) &&
-                            retries < options.maxRetries
-                        ) {
-                            const newDelay = between(
-                                options.nextDelay(delay, retries),
-                                options.minDelay,
-                                options.maxDelay
-                            );
-                            Observable.of(1)
-                                .delay(delay)
-                                .flatMap(() => looper(retries + 1, newDelay))
-                                .subscribe(obs);
-                        } else {
-                            sub.error(error);
-                            obs.complete();
-                            onTaskErrorSub.next([item, error]);
-                        }
-                    },
-                    complete: () => {
-                        sub.complete();
-                        obs.complete();
-                        onTaskCompletedSub.next(item);
+        const looper = (retries: number, delay: number) => {
+            const task = runOnce(retries);
+            task.subscribe({
+                next: v => {
+                    sub.next(v);
+                    onTaskResultSub.next([item, v]);
+                },
+                error: error => {
+                    if (
+                        opts.isTransientError(error, retries) &&
+                        retries < opts.maxRetries
+                    ) {
+                        const newDelay = between(
+                            opts.nextDelay(delay, retries),
+                            opts.minDelay,
+                            opts.maxDelay
+                        );
+                        setTimeout(() => looper(retries + 1, newDelay), delay);
+                    } else {
+                        sub.error(error);
+                        onTaskErrorSub.next([item, error]);
                     }
-                });
+                },
+                complete: () => {
+                    sub.complete();
+                    onTaskCompletedSub.next(item);
+                }
             });
+        };
 
-        return looper(1, opts.minDelay).subscribe();
+        looper(1, opts.minDelay);
     };
 
     const process = (item: TaskItem) => {
@@ -162,7 +157,7 @@ export function startDirectProcessor(
     };
 
     return {
-        caption: options.caption,
+        caption: opts.caption,
         process,
         isAlive,
         finish,

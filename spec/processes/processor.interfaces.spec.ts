@@ -1,12 +1,45 @@
 import { Observable } from 'rxjs';
 import {
     fromProcessorToService,
-    IProcessorCore
+    IProcessorCore,
+    task
 } from '../../src/processes/processor.interfaces';
 import { testObs } from '../utils/rxtest';
 
 describe('Processes', () => {
     describe('Processor Interfaces', () => {
+        describe('task', () => {
+            it('should be a function', () =>
+                expect(task).toBeInstanceOf(Function));
+
+            it('when passed a kind should return a TaskItem with given kind', () => {
+                const t = task('taskA');
+                expect(t).not.toBeUndefined();
+                expect(t.kind).toBe('taskA');
+                expect(t.payload).toBeUndefined();
+                expect(t.uid).not.toBeUndefined();
+                expect(t.uid).toHaveLength(32);
+            });
+
+            it('when passed a kind and payload should return a TaskItem with given kind and payload', () => {
+                const t = task('taskA', 42);
+                expect(t).not.toBeUndefined();
+                expect(t.kind).toBe('taskA');
+                expect(t.payload).toBe(42);
+                expect(t.uid).not.toBeUndefined();
+                expect(t.uid).toHaveLength(32);
+            });
+
+            it('when passed all parameters should return a TaskItem with given parameters', () => {
+                const t = task('taskA', 42, '12345');
+                expect(t).not.toBeUndefined();
+                expect(t.kind).toBe('taskA');
+                expect(t.payload).toBe(42);
+                expect(t.uid).not.toBeUndefined();
+                expect(t.uid).toBe('12345');
+            });
+        });
+
         describe('fromProcessorToService', () => {
             it('should be a function', () =>
                 expect(fromProcessorToService).toBeInstanceOf(Function));

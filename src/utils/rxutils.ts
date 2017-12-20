@@ -25,10 +25,15 @@ export const tryTo = <T>(thunk: () => ObsLike<T>): Observable<T> => {
 
 export const rxid = <T>(x: T) => Observable.of(x);
 
-export const rxdelay = <T>(ms: number | Date, scheduler?: IScheduler) =>
+export const rxdelay = <T>(ms: number | Date) =>
     Observable.of(1)
-        .delay(ms, scheduler)
+        .delay(ms)
         .switchMap(() => Observable.empty<T>());
+
+export const rxdelayof = <T>(ms: number | Date, ...arr: T[]) =>
+    Observable.of(1)
+        .delay(ms)
+        .switchMap(() => Observable.of<T>(...arr));
 
 type FuncOf<V> = (...args: any[]) => V;
 type FuncOfObs<V> = FuncOf<Observable<V>>;

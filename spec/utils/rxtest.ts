@@ -7,15 +7,29 @@ export interface DoneCallback {
     fail(error?: string | { message: string }): any;
 }
 
+export interface TestObsOptions<T = any> {
+    anyValue: T;
+    anyError: any;
+    doneTimeout: number;
+    logActualValues: boolean;
+}
+
 export const testObsNotifications = <T = any>(
     actual: Observable<T>,
     expected: Notification<T>[],
     done: DoneCallback,
-    anyValue?: T,
-    anyError?: any,
-    doneTimeout: number | undefined = 1000
+    options?: Partial<TestObsOptions<T>>
 ) => {
     expect(actual).toBeInstanceOf(Observable);
+    const { anyValue, anyError, doneTimeout, logActualValues } = Object.assign(
+        <TestObsOptions<T>>{
+            anyValue: undefined,
+            anyError: undefined,
+            doneTimeout: 1000,
+            logActualValues: false
+        },
+        options
+    );
     let count = 0;
     const inc = () => count++;
     const errorSpy = jasmine.createSpy('error');
@@ -80,6 +94,9 @@ export const testObsNotifications = <T = any>(
 
     actual.subscribe({
         next: actualValue => {
+            if (logActualValues) {
+                console.log('NEXT', actualValue);
+            }
             expect(completeSpy).not.toHaveBeenCalled();
             expect(errorSpy).not.toHaveBeenCalled();
             const expectedNotification = fetchExpected();
@@ -87,6 +104,9 @@ export const testObsNotifications = <T = any>(
             checkKind('N', expectedNotification, actualNotification);
         },
         error: err => {
+            if (logActualValues) {
+                console.log('ERROR', err);
+            }
             expect(completeSpy).not.toHaveBeenCalled();
             expect(errorSpy).not.toHaveBeenCalled();
             const expectedNotification = fetchExpected();
@@ -97,6 +117,9 @@ export const testObsNotifications = <T = any>(
             done();
         },
         complete: () => {
+            if (logActualValues) {
+                console.log('COMPLETE');
+            }
             expect(completeSpy).not.toHaveBeenCalled();
             expect(errorSpy).not.toHaveBeenCalled();
             const expectedNotification = fetchExpected();
@@ -124,8 +147,7 @@ export const testObs = <T = any>(
     expectedValues: T[],
     expectedError: any | undefined,
     done: DoneCallback,
-    anyValue?: T,
-    anyError?: any
+    options?: Partial<TestObsOptions<T>>
 ) =>
     testObsNotifications(
         actual,
@@ -137,21 +159,18 @@ export const testObs = <T = any>(
                     : [Notification.createComplete()]
             ),
         done,
-        anyValue,
-        anyError
+        options
     );
 
 export const testObsValues = <T = any>(
     actual: Observable<T>,
     expected: T[],
     done: DoneCallback,
-    anyValue?: T,
-    anyError?: any
+    options?: Partial<TestObsOptions<T>>
 ) =>
     testObsNotifications(
         actual,
         expected.map(v => Notification.createNext(v)),
         done,
-        anyValue,
-        anyError
+        options
     );
