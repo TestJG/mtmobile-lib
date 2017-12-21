@@ -158,13 +158,17 @@ export function startSequentialProcessor(
                         );
                         work.delay = newDelay;
                         _retryPendingCount++;
+                        console.log("Waiting (" + work.item.kind + ") for another " + newDelay + 'ms for retry #' + work.retries);
+                        setTimeout(() => loop(), 1);
                         setTimeout(() => pushWorkItem(work), newDelay);
                     } else {
+                        setTimeout(() => loop(), 1);
                         work.sub.error(error);
                         onTaskErrorSub.next([work.item, error]);
                     }
                 },
                 complete: () => {
+                    setTimeout(() => loop(), 1);
                     work.sub.complete();
                     onTaskCompletedSub.next(work.item);
                 }
@@ -175,9 +179,7 @@ export function startSequentialProcessor(
         const work = pickWork();
         if (work) {
             runTaskOnce(work);
-
-            // setTimeout(loop, 1);
-        } else if (!_isAlive) {
+        } else if (!_isAlive && _retryPendingCount === 0) {
             // Only once all input and retries has been processed
             _isActive = false;
             finishSub.next();
@@ -196,8 +198,11 @@ export function startSequentialProcessor(
 
     const pushWorkItem = (work: WorkState) => {
         if (work.retries === 0) {
+            console.log('Pushing work ' + work.item.kind);
             inputCh.push(work);
         } else {
+            console.log('Retrying work ' + work.item.kind);
+            _retryPendingCount--;
             retriesCh.push(work);
         }
 

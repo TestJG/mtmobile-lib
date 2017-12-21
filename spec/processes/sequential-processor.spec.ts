@@ -84,10 +84,10 @@ describe('Processes', () => {
                     testObs(
                         Observable.merge(
                             rxdelayof(10, null).switchMap(() =>
-                                processor.process(task('task', 10))
+                                processor.process(task('task1', 10))
                             ),
                             rxdelayof(5, null).switchMap(() =>
-                                processor.process(task('task', 30))
+                                processor.process(task('task2', 30))
                             )
                         ),
                         [30, 10],
@@ -96,7 +96,7 @@ describe('Processes', () => {
                     ));
             });
 
-            describe('Given a simple sequential processor with a bad behaved task', () => {
+            fdescribe('Given a simple sequential processor with a bad behaved task', () => {
                 const runner = makeRunTask({
                     taskA: (item: TaskItem) =>
                         rxdelayof(item.payload, item.payload),
@@ -119,12 +119,12 @@ describe('Processes', () => {
                                 processor.process(task('taskA', 10))
                             ),
                             rxdelayof(5, null).switchMap(() =>
-                                processor.process(task('taskA', 30))
+                                processor.process(task('taskB', 30))
                             )
                         ),
                         [30, 10, 30, 30],
                         null,
-                        done
+                        done, { logActualValues: true }
                     ));
             });
         });
