@@ -3,12 +3,14 @@ import { assign } from '../utils/common';
 import { ObsLike } from '../utils/rxutils';
 import { IProcessor, TaskItem } from './processor.interfaces';
 import { setTimeout } from 'timers';
+import { tryTo } from '../utils';
+import * as _ from 'lodash';
 // import { alts, chan, go, put, putAsync, spawn, take, timeout } from 'js-csp';
 
 interface WorkState {
     item: TaskItem;
     sub: Subject<any>;
-    nextDelay: number;
+    delay: number;
     retries: number;
 }
 
@@ -52,6 +54,7 @@ export interface SequentialProcessorOptions {
      */
     isTransientError: (error: any, retry: number) => boolean;
     caption: string;
+    taskTimeout: number;
 }
 
 /**
@@ -71,6 +74,7 @@ export function startSequentialProcessor(
             maxRetries: 5,
             minDelay: 10,
             maxDelay: 5000,
+            taskTimeout: 5000,
             nextDelay: (d: number) => d * 5,
             isTransientError: (error: any) => true
         },
@@ -83,6 +87,7 @@ export function startSequentialProcessor(
     const finishObs = finishSub.asObservable();
     let _isAlive = true;
     let _isActive = false;
+    let _retryPendingCount = 0;
     let _pickedRetry = false;
 
     const onFinishedSub = new ReplaySubject<void>(1);
@@ -127,7 +132,43 @@ export function startSequentialProcessor(
     };
 
     const runTaskOnce = (work: WorkState) => {
+        if (work.retries === 0) {
+            onTaskStartedSub.next(work.item);
+        } else {
+            onTaskReStartedSub.next(work.item);
+        }
+        work.retries++;
 
+        tryTo(() => runTask(work.item))
+            .timeout(opts.taskTimeout)
+            .subscribe({
+                next: value => {
+                    work.sub.next(value),
+                    onTaskResultSub.next([work.item, value]);
+                },
+                error: error => {
+                    if (
+                        opts.isTransientError(error, work.retries) &&
+                        work.retries < opts.maxRetries
+                    ) {
+                        const newDelay = _.clamp(
+                            opts.nextDelay(work.delay, work.retries),
+                            opts.minDelay,
+                            opts.maxDelay
+                        );
+                        work.delay = newDelay;
+                        _retryPendingCount++;
+                        setTimeout(() => pushWorkItem(work), newDelay);
+                    } else {
+                        work.sub.error(error);
+                        onTaskErrorSub.next([work.item, error]);
+                    }
+                },
+                complete: () => {
+                    work.sub.complete();
+                    onTaskCompletedSub.next(work.item);
+                }
+            });
     };
 
     const loop = () => {
@@ -153,23 +194,33 @@ export function startSequentialProcessor(
         }
     };
 
+    const pushWorkItem = (work: WorkState) => {
+        if (work.retries === 0) {
+            inputCh.push(work);
+        } else {
+            retriesCh.push(work);
+        }
+
+        if (!_isActive) {
+            _isActive = true;
+            setTimeout(loop, opts.interTaskDelay);
+        }
+    };
+
     const process = (item: TaskItem) => {
         if (!_isAlive) {
             return Observable.throw(new Error('worker:finishing'));
         }
 
         const sub = new Subject<any>();
-        inputCh.push({
+        const work: WorkState = {
             item,
             sub,
-            nextDelay: opts.minDelay,
+            delay: opts.minDelay,
             retries: 0
-        });
+        };
 
-        if (!_isActive) {
-            _isActive = true;
-            setTimeout(loop, 1);
-        }
+        pushWorkItem(work);
 
         return sub.asObservable();
     };
