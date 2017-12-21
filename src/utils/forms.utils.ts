@@ -557,6 +557,8 @@ const updateFormItemInternalRec = (
                                         Object.assign(fs, { [key]: newField }),
                                     {}
                                 );
+                        } else {
+                            return prevFields;
                         }
                     }, item.fields);
 
@@ -613,6 +615,8 @@ const updateFormItemInternalRec = (
                                 return prevFields
                                     .slice(0, index)
                                     .concat(prevFields.slice(index + 1));
+                            } else {
+                                return prevFields;
                             }
                         },
                         <FormItem[]>item.fields
