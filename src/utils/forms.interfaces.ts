@@ -36,6 +36,10 @@ export interface FormPart<T = any> extends FormPartState<T> {
     showErrors: boolean;
 }
 
+export interface UpdateFormItemData {
+    relativePath: string;
+}
+
 ////////////////////////////////////////////////////////////////
 //                                                            //
 //                     Field Interfaces                       //

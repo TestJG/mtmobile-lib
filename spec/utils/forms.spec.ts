@@ -35,7 +35,8 @@ import {
     shouldBeBetweenValues,
     shouldNotBeBlank,
     shouldBeLongerThan,
-    ExtraFormInfo
+    ExtraFormInfo,
+    UpdateFormItemData
 } from '../../src/utils';
 
 interface Person {
@@ -1530,6 +1531,49 @@ describe('Utils', () => {
                     isTouched: false
                 });
             });
+
+            describe("When a form is created and an update is applied to all of its pet's fields", () => {
+                const aForm = group(
+                    {
+                        firstName: field(''),
+                        lastName: field(''),
+                        age: field(20),
+                        pets: listing(
+                            [
+                                group(
+                                    { name: field(''), kind: field('') },
+                                    { initValue: newPet('fido', 'dog') }
+                                ),
+                                group(
+                                    { name: field(''), kind: field('') },
+                                    { initValue: newPet('garfield', 'cat') }
+                                )
+                            ],
+                            { initValue: <Pet[]>undefined }
+                        )
+                    },
+                    { initValue: <Person & { pet: Pet[] }>undefined }
+                );
+                const newGroup = setValue(
+                    aForm,
+                    (value: string, data: UpdateFormItemData) =>
+                        `${value.toUpperCase()}/${data.relativePath}`,
+                    'pets[*].*'
+                );
+
+                expectConfig(newGroup, {
+                    initValue: <any>newPersPets('', '', 20, [
+                        newPet('fido', 'dog'),
+                        newPet('garfield', 'cat')
+                    ]),
+                    value: <any>newPersPets('', '', 20, [
+                        newPet('FIDO/pets[0].name', 'DOG/pets[0].kind'),
+                        newPet('GARFIELD/pets[1].name', 'CAT/pets[1].kind')
+                    ]),
+                    isDirty: true,
+                    isTouched: true
+                });
+            });
         });
     });
 });
@@ -1553,34 +1597,84 @@ describe('Utils', () => {
                     expect(updateFormInfo(aField, '', {})).toBe(aField));
 
                 it('When caption change is requested the new caption should be be the given one', () => {
-                    const newField = updateFormInfo(aField, '', { caption: 'New Caption' });
+                    const newField = updateFormInfo(aField, '', {
+                        caption: 'New Caption'
+                    });
                     expect(newField.caption).toBe('New Caption');
                 });
 
                 it('When description change is requested the new description should be be the given one', () => {
-                    const newField = updateFormInfo(aField, '', { description: 'New Description' });
+                    const newField = updateFormInfo(aField, '', {
+                        description: 'New Description'
+                    });
                     expect(newField.description).toBe('New Description');
                 });
 
                 it('When info change is requested the new info should be be the given one', () => {
-                    const newField = updateFormInfo(aField, '', { info: 'New Info' });
+                    const newField = updateFormInfo(aField, '', {
+                        info: 'New Info'
+                    });
                     expect(newField.info).toBe('New Info');
                 });
 
                 it('When changes are requested as a function it should receive the previous extra form item info', () => {
-                    const newField = updateFormInfo(aField, '', (d: ExtraFormInfo) => ({
-                        caption: 'New ' + d.caption.toLowerCase(),
-                        description: 'New ' + d.description.toLowerCase(),
-                        info: 'New ' + d.info.toLowerCase(),
-                    }));
+                    const newField = updateFormInfo(
+                        aField,
+                        '',
+                        (d: ExtraFormInfo) => ({
+                            caption: 'New ' + d.caption.toLowerCase(),
+                            description: 'New ' + d.description.toLowerCase(),
+                            info: 'New ' + d.info.toLowerCase()
+                        })
+                    );
                     expect(newField.caption).toBe('New caption');
                     expect(newField.description).toBe('New desc');
                     expect(newField.info).toBe('New info');
                 });
 
                 it('When caption change is requested the field should not be dirty', () => {
-                    const newField = updateFormInfo(aField, '', { caption: 'New Caption' });
+                    const newField = updateFormInfo(aField, '', {
+                        caption: 'New Caption'
+                    });
                     expect(newField.isDirty).toBe(false);
+                });
+            });
+
+            // combined
+            describe('Given a field is created with custom info', () => {
+                const aForm = group(
+                    {
+                        firstName: field(''),
+                        lastName: field(''),
+                        age: field(20),
+                        pets: listing(
+                            [
+                                group(
+                                    { name: field(''), kind: field('') },
+                                    { initValue: newPet('fido', 'dog') }
+                                ),
+                                group(
+                                    { name: field(''), kind: field('') },
+                                    { initValue: newPet('garfield', 'cat') }
+                                )
+                            ],
+                            { initValue: <Pet[]>undefined }
+                        )
+                    },
+                    { initValue: <Person & { pet: Pet[] }>undefined }
+                );
+
+                it('When changes are requested as a function it should receive the UpdateFormData', () => {
+                    const newForm = updateFormInfo(
+                        aForm,
+                        'pets[1].name',
+                        (d: FormItem, data: UpdateFormItemData) => ({
+                            info: `${d.value}/${data.relativePath}`
+                        })
+                    );
+                    expect(getFormItem(newForm, 'pets[1].name').info).toBe(
+                        'garfield/pets[1].name'
+                    );
                 });
             });
         });
