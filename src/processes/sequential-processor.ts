@@ -100,12 +100,10 @@ export function startSequentialProcessor(
             retriesCh.length
         } ]`;
 
-    const log = (msg: ValueOrFunc<string>) => {
+    const log = (msg: ValueOrFunc<string>, state: boolean = true) => {
         if (opts.logToConsole) {
-            console.log(
-                `${opts.caption}: ${getAsValue(msg)}.\n`,
-                currentState()
-            );
+            const extra = state ? `\n     - ${currentState()}` : '';
+            console.log(`${getAsValue(msg)}.${extra}`);
         }
     };
 
@@ -161,18 +159,22 @@ export function startSequentialProcessor(
     const runTaskOnce = (work: WorkState) => {
         if (work.retries === 0) {
             onTaskStartedSub.next(work.item);
-            log(() => 'RUN - FIRST ' + logWork(work));
+            log(() => 'RUN  - FIRST ' + logWork(work));
         } else {
             onTaskReStartedSub.next(work.item);
-            log(() => 'RUN - RETRY');
+            log(() => 'RUN  - RETRY');
         }
         work.retries++;
 
         tryTo(() => runTask(work.item))
-            .timeout(opts.taskTimeout)
+            // .timeout(opts.taskTimeout)
             .subscribe({
                 next: value => {
-                    log(() => `RUN - NEXT ${JSON.stringify(value)} ${logWork(work)}`);
+                    log(
+                        () =>
+                            `RUN  - NEXT ${JSON.stringify(value)} ` +
+                            logWork(work)
+                    );
                     work.sub.next(value);
                     onTaskResultSub.next([work.item, value]);
                 },
@@ -188,13 +190,18 @@ export function startSequentialProcessor(
                         );
                         work.delay = newDelay;
                         _retryPendingCount++;
-                        log(() => `RUN - ERROR ${JSON.stringify(errorToString(error))} ${logWork(work)}`);
+                        log(
+                            () =>
+                                `RUN  - ERROR ${JSON.stringify(
+                                    errorToString(error)
+                                )} ${logWork(work)}`
+                        );
                         setTimeout(() => loop(), 1);
                         setTimeout(() => pushWorkItem(work), newDelay);
                     } else {
                         work.sub.error(error);
                         onTaskErrorSub.next([work.item, error]);
-                        log(() => `RUN - COMPLETE ${logWork(work)}`);
+                        log(() => `RUN  - COMPLETE ${logWork(work)}`);
                         setTimeout(() => loop(), 1);
                     }
                 },
@@ -242,7 +249,7 @@ export function startSequentialProcessor(
 
         if (!_isActive) {
             _isActive = true;
-            setTimeout(loop, opts.interTaskDelay);
+            setTimeout(loop, 1);
             log('PUSH - REACTIVATE');
         }
     };

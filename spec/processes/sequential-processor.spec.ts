@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { Observable, Observer } from 'rxjs';
 import {
     IProcessorCore,
     TaskItem,
@@ -6,8 +6,58 @@ import {
 } from '../../src/processes/processor.interfaces';
 import { startSequentialProcessor } from '../../src/processes/sequential-processor';
 import { testObs } from '../utils/rxtest';
-import { rxdelay, rxdelayof } from '../../src/utils';
+import { rxdelay, rxdelayof, getAsValue, ValueOrFunc } from '../../src/utils';
 import { makeRunTask } from '../../src/processes/makeRunTask';
+import { setTimeout } from 'timers';
+import { ReplaySubject } from 'rxjs/ReplaySubject';
+
+const delayedSeq = (due: number, step: number = 0) => (
+    values: ValueOrFunc<any>,
+    error?: ValueOrFunc<any>
+): Observable<any> =>
+    // Observable.of(1)
+    //     .delay(due)
+    //     .flatMap<number, any>(() => Observable.from(getAsValue(values)))
+    //     .concatMap((v, i) => {
+    //         console.log("----------------- ", v, i);
+    //         return Observable.of(v).delay(i === 0 ? 0 : step);
+    //     })
+    //     .concat(
+    //         error ? Observable.throw(getAsValue(error)) : Observable.empty()
+    //     )
+    //     .delay(due);
+    Observable.create((obs: Observer<any>) => {
+        const stop = new ReplaySubject<number>();
+        const timer = setTimeout(() => {
+            Observable.from(getAsValue(values))
+                .concat(
+                    error
+                        ? Observable.throw(getAsValue(error))
+                        : Observable.empty()
+                )
+                // .takeUntil(stop)
+                .subscribe(obs);
+                // .subscribe({
+                //     next: v => {
+                //         console.log("NEXT ", v);
+                //         obs.next(v);
+                //     },
+                //     error: e => {
+                //         console.log("Error ", e);
+                //         obs.error(e);
+                //     },
+                //     complete: () => {
+                //         console.log("COMPLETE");
+                //         obs.complete();
+                //     },
+                // });
+        }, 30);
+
+        return () => {
+            // clearTimeout(timer);
+            // stop.next(1);
+        };
+    });
 
 describe('Processes', () => {
     describe('Processor Interfaces', () => {
@@ -99,37 +149,35 @@ describe('Processes', () => {
             describe('Given a simple sequential processor with a bad behaved task', () => {
                 const runner = makeRunTask({
                     taskA: (item: TaskItem) =>
-                        Observable.of(item.payload).delay(item.payload),
-                        // rxdelayof(item.payload, item.payload),
+                        delayedSeq(item.payload, 5)([1, 2, 3]),
                     taskB: (item: TaskItem) =>
-                        Observable.of(item.payload).concat(
-                            Observable.throw(new Error('permanent'))
-                        ).delay(50),
-                        // rxdelayof(item.payload, 1).switchMap(() =>
-                        //     Observable.of(item.payload).concat(
-                        //         Observable.throw(new Error('permanent'))
-                        //     )
-                        // )
+                        delayedSeq(item.payload, 5)(
+                            [10, 20, 30],
+                            new Error('permanent')
+                        )
                 });
                 const processor = startSequentialProcessor(runner, {
                     maxRetries: 3,
                     nextDelay: d => 2 * d,
-                    logToConsole: true,
+                    logToConsole: true
                 });
 
                 it('it should reschedule the failing task 3 times', done =>
                     testObs(
-                        Observable.merge(
-                            rxdelayof(10, null).switchMap(() =>
-                                processor.process(task('taskA', 10))
-                            ),
-                            rxdelayof(5, null).switchMap(() =>
-                                processor.process(task('taskB', 30))
-                            )
-                        ),
-                        [30, 10, 30, 30],
-                        null,
-                        done
+                        delayedSeq(30, 5)([1, 2, 3], new Error('abc')),
+                        // Observable.of(1, 2, 3), // .delay(30),
+                        // processor.process(task('taskB', 30)),
+                        // Observable.merge(
+                        //     delayedSeq(10)(() =>
+                        //         processor.process(task('taskA', 10))
+                        //     ),
+                        //     delayedSeq(5)(() =>
+                        //         processor.process(task('taskB', 30))
+                        //     )
+                        // ),
+                        [10, 20, 30, 10, 20, 30, 10, 20, 30],
+                        null, // new Error('permanent'),
+                        done, { logActualValues: true }
                     ));
             });
         });

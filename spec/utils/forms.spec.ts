@@ -999,7 +999,7 @@ describe('Utils', () => {
                     initValue: 'John',
                     value: '',
                     isDirty: true,
-                    isTouched: true,
+                    isTouched: true
                 });
             });
 
@@ -1385,6 +1385,55 @@ describe('Utils', () => {
                     value: ['', '', 20],
                     isDirty: false,
                     isTouched: false
+                });
+            });
+
+            describe('When a listing is created with errors and then reset', () => {
+                const aListing = listing(
+                    <PersonArrayForm>[
+                        field('John', { validations: shouldNotBeBlank() }),
+                        field('Smith'),
+                        field(20)
+                    ],
+                    { initValue: <PersonArray>undefined }
+                );
+                const newListingDirty = setValue(aListing, '', '[0]');
+                const newListing = resetValue(newListingDirty);
+
+                expectConfig(newListingDirty, {
+                    initValue: ['John', 'Smith', 20],
+                    value: ['', 'Smith', 20],
+                    isDirty: true,
+                    isTouched: true,
+                    isValid: false,
+                    showErrors: false,
+                });
+
+                expectConfig(newListingDirty.fields[0], {
+                    initValue: 'John',
+                    value: '',
+                    isDirty: true,
+                    isTouched: true,
+                    isValid: false,
+                    showErrors: true,
+                });
+
+                expectConfig(newListing, {
+                    initValue: ['John', 'Smith', 20],
+                    value: ['John', 'Smith', 20],
+                    isDirty: false,
+                    isTouched: false,
+                    isValid: true,
+                    showErrors: false,
+                });
+
+                expectConfig(newListing.fields[0], {
+                    initValue: 'John',
+                    value: 'John',
+                    isDirty: false,
+                    isTouched: false,
+                    isValid: true,
+                    showErrors: false,
                 });
             });
 

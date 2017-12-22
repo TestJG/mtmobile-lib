@@ -1,6 +1,7 @@
 import { Observable, Notification } from 'rxjs';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
 import { deepEqual } from '../../src/utils/equality';
+import { joinStr } from '../../src/utils';
 
 export interface DoneCallback {
     (...args: any[]): any;
@@ -14,7 +15,7 @@ export interface TestObsOptions<T = any> {
     logActualValues: boolean;
 }
 
-export const testObsNotifications = <T = any>(
+export const testObsNotificationsOld = <T = any>(
     actual: Observable<T>,
     expected: Notification<T>[],
     done: DoneCallback,
@@ -54,15 +55,18 @@ export const testObsNotifications = <T = any>(
                 return `an unknown notification of kind: ${n.kind}`;
         }
     };
+    const valuesSoFar = [];
     const checkKind = (
         kind: string,
         exp: Notification<T>,
         act: Notification<any>
     ) => {
+        let failed = false;
         if (exp.kind !== kind) {
             const expStr = toStr(exp);
             const actStr = toStr(act);
-            done.fail(`Expected ${expStr}, but ${actStr} was received}`);
+            done.fail(`Expected ${expStr}, but ${actStr} was received}\nValues so far:\n${joinStr('\n', valuesSoFar.map(toStr))}`);
+            failed = true;
         } else if (kind === 'N') {
             if (anyValue === undefined || exp.value !== anyValue) {
                 if (!deepEqual(act.value, exp.value)) {
@@ -71,8 +75,9 @@ export const testObsNotifications = <T = any>(
                             exp.value
                         )}, but value ${JSON.stringify(
                             act.value
-                        )} was received}`
+                        )} was received}\nValues so far:\n${joinStr('\n', valuesSoFar.map(toStr))}`
                     );
+                    failed = true;
                 }
             }
         } else if (kind === 'E') {
@@ -83,10 +88,14 @@ export const testObsNotifications = <T = any>(
                             exp.error.message || exp.error
                         )}, but error ${JSON.stringify(
                             act.error.message || act.error
-                        )} was received}`
+                        )} was received}\nValues so far:\n${joinStr('\n', valuesSoFar.map(toStr))}`
                     );
+                    failed = true;
                 }
             }
+        }
+        if (!failed) {
+            valuesSoFar.push(act);
         }
     };
 
@@ -143,6 +152,50 @@ export const testObsNotifications = <T = any>(
                 done();
             });
     }
+};
+
+export const testObsNotifications = <T = any>(
+    actual: Observable<T>,
+    expected: Notification<T>[],
+    done: DoneCallback,
+    options?: Partial<TestObsOptions<T>>
+) => {
+    // expect(actual).toBeInstanceOf(Observable);
+    const { anyValue, anyError, doneTimeout, logActualValues } = Object.assign(
+        <TestObsOptions<T>>{
+            anyValue: undefined,
+            anyError: undefined,
+            doneTimeout: 1000,
+            logActualValues: false
+        },
+        options
+    );
+
+    const toStr = (n: Notification<any>) => {
+        switch (n.kind) {
+            case 'N':
+                return `a VALUE ${JSON.stringify(n.value)}`;
+            case 'E':
+                return `an ERROR ${JSON.stringify(n.error.message || n.error)}`;
+            case 'C':
+                return `a COMPLETE`;
+            default:
+                return `an unknown notification of kind: ${n.kind}`;
+        }
+    };
+
+    const tout = Observable.of(1).delay(100);
+    actual.timeoutWith(100, ['TIMEOUT']).materialize().do(n => {
+        if (logActualValues) {
+            console.log('RECEIVED ', toStr(n));
+        }
+    }).toArray().subscribe({
+        next: actArr => {
+            expect(actArr).toEqual(expected);
+        },
+        error: e => done.fail(e),
+        complete: () => done()
+    });
 };
 
 export const testObs = <T = any>(

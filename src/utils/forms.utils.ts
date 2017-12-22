@@ -277,7 +277,7 @@ const setFieldValueInternal = (
 
     // Derived
     const isValid = errors.length === 0;
-    const showErrors = !isValid && isTouched;
+    const showErrors = errors.length !== 0 && isTouched;
 
     const newItem = assignOrSame(item, {
         initValue,
@@ -379,7 +379,7 @@ const updateFinalGroupFields = (item: FormGroup) => {
     const isValid =
         errors.length === 0 &&
         Object.keys(item.fields).every(k => item.fields[k].isValid);
-    const showErrors = !isValid && isTouched;
+    const showErrors = errors.length !== 0 && isTouched;
 
     return assignOrSame(item, {
         // Config
@@ -407,7 +407,7 @@ const updateFinalListingFields = (item: FormListing) => {
     // Derived
     const isValid =
         errors.length === 0 && (<FormItem[]>item.fields).every(f => f.isValid);
-    const showErrors = !isValid && isTouched;
+    const showErrors = errors.length !== 0 && isTouched;
 
     return assignOrSame(item, {
         // Config
