@@ -96,20 +96,25 @@ describe('Processes', () => {
                     ));
             });
 
-            fdescribe('Given a simple sequential processor with a bad behaved task', () => {
+            describe('Given a simple sequential processor with a bad behaved task', () => {
                 const runner = makeRunTask({
                     taskA: (item: TaskItem) =>
-                        rxdelayof(item.payload, item.payload),
+                        Observable.of(item.payload).delay(item.payload),
+                        // rxdelayof(item.payload, item.payload),
                     taskB: (item: TaskItem) =>
-                        rxdelayof(item.payload, 1).switchMap(() =>
-                            Observable.of(item.payload).concat(
-                                Observable.throw(new Error('permanent'))
-                            )
-                        )
+                        Observable.of(item.payload).concat(
+                            Observable.throw(new Error('permanent'))
+                        ).delay(50),
+                        // rxdelayof(item.payload, 1).switchMap(() =>
+                        //     Observable.of(item.payload).concat(
+                        //         Observable.throw(new Error('permanent'))
+                        //     )
+                        // )
                 });
                 const processor = startSequentialProcessor(runner, {
                     maxRetries: 3,
-                    nextDelay: d => d
+                    nextDelay: d => 2 * d,
+                    logToConsole: true,
                 });
 
                 it('it should reschedule the failing task 3 times', done =>
@@ -124,7 +129,7 @@ describe('Processes', () => {
                         ),
                         [30, 10, 30, 30],
                         null,
-                        done, { logActualValues: true }
+                        done
                     ));
             });
         });

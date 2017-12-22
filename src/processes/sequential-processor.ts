@@ -1,10 +1,11 @@
 import { Observable, Subject, ReplaySubject } from 'rxjs';
-import { assign } from '../utils/common';
+import { assign, objFilter } from '../utils/common';
 import { ObsLike } from '../utils/rxutils';
 import { IProcessor, TaskItem } from './processor.interfaces';
 import { setTimeout } from 'timers';
 import { tryTo } from '../utils';
 import * as _ from 'lodash';
+import { ValueOrFunc, getAsValue, errorToString } from '../../index';
 // import { alts, chan, go, put, putAsync, spawn, take, timeout } from 'js-csp';
 
 interface WorkState {
@@ -55,6 +56,7 @@ export interface SequentialProcessorOptions {
     isTransientError: (error: any, retry: number) => boolean;
     caption: string;
     taskTimeout: number;
+    logToConsole: boolean;
 }
 
 /**
@@ -76,7 +78,8 @@ export function startSequentialProcessor(
             maxDelay: 5000,
             taskTimeout: 5000,
             nextDelay: (d: number) => d * 5,
-            isTransientError: (error: any) => true
+            isTransientError: (error: any) => true,
+            logToConsole: false
         },
         options
     );
@@ -89,6 +92,27 @@ export function startSequentialProcessor(
     let _isActive = false;
     let _retryPendingCount = 0;
     let _pickedRetry = false;
+
+    const currentState = () =>
+        `[ ${_isAlive ? 'ALIVE' : 'DEAD'} ${
+            _isActive ? 'ACTIVE' : 'WAITING'
+        } PEND:${_retryPendingCount} INP:${inputCh.length} RET:${
+            retriesCh.length
+        } ]`;
+
+    const log = (msg: ValueOrFunc<string>) => {
+        if (opts.logToConsole) {
+            console.log(
+                `${opts.caption}: ${getAsValue(msg)}.\n`,
+                currentState()
+            );
+        }
+    };
+
+    const logWork = (work: WorkState) =>
+        `(${work.item.kind} R:${work.retries} D:${work.delay}ms ID:${
+            work.item.uid
+        })`;
 
     const onFinishedSub = new ReplaySubject<void>(1);
     const onFinished$ = onFinishedSub.asObservable();
@@ -107,6 +131,7 @@ export function startSequentialProcessor(
 
     const finish = () => {
         _isAlive = false;
+        log('FINISH');
         return finishObs;
     };
 
@@ -126,16 +151,20 @@ export function startSequentialProcessor(
             }
             return undefined;
         };
-        return _pickedRetry
+        const result = _pickedRetry
             ? pickInput() || pickRetry()
             : pickRetry() || pickInput();
+
+        return result;
     };
 
     const runTaskOnce = (work: WorkState) => {
         if (work.retries === 0) {
             onTaskStartedSub.next(work.item);
+            log(() => 'RUN - FIRST ' + logWork(work));
         } else {
             onTaskReStartedSub.next(work.item);
+            log(() => 'RUN - RETRY');
         }
         work.retries++;
 
@@ -143,7 +172,8 @@ export function startSequentialProcessor(
             .timeout(opts.taskTimeout)
             .subscribe({
                 next: value => {
-                    work.sub.next(value),
+                    log(() => `RUN - NEXT ${JSON.stringify(value)} ${logWork(work)}`);
+                    work.sub.next(value);
                     onTaskResultSub.next([work.item, value]);
                 },
                 error: error => {
@@ -158,13 +188,14 @@ export function startSequentialProcessor(
                         );
                         work.delay = newDelay;
                         _retryPendingCount++;
-                        console.log("Waiting (" + work.item.kind + ") for another " + newDelay + 'ms for retry #' + work.retries);
+                        log(() => `RUN - ERROR ${JSON.stringify(errorToString(error))} ${logWork(work)}`);
                         setTimeout(() => loop(), 1);
                         setTimeout(() => pushWorkItem(work), newDelay);
                     } else {
-                        setTimeout(() => loop(), 1);
                         work.sub.error(error);
                         onTaskErrorSub.next([work.item, error]);
+                        log(() => `RUN - COMPLETE ${logWork(work)}`);
+                        setTimeout(() => loop(), 1);
                     }
                 },
                 complete: () => {
@@ -177,6 +208,7 @@ export function startSequentialProcessor(
 
     const loop = () => {
         const work = pickWork();
+        log(() => `LOOP - PICK ${!work ? 'nothing' : logWork(work)}`);
         if (work) {
             runTaskOnce(work);
         } else if (!_isAlive && _retryPendingCount === 0) {
@@ -191,29 +223,33 @@ export function startSequentialProcessor(
             onTaskResultSub.complete();
             onTaskErrorSub.complete();
             onTaskCompletedSub.complete();
+            log('LOOP - CLOSED');
         } else {
             _isActive = false;
+            log('LOOP - DEACTIVATED');
         }
     };
 
     const pushWorkItem = (work: WorkState) => {
         if (work.retries === 0) {
-            console.log('Pushing work ' + work.item.kind);
             inputCh.push(work);
+            log(() => 'PUSH - INPUT ' + logWork(work));
         } else {
-            console.log('Retrying work ' + work.item.kind);
             _retryPendingCount--;
             retriesCh.push(work);
+            log(() => 'PUSH - RETRY ' + logWork(work));
         }
 
         if (!_isActive) {
             _isActive = true;
             setTimeout(loop, opts.interTaskDelay);
+            log('PUSH - REACTIVATE');
         }
     };
 
     const process = (item: TaskItem) => {
         if (!_isAlive) {
+            log('PROCESS - NOT ALIVE');
             return Observable.throw(new Error('worker:finishing'));
         }
 
@@ -229,6 +265,8 @@ export function startSequentialProcessor(
 
         return sub.asObservable();
     };
+
+    log('START');
 
     return {
         caption: opts.caption,

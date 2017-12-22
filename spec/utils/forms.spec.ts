@@ -984,6 +984,25 @@ describe('Utils', () => {
                 });
             });
 
+            describe('When a text field is created and an empty value is assigned', () => {
+                const nameField = field('John');
+                const nameFieldCopy = Object.assign({}, nameField);
+                const newNameField = setValue(nameField, '');
+
+                it('the new field should be distinct from the original one', () =>
+                    expect(newNameField).not.toBe(nameField));
+
+                it('the original field should no be changed in place', () =>
+                    expect(nameField).toEqual(nameFieldCopy));
+
+                expectConfig(newNameField, {
+                    initValue: 'John',
+                    value: '',
+                    isDirty: true,
+                    isTouched: true,
+                });
+            });
+
             describe('When a field is created and a coerceable value to the same old value is assigned', () => {
                 const ageField = field(0, {
                     coerce: [mustNotBeBelow(0), mustNotBeAbove(100)],

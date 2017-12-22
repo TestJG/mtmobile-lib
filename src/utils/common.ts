@@ -192,6 +192,23 @@ export const objMap = (mapper: (keyValue: [string, any]) => [string, any]) =>
 export const objMapValues = (mapper: (value: any, key: string) => any) =>
     objMap(([k, v]) => [k, mapper(v, k)]);
 
+export const objFilter = (filter: (keyValue: [string, any]) => boolean) => (
+    source: KeyValuePairs
+): KeyValuePairsMap => {
+    if (typeof source !== 'object') {
+        throw new Error('Must be an object');
+    }
+    const original = toKVMap(source);
+    return toKVMap(
+        Object.keys(original).reduce((obj, key) => {
+            if (filter([key, original[key]])) {
+                return Object.assign(obj, { [key]: original[key] });
+            } else {
+                return obj;
+            }
+        }, {}));
+};
+
 export const normalizeError = (err: any) => {
     if (!err) {
         return new Error('error.unknown');

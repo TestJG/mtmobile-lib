@@ -92,6 +92,9 @@ export const testObsNotifications = <T = any>(
 
     const finished$ = new ReplaySubject(1);
 
+    if (logActualValues) {
+        console.log('SUBSCRIBING');
+    }
     actual.subscribe({
         next: actualValue => {
             if (logActualValues) {

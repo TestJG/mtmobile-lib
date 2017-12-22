@@ -258,7 +258,10 @@ const setFieldValueInternal = (
     opts: SetValueOptions,
     data: UpdateFormItemData
 ): FormItem => {
-    const theValue = getAsValue(value || item.initValue, item.value, data);
+    const theValue =
+        value === undefined
+            ? item.initValue
+            : getAsValue(value, item.value, data);
     const newValue = item.coerce(theValue);
     const sameValue = opts.compareValues && item.value === newValue;
     if (sameValue && theValue === item.value) {
@@ -296,7 +299,10 @@ const createNewGroupFieldsFromDirectValue = (
     data: UpdateFormItemData
 ): FormGroupFields => {
     // If path is empty, the assignment is directed to this group
-    const theValue = getAsValue(value || item.initValue, item.value, data);
+    const theValue =
+        value === undefined
+            ? item.initValue
+            : getAsValue(value, item.value, data);
 
     validateGroupValue(theValue, item.fields);
     const newValue = item.coerce(theValue);
@@ -319,7 +325,10 @@ const createNewListingFieldsFromDirectValue = (
     data: UpdateFormItemData
 ): FormListingFields => {
     // If path is empty, the assignment is directed to this group
-    const theValue = getAsValue(value || item.initValue, item.value, data);
+    const theValue =
+        value === undefined
+            ? item.initValue
+            : getAsValue(value, item.value, data);
 
     validateListingValue(theValue, item.fields);
     const newValue = item.coerce(theValue);
