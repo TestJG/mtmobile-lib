@@ -301,7 +301,8 @@ export const resetValue = <I extends FormItem = FormItem>(
     pathToField: string = ''
 ): I =>
     <I>setValueInternal(item, value, pathToField, {
-        initialization: true
+        initialization: true,
+        compareValues: false,
     });
 
 export const setGroupField = <I extends FormItem = FormItem>(
