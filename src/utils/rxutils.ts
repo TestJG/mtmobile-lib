@@ -25,12 +25,6 @@ export const tryTo = <T>(thunk: () => ObsLike<T>): Observable<T> => {
 
 export const rxid = <T>(x: T) => Observable.of(x);
 
-export const rxdelay = <T>(ms: number | Date) =>
-    Observable.empty<T>().delay(ms);
-
-export const rxdelayof = <T>(ms: number | Date, ...arr: T[]) =>
-    Observable.from(arr).delay(ms);
-
 type FuncOf<V> = (...args: any[]) => V;
 type FuncOfObs<V> = FuncOf<Observable<V>>;
 

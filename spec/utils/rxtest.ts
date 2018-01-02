@@ -185,7 +185,7 @@ export const testObsNotifications = <T = any>(
     };
 
     const tout = Observable.of(1).delay(100);
-    actual.timeoutWith(100, ['TIMEOUT']).materialize().do(n => {
+    actual.timeoutWith(500, ['TIMEOUT']).materialize().do(n => {
         if (logActualValues) {
             console.log('RECEIVED ', toStr(n));
         }

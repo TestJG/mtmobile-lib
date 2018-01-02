@@ -9,7 +9,6 @@ import {
     startDirectProcessor
 } from '../../src/processes/direct-processor';
 import { testObs } from '../utils/rxtest';
-import { rxdelay, rxdelayof } from '../../src/utils';
 
 describe('Processes', () => {
     describe('Processor Interfaces', () => {
@@ -19,7 +18,9 @@ describe('Processes', () => {
 
             describe('When a direct processor is started with well behaved task', () => {
                 const runner = (item: TaskItem) =>
-                    rxdelay(5).concat(Observable.of(1, 2, 3));
+                    Observable.timer(5)
+                        .skip(1)
+                        .concat(Observable.of(1, 2, 3));
                 const proc = startDirectProcessor(runner);
 
                 it('it should process task returning the well behaved result', done =>
@@ -33,7 +34,8 @@ describe('Processes', () => {
 
             describe('When a direct processor is started with bad behaved task', () => {
                 const runner = (item: TaskItem) =>
-                    rxdelay(5)
+                    Observable.timer(5)
+                        .skip(1)
                         .concat(Observable.of(1, 2, 3))
                         .concat(Observable.throw(new Error('permanent')));
                 const proc = startDirectProcessor(runner, {
@@ -53,13 +55,15 @@ describe('Processes', () => {
             describe('When a direct processor is started with temporary error', () => {
                 let errorCount = 0;
                 const runner = (item: TaskItem) =>
-                    rxdelay(5).concat(
-                        ++errorCount <= 2
-                            ? Observable.of(1, 2, 3).concat(
-                                  Observable.throw(new Error('temporary'))
-                              )
-                            : Observable.of(1, 2, 3, 4)
-                    );
+                    Observable.timer(5)
+                        .skip(1)
+                        .concat(
+                            ++errorCount <= 2
+                                ? Observable.of(1, 2, 3).concat(
+                                      Observable.throw(new Error('temporary'))
+                                  )
+                                : Observable.of(1, 2, 3, 4)
+                        );
                 const proc = startDirectProcessor(runner, {
                     maxRetries: 5,
                     nextDelay: d => d
@@ -81,9 +85,14 @@ describe('Processes', () => {
 
             describe('When a simple service is given', () => {
                 const service = {
-                    taskA: () => rxdelay(5).concat(Observable.of(42)),
+                    taskA: () =>
+                        Observable.timer(5)
+                            .skip(1)
+                            .concat(Observable.of(42)),
                     taskB: (p: number) =>
-                        rxdelay(p).concat(Observable.of(p + 10))
+                        Observable.timer(p).concatMap(() =>
+                            Observable.of(p + 10)
+                        )
                 };
                 const processor = fromServiceToDirectProcessor(service);
 
@@ -109,10 +118,10 @@ describe('Processes', () => {
                 it('calling taskA and taskB should run them simultaneously', done =>
                     testObs(
                         Observable.merge(
-                            rxdelayof(10, null).switchMap(() =>
+                            Observable.timer(10).switchMap(() =>
                                 processor.process(task('taskB', 50))
                             ),
-                            rxdelayof(1, null).switchMap(() =>
+                            Observable.timer(1).switchMap(() =>
                                 processor.process(task('taskA'))
                             )
                         ),
@@ -124,22 +133,27 @@ describe('Processes', () => {
 
             describe('When a simple service is given and the processor is finished', () => {
                 const service = {
-                    taskA: () => rxdelay(5).concat(Observable.of(42)),
+                    taskA: () =>
+                        Observable.timer(5)
+                            .skip(1)
+                            .concat(Observable.of(42)),
                     taskB: (p: number) =>
-                        rxdelay(p).concat(Observable.of(p + 10))
+                        Observable.timer(p)
+                            .skip(1)
+                            .concat(Observable.of(p + 10))
                 };
                 const processor = fromServiceToDirectProcessor(service);
 
                 it('calling a task after processor.finish should prevent it from running', done => {
                     testObs(
                         Observable.merge(
-                            rxdelayof(5, null).switchMap(() =>
+                            Observable.timer(5).switchMap(() =>
                                 processor.process(task('taskB', 15))
                             ),
-                            rxdelayof(1, null).switchMap(() =>
+                            Observable.timer(1).switchMap(() =>
                                 processor.process(task('taskA'))
                             ),
-                            rxdelayof(25, null).switchMap(() =>
+                            Observable.timer(25).switchMap(() =>
                                 processor.process(task('taskB', 12))
                             )
                         ),
@@ -147,7 +161,7 @@ describe('Processes', () => {
                         new Error('worker:finishing'),
                         done
                     );
-                    rxdelayof(20, null)
+                    Observable.timer(20)
                         .switchMap(() => processor.finish())
                         .subscribe();
                 });
