@@ -11,7 +11,7 @@ import {
 import { testObs } from '../utils/rxtest';
 
 describe('Processes', () => {
-    describe('Processor Interfaces', () => {
+    describe('Direct Processor', () => {
         describe('startDirectProcessor', () => {
             it('should be a function', () =>
                 expect(startDirectProcessor).toBeInstanceOf(Function));

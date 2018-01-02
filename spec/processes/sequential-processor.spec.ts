@@ -6,13 +6,10 @@ import {
 } from '../../src/processes/processor.interfaces';
 import { startSequentialProcessor } from '../../src/processes/sequential-processor';
 import { testObs } from '../utils/rxtest';
-import { getAsValue, ValueOrFunc } from '../../src/utils';
 import { makeRunTask } from '../../src/processes/makeRunTask';
-import { setTimeout } from 'timers';
-import { ReplaySubject } from 'rxjs/ReplaySubject';
 
 describe('Processes', () => {
-    describe('Processor Interfaces', () => {
+    describe('Sequential Processor', () => {
         describe('startSequentialProcessor', () => {
             it('should be a function', () =>
                 expect(startSequentialProcessor).toBeInstanceOf(Function));
