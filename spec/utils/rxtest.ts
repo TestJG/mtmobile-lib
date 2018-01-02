@@ -65,7 +65,12 @@ export const testObsNotificationsOld = <T = any>(
         if (exp.kind !== kind) {
             const expStr = toStr(exp);
             const actStr = toStr(act);
-            done.fail(`Expected ${expStr}, but ${actStr} was received}\nValues so far:\n${joinStr('\n', valuesSoFar.map(toStr))}`);
+            done.fail(
+                `Expected ${expStr}, but ${actStr} was received}\nValues so far:\n${joinStr(
+                    '\n',
+                    valuesSoFar.map(toStr)
+                )}`
+            );
             failed = true;
         } else if (kind === 'N') {
             if (anyValue === undefined || exp.value !== anyValue) {
@@ -75,7 +80,10 @@ export const testObsNotificationsOld = <T = any>(
                             exp.value
                         )}, but value ${JSON.stringify(
                             act.value
-                        )} was received}\nValues so far:\n${joinStr('\n', valuesSoFar.map(toStr))}`
+                        )} was received}\nValues so far:\n${joinStr(
+                            '\n',
+                            valuesSoFar.map(toStr)
+                        )}`
                     );
                     failed = true;
                 }
@@ -88,7 +96,10 @@ export const testObsNotificationsOld = <T = any>(
                             exp.error.message || exp.error
                         )}, but error ${JSON.stringify(
                             act.error.message || act.error
-                        )} was received}\nValues so far:\n${joinStr('\n', valuesSoFar.map(toStr))}`
+                        )} was received}\nValues so far:\n${joinStr(
+                            '\n',
+                            valuesSoFar.map(toStr)
+                        )}`
                     );
                     failed = true;
                 }
@@ -185,17 +196,22 @@ export const testObsNotifications = <T = any>(
     };
 
     const tout = Observable.of(1).delay(100);
-    actual.timeoutWith(500, ['TIMEOUT']).materialize().do(n => {
-        if (logActualValues) {
-            console.log('RECEIVED ', toStr(n));
-        }
-    }).toArray().subscribe({
-        next: actArr => {
-            expect(actArr).toEqual(expected);
-        },
-        error: e => done.fail(e),
-        complete: () => done()
-    });
+    actual
+        .timeoutWith(500, ['TIMEOUT'])
+        .materialize()
+        .do(n => {
+            if (logActualValues) {
+                console.log('RECEIVED ', toStr(n));
+            }
+        })
+        .toArray()
+        .subscribe({
+            next: actArr => {
+                expect(actArr).toEqual(expected);
+            },
+            error: e => done.fail(e),
+            complete: () => done()
+        });
 };
 
 export const testObs = <T = any>(
@@ -230,3 +246,17 @@ export const testObsValues = <T = any>(
         done,
         options
     );
+
+export const testTaskOf = (due: number, period: number = 0) => (
+    ...args: any[]
+) => (p?: any) =>
+    Observable.timer(due, period)
+        .take(args.length)
+        .concatMap(i => {
+            const elem = args[i];
+            if (i === args.length - 1 && elem instanceof Error) {
+                return Observable.throw(elem);
+            } else {
+                return Observable.of(elem);
+            }
+        });

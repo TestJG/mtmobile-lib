@@ -8,7 +8,7 @@ import {
     fromServiceToDirectProcessor,
     startDirectProcessor
 } from '../../src/processes/direct-processor';
-import { testObs } from '../utils/rxtest';
+import { testObs, testTaskOf } from '../utils/rxtest';
 
 describe('Processes', () => {
     describe('Direct Processor', () => {
@@ -17,10 +17,7 @@ describe('Processes', () => {
                 expect(startDirectProcessor).toBeInstanceOf(Function));
 
             describe('When a direct processor is started with well behaved task', () => {
-                const runner = (item: TaskItem) =>
-                    Observable.timer(5)
-                        .skip(1)
-                        .concat(Observable.of(1, 2, 3));
+                const runner = (item: TaskItem) => testTaskOf(5)(1, 2, 3)();
                 const proc = startDirectProcessor(runner);
 
                 it('it should process task returning the well behaved result', done =>
@@ -34,10 +31,7 @@ describe('Processes', () => {
 
             describe('When a direct processor is started with bad behaved task', () => {
                 const runner = (item: TaskItem) =>
-                    Observable.timer(5)
-                        .skip(1)
-                        .concat(Observable.of(1, 2, 3))
-                        .concat(Observable.throw(new Error('permanent')));
+                    testTaskOf(5)(1, 2, 3, new Error('permanent'))();
                 const proc = startDirectProcessor(runner, {
                     maxRetries: 3,
                     nextDelay: d => d
@@ -54,16 +48,16 @@ describe('Processes', () => {
 
             describe('When a direct processor is started with temporary error', () => {
                 let errorCount = 0;
-                const runner = (item: TaskItem) =>
-                    Observable.timer(5)
-                        .skip(1)
-                        .concat(
-                            ++errorCount <= 2
-                                ? Observable.of(1, 2, 3).concat(
-                                      Observable.throw(new Error('temporary'))
-                                  )
-                                : Observable.of(1, 2, 3, 4)
-                        );
+                const failing = (i, p) =>
+                    testTaskOf(5)(1, 2, 3, new Error('temporary'))();
+                const succeeding = (i, p) => testTaskOf(5)(1, 2, 3, 4)();
+                const runner = (item: TaskItem) => {
+                    if (++errorCount <= 2) {
+                        return failing(errorCount - 1, item.payload);
+                    } else {
+                        return succeeding(errorCount - 1, item.payload);
+                    }
+                };
                 const proc = startDirectProcessor(runner, {
                     maxRetries: 5,
                     nextDelay: d => d
@@ -85,14 +79,8 @@ describe('Processes', () => {
 
             describe('When a simple service is given', () => {
                 const service = {
-                    taskA: () =>
-                        Observable.timer(5)
-                            .skip(1)
-                            .concat(Observable.of(42)),
-                    taskB: (p: number) =>
-                        Observable.timer(p).concatMap(() =>
-                            Observable.of(p + 10)
-                        )
+                    taskA: testTaskOf(5)(42),
+                    taskB: testTaskOf(15)(60)
                 };
                 const processor = fromServiceToDirectProcessor(service);
 
@@ -110,7 +98,7 @@ describe('Processes', () => {
                 it("calling taskB with payload should return the same results as service's taskB", done =>
                     testObs(
                         processor.process(task('taskB', 23)),
-                        [33],
+                        [60],
                         null,
                         done
                     ));

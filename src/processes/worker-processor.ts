@@ -24,9 +24,10 @@ export const createBackgroundWorker = (opts: {
             opts.terminate();
         }
     });
-    return {
-        process: (item: WorkerItem) => {
-            if (item.kind === 'process') {
+
+    const process = (item: WorkerItem) => {
+        switch (item.kind) {
+            case 'process': {
                 opts.processor.process(item.task).subscribe({
                     next: v =>
                         opts.postMessage(<WorkerItemResponse>{
@@ -46,17 +47,32 @@ export const createBackgroundWorker = (opts: {
                             uid: item.uid
                         })
                 });
-            } else if (item.kind === 'terminate') {
-                opts.processor.finish().subscribe();
+                break;
             }
+
+            case 'terminate': {
+                opts.processor.finish().subscribe();
+                break;
+            }
+
+            default:
+                throw new Error('Unknown WorkerItem type: ' + item.kind);
         }
     };
+
+    return { process };
 };
 
+export interface SimpleWorker {
+    onmessage: typeof Worker.prototype.onmessage;
+    postMessage: typeof Worker.prototype.postMessage;
+    terminate: typeof Worker.prototype.terminate;
+}
+
 export const createForegroundWorker = (opts: {
-    workerScript: string;
+    createWorker: () => SimpleWorker;
 }): IProcessorCore => {
-    const worker = new Worker(opts.workerScript);
+    const worker = opts.createWorker();
 
     let status = 'open';
     const terminateUUID = uuid();
