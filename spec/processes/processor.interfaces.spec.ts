@@ -3,7 +3,7 @@ import {
     fromProcessorToService,
     IProcessorCore,
     task
-} from '../../src/processes/processor.interfaces';
+} from '../../src/processes';
 import { testObs } from '../utils/rxtest';
 
 describe('Processes', () => {

@@ -2,11 +2,10 @@ import { Observable, Observer } from 'rxjs';
 import {
     IProcessorCore,
     TaskItem,
-    task
-} from '../../src/processes/processor.interfaces';
-import { startSequentialProcessor } from '../../src/processes/sequential-processor';
+    task,
+    makeRunTask,
+    startSequentialProcessor } from '../../src/processes';
 import { testObs } from '../utils/rxtest';
-import { makeRunTask } from '../../src/processes/makeRunTask';
 
 describe('Processes', () => {
     describe('Sequential Processor', () => {

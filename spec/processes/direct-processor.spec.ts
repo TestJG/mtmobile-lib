@@ -2,12 +2,10 @@ import { Observable } from 'rxjs';
 import {
     IProcessorCore,
     TaskItem,
-    task
-} from '../../src/processes/processor.interfaces';
-import {
+    task,
     fromServiceToDirectProcessor,
     startDirectProcessor
-} from '../../src/processes/direct-processor';
+} from '../../src/processes';
 import { testObs, testTaskOf } from '../utils/rxtest';
 
 describe('Processes', () => {

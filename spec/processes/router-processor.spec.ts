@@ -7,12 +7,10 @@ import {
 import { testObs } from '../utils/rxtest';
 import {
     fromServiceToDirectProcessor,
-    startDirectProcessor
-} from '../../src/processes/direct-processor';
-import {
+    startDirectProcessor,
     startRouterProcessor,
     startRouterProxy
-} from '../../src/processes/router-processor';
+} from '../../src/processes';
 
 describe('Processes', () => {
     describe('Router Processor', () => {

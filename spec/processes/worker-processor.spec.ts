@@ -1,18 +1,14 @@
 import { Observable, Observer } from 'rxjs';
+import { testObs, testTaskOf } from '../utils/rxtest';
 import {
     IProcessorCore,
     TaskItem,
-    task
-} from '../../src/processes/processor.interfaces';
-import { testObs, testTaskOf } from '../utils/rxtest';
-import {
+    task,
     fromServiceToDirectProcessor,
-    startDirectProcessor
-} from '../../src/processes/direct-processor';
-import {
+    startDirectProcessor,
     createBackgroundWorker,
     createForegroundWorker
-} from '../../src/processes/worker-processor';
+} from '../../src/processes';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
 
 describe('Processes', () => {
