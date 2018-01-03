@@ -11,7 +11,6 @@ import {
     rxid,
     makeState
 } from '../../src/utils/rxutils';
-import { setTimeout } from 'timers';
 
 describe('Utils', () => {
     describe('Reactive Utils', () => {

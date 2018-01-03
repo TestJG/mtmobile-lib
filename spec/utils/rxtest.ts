@@ -155,8 +155,7 @@ export const testObsNotificationsOld = <T = any>(
     });
 
     if (typeof doneTimeout === 'number' && doneTimeout > 0) {
-        Observable.of(1)
-            .delay(1000)
+        Observable.timer(1000)
             .takeUntil(finished$)
             .subscribe(() => {
                 done.fail('DONE by custom TIMEOUT');
@@ -176,7 +175,7 @@ export const testObsNotifications = <T = any>(
         <TestObsOptions<T>>{
             anyValue: undefined,
             anyError: undefined,
-            doneTimeout: 1000,
+            doneTimeout: 500,
             logActualValues: false
         },
         options
@@ -197,7 +196,7 @@ export const testObsNotifications = <T = any>(
 
     const tout = Observable.of(1).delay(100);
     actual
-        .timeoutWith(500, ['TIMEOUT'])
+        .timeoutWith(doneTimeout, ['TIMEOUT'])
         .materialize()
         .do(n => {
             if (logActualValues) {
@@ -207,7 +206,11 @@ export const testObsNotifications = <T = any>(
         .toArray()
         .subscribe({
             next: actArr => {
-                expect(actArr).toEqual(expected);
+                try {
+                    expect(actArr).toEqual(expected);
+                } catch(e) {
+                    done.fail(e);
+                }
             },
             error: e => done.fail(e),
             complete: () => done()

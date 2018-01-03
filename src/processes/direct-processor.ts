@@ -177,7 +177,8 @@ export function startDirectProcessor(
  */
 export const fromServiceToDirectProcessor = (
     service: any,
-    caption: string = 'ServProc'
+    caption: string = 'ServProc',
+    options?: Partial<DirectProcessorOptions>
 ): IProcessor =>
     startDirectProcessor(
         makeRunTask(
@@ -185,5 +186,5 @@ export const fromServiceToDirectProcessor = (
                 service
             )
         ),
-        { caption }
+        Object.assign({ caption }, options)
     );

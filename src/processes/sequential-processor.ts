@@ -2,7 +2,6 @@ import { Observable, Subject, ReplaySubject } from 'rxjs';
 import { assign, objFilter } from '../utils/common';
 import { ObsLike } from '../utils/rxutils';
 import { IProcessor, TaskItem } from './processor.interfaces';
-import { setTimeout } from 'timers';
 import { tryTo } from '../utils';
 import * as _ from 'lodash';
 import { ValueOrFunc, getAsValue, errorToString } from '../../index';
