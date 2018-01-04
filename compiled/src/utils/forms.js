@@ -1,4 +1,4 @@
-import { assign, getAsValue } from './common';
+import { id, assign, getAsValue } from './common';
 import { coerceAll } from './coercion';
 import { mergeValidators } from './validation';
 import { checkPathInField, createGroupValue, createListingValue, getAllErrorsInternal, locateInGroupOrFail, locateInListingOrFail, setGroupFieldInternal, setValueInternal, updateListingFieldsInternal, updateFormInfoInternal } from './forms.utils';
@@ -13,7 +13,9 @@ export const field = (initValue, options) => {
         description: '',
         info: undefined,
         coerce: undefined,
-        validations: undefined
+        validations: undefined,
+        initInput: undefined,
+        parser: id,
     }, options);
     const coerce = coerceAll(coerceInit);
     const validator = mergeValidators(validatorInit);
