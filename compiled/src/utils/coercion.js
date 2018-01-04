@@ -1,11 +1,13 @@
-export const coerceAll = (list) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.coerceAll = function (list) {
     if (!list) {
         list = [];
     }
     if (typeof list === 'function') {
         list = [list];
     }
-    return (value) => list.reduce((v, c) => c(v), value);
+    return function (value) { return list.reduce(function (v, c) { return c(v); }, value); };
 };
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -17,19 +19,21 @@ export const coerceAll = (list) => {
 //                     Numerical coercions                    //
 //                                                            //
 ////////////////////////////////////////////////////////////////
-export const mustNotBeBelow = (minValue) => (value) => {
+exports.mustNotBeBelow = function (minValue) { return function (value) {
     if (value < minValue) {
         return minValue;
     }
     return value;
-};
-export const mustNotBeAbove = (maxValue) => (value) => {
+}; };
+exports.mustNotBeAbove = function (maxValue) { return function (value) {
     if (value > maxValue) {
         return maxValue;
     }
     return value;
+}; };
+exports.mustBeBetween = function (minValue, maxValue) {
+    return exports.coerceAll([exports.mustNotBeBelow(minValue), exports.mustNotBeAbove(maxValue)]);
 };
-export const mustBeBetween = (minValue, maxValue) => coerceAll([mustNotBeBelow(minValue), mustNotBeAbove(maxValue)]);
 ////////////////////////////////////////////////////////////////
 //                                                            //
 //                     DateTime coercions                    //

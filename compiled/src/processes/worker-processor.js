@@ -1,29 +1,37 @@
-import { Subject } from 'rxjs';
-import { uuid } from '../utils/common';
-export const createBackgroundWorker = (opts) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var rxjs_1 = require("rxjs");
+var common_1 = require("../utils/common");
+exports.createBackgroundWorker = function (opts) {
     opts.processor.onFinished$.subscribe({
-        complete: () => {
+        complete: function () {
             opts.terminate();
         }
     });
-    const process = (item) => {
+    var process = function (item) {
         switch (item.kind) {
             case 'process': {
                 opts.processor.process(item.task).subscribe({
-                    next: v => opts.postMessage({
-                        kind: 'N',
-                        uid: item.uid,
-                        valueOrError: v
-                    }),
-                    error: err => opts.postMessage({
-                        kind: 'E',
-                        uid: item.uid,
-                        valueOrError: err
-                    }),
-                    complete: () => opts.postMessage({
-                        kind: 'C',
-                        uid: item.uid
-                    })
+                    next: function (v) {
+                        return opts.postMessage({
+                            kind: 'N',
+                            uid: item.uid,
+                            valueOrError: v
+                        });
+                    },
+                    error: function (err) {
+                        return opts.postMessage({
+                            kind: 'E',
+                            uid: item.uid,
+                            valueOrError: err
+                        });
+                    },
+                    complete: function () {
+                        return opts.postMessage({
+                            kind: 'C',
+                            uid: item.uid
+                        });
+                    }
                 });
                 break;
             }
@@ -35,26 +43,26 @@ export const createBackgroundWorker = (opts) => {
                 throw new Error('Unknown WorkerItem type: ' + item.kind);
         }
     };
-    return { process };
+    return { process: process };
 };
-export const createForegroundWorker = (opts) => {
-    const worker = opts.createWorker();
-    const run = opts.run || ((f) => f());
-    let status = 'open';
-    const terminateUUID = uuid();
-    const terminateSub = new Subject();
-    const terminate$ = terminateSub.asObservable();
+exports.createForegroundWorker = function (opts) {
+    var worker = opts.createWorker();
+    var run = opts.run || (function (f) { return f(); });
+    var status = 'open';
+    var terminateUUID = common_1.uuid();
+    var terminateSub = new rxjs_1.Subject();
+    var terminate$ = terminateSub.asObservable();
     terminateSub.subscribe({
-        complete: () => {
+        complete: function () {
             status = 'closed';
-            run(() => worker.terminate());
+            run(function () { return worker.terminate(); });
             // worker.terminate();
         }
     });
-    const observers = new Map();
+    var observers = new Map();
     observers.set(terminateUUID, terminateSub);
-    const isAlive = () => status === 'open';
-    const finish = () => {
+    var isAlive = function () { return status === 'open'; };
+    var finish = function () {
         if (status === 'open') {
             status = 'closing';
             worker.postMessage({
@@ -64,41 +72,41 @@ export const createForegroundWorker = (opts) => {
         }
         return terminate$;
     };
-    const process = (task) => {
-        const id = uuid();
-        const sub = new Subject();
-        const obs$ = sub.asObservable();
+    var process = function (task) {
+        var id = common_1.uuid();
+        var sub = new rxjs_1.Subject();
+        var obs$ = sub.asObservable();
         observers.set(id, sub);
         worker.postMessage({
             kind: 'process',
             uid: id,
-            task
+            task: task
         });
         return obs$;
     };
-    worker.onmessage = msg => {
-        const resp = msg.data;
-        const obs = observers.get(resp.uid);
+    worker.onmessage = function (msg) {
+        var resp = msg.data;
+        var obs = observers.get(resp.uid);
         if (!!obs) {
             switch (resp.kind) {
                 case 'N':
-                    run(() => obs.next(resp.valueOrError));
+                    run(function () { return obs.next(resp.valueOrError); });
                     break;
                 case 'E':
-                    run(() => obs.error(resp.valueOrError));
+                    run(function () { return obs.error(resp.valueOrError); });
                     observers.delete(resp.uid);
                     break;
                 case 'C':
-                    run(() => obs.complete());
+                    run(function () { return obs.complete(); });
                     observers.delete(resp.uid);
                     break;
             }
         }
     };
     return {
-        process,
-        isAlive,
-        finish
+        process: process,
+        isAlive: isAlive,
+        finish: finish
     };
 };
 //# sourceMappingURL=worker-processor.js.map

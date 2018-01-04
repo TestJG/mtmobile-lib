@@ -1,34 +1,36 @@
-import { id, assign, getAsValue } from './common';
-import { coerceAll } from './coercion';
-import { mergeValidators } from './validation';
-import { checkPathInField, createGroupValue, createListingValue, getAllErrorsInternal, locateInGroupOrFail, locateInListingOrFail, setGroupFieldInternal, setValueInternal, updateListingFieldsInternal, updateFormInfoInternal } from './forms.utils';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var common_1 = require("./common");
+var coercion_1 = require("./coercion");
+var validation_1 = require("./validation");
+var forms_utils_1 = require("./forms.utils");
 ////////////////////////////////////////////////////////////////
 //                                                            //
 //                     Initializations                        //
 //                                                            //
 ////////////////////////////////////////////////////////////////
-export const field = (initValue, options) => {
-    const { caption, description, info, coerce: coerceInit, validations: validatorInit } = assign({
+exports.field = function (initValue, options) {
+    var _a = common_1.assign({
         caption: '',
         description: '',
         info: undefined,
         coerce: undefined,
         validations: undefined,
         initInput: undefined,
-        parser: id,
-    }, options);
-    const coerce = coerceAll(coerceInit);
-    const validator = mergeValidators(validatorInit);
-    const result = {
+        parser: common_1.id,
+    }, options), caption = _a.caption, description = _a.description, info = _a.info, coerceInit = _a.coerce, validatorInit = _a.validations;
+    var coerce = coercion_1.coerceAll(coerceInit);
+    var validator = validation_1.mergeValidators(validatorInit);
+    var result = {
         // Type
         type: 'field',
         // Config
-        caption,
-        description,
-        info,
-        initValue,
-        coerce,
-        validator,
+        caption: caption,
+        description: description,
+        info: info,
+        initValue: initValue,
+        coerce: coerce,
+        validator: validator,
         // State
         value: undefined,
         errors: [],
@@ -38,38 +40,38 @@ export const field = (initValue, options) => {
         isValid: true,
         showErrors: false
     };
-    return setValueInternal(result, initValue, '', {
+    return forms_utils_1.setValueInternal(result, initValue, '', {
         affectDirty: false,
         compareValues: false,
         initialization: true
     });
 };
-export const group = (fields, options) => {
+exports.group = function (fields, options) {
     if (!(fields instanceof Object) || fields.constructor !== Object) {
         throw new Error('Group fields must be a plain JS object.');
     }
-    const { caption, description, info, coerce: coerceInit, validations: validatorInit, initValue } = assign({
+    var _a = common_1.assign({
         caption: '',
         description: '',
         info: undefined,
         coerce: undefined,
         validations: undefined,
         initValue: undefined
-    }, options);
-    const coerce = coerceAll(coerceInit);
-    const validator = mergeValidators(validatorInit);
-    const theFields = Object.assign({}, fields);
-    const theInitValue = initValue || createGroupValue(theFields);
-    const result = {
+    }, options), caption = _a.caption, description = _a.description, info = _a.info, coerceInit = _a.coerce, validatorInit = _a.validations, initValue = _a.initValue;
+    var coerce = coercion_1.coerceAll(coerceInit);
+    var validator = validation_1.mergeValidators(validatorInit);
+    var theFields = Object.assign({}, fields);
+    var theInitValue = initValue || forms_utils_1.createGroupValue(theFields);
+    var result = {
         // Type
         type: 'group',
         // Config
-        caption,
-        description,
-        info,
+        caption: caption,
+        description: description,
+        info: info,
         initValue: theInitValue,
-        coerce,
-        validator,
+        coerce: coerce,
+        validator: validator,
         // State
         value: undefined,
         errors: [],
@@ -80,38 +82,38 @@ export const group = (fields, options) => {
         showErrors: false,
         fields: theFields
     };
-    return setValueInternal(result, theInitValue, '', {
+    return forms_utils_1.setValueInternal(result, theInitValue, '', {
         affectDirty: false,
         compareValues: false,
         initialization: true
     });
 };
-export const listing = (fields, options) => {
+exports.listing = function (fields, options) {
     if (!(fields instanceof Array)) {
         throw new Error('Listing fields must be a plain JS Array.');
     }
-    const { caption, description, info, coerce: coerceInit, validations: validatorInit, initValue } = assign({
+    var _a = common_1.assign({
         caption: '',
         description: '',
         info: undefined,
         coerce: undefined,
         validations: undefined,
         initValue: undefined
-    }, options);
-    const coerce = coerceAll(coerceInit);
-    const validator = mergeValidators(validatorInit);
-    const theFields = fields.slice();
-    const theInitValue = initValue || createListingValue(theFields);
-    const result = {
+    }, options), caption = _a.caption, description = _a.description, info = _a.info, coerceInit = _a.coerce, validatorInit = _a.validations, initValue = _a.initValue;
+    var coerce = coercion_1.coerceAll(coerceInit);
+    var validator = validation_1.mergeValidators(validatorInit);
+    var theFields = fields.slice();
+    var theInitValue = initValue || forms_utils_1.createListingValue(theFields);
+    var result = {
         // Type
         type: 'listing',
         // Config
-        caption,
-        description,
-        info,
+        caption: caption,
+        description: description,
+        info: info,
         initValue: theInitValue,
-        coerce,
-        validator,
+        coerce: coerce,
+        validator: validator,
         // State
         value: undefined,
         errors: [],
@@ -122,7 +124,7 @@ export const listing = (fields, options) => {
         showErrors: false,
         fields: theFields
     };
-    return setValueInternal(result, theInitValue, '', {
+    return forms_utils_1.setValueInternal(result, theInitValue, '', {
         affectDirty: false,
         compareValues: false,
         initialization: true
@@ -133,57 +135,69 @@ export const listing = (fields, options) => {
 //                     Form Item Manipulations                //
 //                                                            //
 ////////////////////////////////////////////////////////////////
-export const getFormItem = (item, path = '') => {
+exports.getFormItem = function (item, path) {
+    if (path === void 0) { path = ''; }
     switch (item.type) {
         case 'field': {
-            checkPathInField(path);
+            forms_utils_1.checkPathInField(path);
             return item;
         }
         case 'group': {
             if (!path) {
                 return item;
             }
-            const [_, child, restOfPath] = locateInGroupOrFail(item, path);
-            return getFormItem(child, restOfPath);
+            var _a = forms_utils_1.locateInGroupOrFail(item, path), _1 = _a[0], child = _a[1], restOfPath = _a[2];
+            return exports.getFormItem(child, restOfPath);
         }
         case 'listing': {
             if (!path) {
                 return item;
             }
-            const [_, child, restOfPath] = locateInListingOrFail(item, path);
-            return getFormItem(child, restOfPath);
+            var _b = forms_utils_1.locateInListingOrFail(item, path), _2 = _b[0], child = _b[1], restOfPath = _b[2];
+            return exports.getFormItem(child, restOfPath);
         }
         default:
             throw new Error('getFormItem: Not implemented');
     }
 };
-export const getValue = (item, path = '') => {
-    const child = getFormItem(item, path);
+exports.getValue = function (item, path) {
+    if (path === void 0) { path = ''; }
+    var child = exports.getFormItem(item, path);
     if (!child) {
         return undefined;
     }
     return child.value;
 };
-export const existFormItem = (item, path) => {
+exports.existFormItem = function (item, path) {
     try {
-        return !!getFormItem(item, path);
+        return !!exports.getFormItem(item, path);
     }
     catch (error) {
         return false;
     }
 };
-export const setValue = (item, value, pathToField = '') => setValueInternal(item, value, pathToField);
-export const setValueDoNotTouch = (item, value, pathToField = '') => setValueInternal(item, value, pathToField, {
-    affectDirty: false
-});
-export const resetValue = (item, value = undefined, pathToField = '') => setValueInternal(item, value, pathToField, {
-    initialization: true,
-    compareValues: false,
-});
-export const setGroupField = (item, pathToGroupField, formItem) => setGroupFieldInternal(item, pathToGroupField, formItem);
-export const insertListingFields = (item, pathToListing, newFields, atPosition) => {
-    return updateListingFieldsInternal(item, pathToListing, (fields) => {
-        let theNewFields = getAsValue(newFields);
+exports.setValue = function (item, value, pathToField) {
+    if (pathToField === void 0) { pathToField = ''; }
+    return forms_utils_1.setValueInternal(item, value, pathToField);
+};
+exports.setValueDoNotTouch = function (item, value, pathToField) {
+    if (pathToField === void 0) { pathToField = ''; }
+    return forms_utils_1.setValueInternal(item, value, pathToField, {
+        affectDirty: false
+    });
+};
+exports.resetValue = function (item, value, pathToField) {
+    if (value === void 0) { value = undefined; }
+    if (pathToField === void 0) { pathToField = ''; }
+    return forms_utils_1.setValueInternal(item, value, pathToField, {
+        initialization: true,
+        compareValues: false,
+    });
+};
+exports.setGroupField = function (item, pathToGroupField, formItem) { return forms_utils_1.setGroupFieldInternal(item, pathToGroupField, formItem); };
+exports.insertListingFields = function (item, pathToListing, newFields, atPosition) {
+    return forms_utils_1.updateListingFieldsInternal(item, pathToListing, function (fields) {
+        var theNewFields = common_1.getAsValue(newFields);
         if (!(theNewFields instanceof Array)) {
             theNewFields = [theNewFields];
         }
@@ -191,7 +205,7 @@ export const insertListingFields = (item, pathToListing, newFields, atPosition) 
             return fields.concat(theNewFields);
         }
         else {
-            const pos = atPosition < 0 ? 0 : atPosition;
+            var pos = atPosition < 0 ? 0 : atPosition;
             if (pos === 0) {
                 return theNewFields.concat(fields);
             }
@@ -204,13 +218,14 @@ export const insertListingFields = (item, pathToListing, newFields, atPosition) 
         }
     });
 };
-export const removeListingFields = (item, pathToListing, atPosition, count = 1) => {
-    return updateListingFieldsInternal(item, pathToListing, (fields) => {
+exports.removeListingFields = function (item, pathToListing, atPosition, count) {
+    if (count === void 0) { count = 1; }
+    return forms_utils_1.updateListingFieldsInternal(item, pathToListing, function (fields) {
         return fields
             .slice(0, atPosition)
             .concat(fields.slice(atPosition + count));
     });
 };
-export const updateFormInfo = (item, pathToFormItem, updater) => updateFormInfoInternal(item, pathToFormItem, updater);
-export const getAllErrors = (item) => getAllErrorsInternal(item);
+exports.updateFormInfo = function (item, pathToFormItem, updater) { return forms_utils_1.updateFormInfoInternal(item, pathToFormItem, updater); };
+exports.getAllErrors = function (item) { return forms_utils_1.getAllErrorsInternal(item); };
 //# sourceMappingURL=forms.js.map

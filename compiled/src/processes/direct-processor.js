@@ -1,31 +1,33 @@
-import { Observable, Subject, ReplaySubject } from 'rxjs';
-import { assign, objMapValues } from '../utils/common';
-import { makeRunTask } from './makeRunTask';
-export function startDirectProcessor(runTask, options) {
-    const opts = assign({
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var rxjs_1 = require("rxjs");
+var common_1 = require("../utils/common");
+var makeRunTask_1 = require("./makeRunTask");
+function startDirectProcessor(runTask, options) {
+    var opts = common_1.assign({
         caption: 'DirProc',
         maxRetries: 5,
         minDelay: 10,
         maxDelay: 5000,
-        nextDelay: (d) => d * 5,
-        isTransientError: (error) => true
+        nextDelay: function (d) { return d * 5; },
+        isTransientError: function (error) { return true; }
     }, options || {});
-    const onFinishedSub = new ReplaySubject(1);
-    const onFinished$ = onFinishedSub.asObservable();
-    const onTaskStartedSub = new Subject();
-    const onTaskStarted$ = onTaskStartedSub.asObservable();
-    const onTaskReStartedSub = new Subject();
-    const onTaskReStarted$ = onTaskReStartedSub.asObservable();
-    const onTaskResultSub = new Subject();
-    const onTaskResult$ = onTaskResultSub.asObservable();
-    const onTaskErrorSub = new Subject();
-    const onTaskError$ = onTaskErrorSub.asObservable();
-    const onTaskCompletedSub = new Subject();
-    const onTaskCompleted$ = onTaskCompletedSub.asObservable();
-    let _isAlive = true;
-    let runningCount = 0;
-    const isAlive = () => _isAlive;
-    const closeSubjects = () => {
+    var onFinishedSub = new rxjs_1.ReplaySubject(1);
+    var onFinished$ = onFinishedSub.asObservable();
+    var onTaskStartedSub = new rxjs_1.Subject();
+    var onTaskStarted$ = onTaskStartedSub.asObservable();
+    var onTaskReStartedSub = new rxjs_1.Subject();
+    var onTaskReStarted$ = onTaskReStartedSub.asObservable();
+    var onTaskResultSub = new rxjs_1.Subject();
+    var onTaskResult$ = onTaskResultSub.asObservable();
+    var onTaskErrorSub = new rxjs_1.Subject();
+    var onTaskError$ = onTaskErrorSub.asObservable();
+    var onTaskCompletedSub = new rxjs_1.Subject();
+    var onTaskCompleted$ = onTaskCompletedSub.asObservable();
+    var _isAlive = true;
+    var runningCount = 0;
+    var isAlive = function () { return _isAlive; };
+    var closeSubjects = function () {
         onFinishedSub.next(null);
         onFinishedSub.complete();
         onTaskStartedSub.complete();
@@ -34,7 +36,7 @@ export function startDirectProcessor(runTask, options) {
         onTaskErrorSub.complete();
         onTaskCompletedSub.complete();
     };
-    const finish = () => {
+    var finish = function () {
         if (_isAlive) {
             _isAlive = false;
             if (runningCount === 0) {
@@ -43,9 +45,9 @@ export function startDirectProcessor(runTask, options) {
         }
         return onFinished$;
     };
-    const runOneTask = function (item, sub) {
-        const runOnce = (retries) => {
-            let obs = null;
+    var runOneTask = function (item, sub) {
+        var runOnce = function (retries) {
+            var obs = null;
             if (retries === 1) {
                 onTaskStartedSub.next(item);
             }
@@ -56,39 +58,41 @@ export function startDirectProcessor(runTask, options) {
                 obs = runTask(item);
             }
             catch (error) {
-                obs = Observable.throw(error);
+                obs = rxjs_1.Observable.throw(error);
             }
-            if (obs instanceof Observable) {
+            if (obs instanceof rxjs_1.Observable) {
                 // It is already an observable, let it be!
             }
             else if (Promise.resolve(obs) === obs) {
-                obs = Observable.fromPromise(obs);
+                obs = rxjs_1.Observable.fromPromise(obs);
             }
             else {
-                obs = Observable.of(obs);
+                obs = rxjs_1.Observable.of(obs);
             }
             return obs;
         };
-        const between = (value, min, max) => Math.min(Math.max(value, min), max);
-        const looper = (retries, delay) => {
-            const task = runOnce(retries);
+        var between = function (value, min, max) {
+            return Math.min(Math.max(value, min), max);
+        };
+        var looper = function (retries, delay) {
+            var task = runOnce(retries);
             task.subscribe({
-                next: v => {
+                next: function (v) {
                     sub.next(v);
                     onTaskResultSub.next([item, v]);
                 },
-                error: error => {
+                error: function (error) {
                     if (opts.isTransientError(error, retries) &&
                         retries < opts.maxRetries) {
-                        const newDelay = between(opts.nextDelay(delay, retries), opts.minDelay, opts.maxDelay);
-                        setTimeout(() => looper(retries + 1, newDelay), delay);
+                        var newDelay_1 = between(opts.nextDelay(delay, retries), opts.minDelay, opts.maxDelay);
+                        setTimeout(function () { return looper(retries + 1, newDelay_1); }, delay);
                     }
                     else {
                         sub.error(error);
                         onTaskErrorSub.next([item, error]);
                     }
                 },
-                complete: () => {
+                complete: function () {
                     sub.complete();
                     onTaskCompletedSub.next(item);
                 }
@@ -96,32 +100,36 @@ export function startDirectProcessor(runTask, options) {
         };
         looper(1, opts.minDelay);
     };
-    const process = (item) => {
+    var process = function (item) {
         if (!isAlive()) {
-            return Observable.throw(new Error('worker:finishing'));
+            return rxjs_1.Observable.throw(new Error('worker:finishing'));
         }
         runningCount++;
-        const sub = new Subject();
+        var sub = new rxjs_1.Subject();
         runOneTask(item, sub);
         return sub.asObservable();
     };
     return {
         caption: opts.caption,
-        process,
-        isAlive,
-        finish,
-        onFinished$,
-        onTaskStarted$,
-        onTaskReStarted$,
-        onTaskResult$,
-        onTaskError$,
-        onTaskCompleted$
+        process: process,
+        isAlive: isAlive,
+        finish: finish,
+        onFinished$: onFinished$,
+        onTaskStarted$: onTaskStarted$,
+        onTaskReStarted$: onTaskReStarted$,
+        onTaskResult$: onTaskResult$,
+        onTaskError$: onTaskError$,
+        onTaskCompleted$: onTaskCompleted$
     };
 }
+exports.startDirectProcessor = startDirectProcessor;
 /**
  * Creates an instance of IProcessor (Direct), from a given service, where each
  * TaskItem of the form { kind: 'method', payload: T } is implemented as
  * service.method(payload).
  */
-export const fromServiceToDirectProcessor = (service, caption = 'ServProc', options) => startDirectProcessor(makeRunTask(objMapValues(f => payload => (!!payload ? f(payload) : f()))(service)), Object.assign({ caption }, options));
+exports.fromServiceToDirectProcessor = function (service, caption, options) {
+    if (caption === void 0) { caption = 'ServProc'; }
+    return startDirectProcessor(makeRunTask_1.makeRunTask(common_1.objMapValues(function (f) { return function (payload) { return (!!payload ? f(payload) : f()); }; })(service)), Object.assign({ caption: caption }, options));
+};
 //# sourceMappingURL=direct-processor.js.map

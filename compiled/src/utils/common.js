@@ -1,17 +1,29 @@
-import _ from 'lodash';
-import { shallowEqualStrict } from './equality';
-export const assign = (s, ...u) => Object.assign({}, s, ...u);
-export const assignArray = (s, ...u) => {
-    const arr = s.slice();
-    for (let index = 0; index < u.length; index++) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var lodash_1 = require("lodash");
+var equality_1 = require("./equality");
+exports.assign = function (s) {
+    var u = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        u[_i - 1] = arguments[_i];
+    }
+    return Object.assign.apply(Object, [{}, s].concat(u));
+};
+exports.assignArray = function (s) {
+    var u = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        u[_i - 1] = arguments[_i];
+    }
+    var arr = s.slice();
+    for (var index = 0; index < u.length; index++) {
         if (!(u[index] instanceof Array)) {
             continue;
         }
-        const [pos, other] = u[index];
+        var _a = u[index], pos = _a[0], other = _a[1];
         if (!(typeof pos === 'number') || !(other instanceof Array)) {
             continue;
         }
-        for (let p = 0; p < other.length; p++) {
+        for (var p = 0; p < other.length; p++) {
             if (pos + p < arr.length) {
                 arr[pos + p] = other[p];
             }
@@ -22,68 +34,119 @@ export const assignArray = (s, ...u) => {
     }
     return arr;
 };
-export const getAsValue = (valueOrFunc, ...args) => {
+exports.getAsValue = function (valueOrFunc) {
+    var args = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        args[_i - 1] = arguments[_i];
+    }
     if (typeof valueOrFunc === 'function') {
-        return valueOrFunc(...args);
+        return valueOrFunc.apply(void 0, args);
     }
     else {
         return valueOrFunc;
     }
 };
-export const getAsValueOrError = (valueOrFunc, onError, ...args) => {
+exports.getAsValueOrError = function (valueOrFunc, onError) {
+    var args = [];
+    for (var _i = 2; _i < arguments.length; _i++) {
+        args[_i - 2] = arguments[_i];
+    }
     if (typeof valueOrFunc === 'function') {
         try {
-            return valueOrFunc(...args);
+            return valueOrFunc.apply(void 0, args);
         }
         catch (error) {
-            return getAsValue(onError, error);
+            return exports.getAsValue(onError, error);
         }
     }
     else {
         return valueOrFunc;
     }
 };
-export const assignOrSameWith = (equality, s, ...u) => {
-    const would = assign(s, ...u);
+exports.assignOrSameWith = function (equality, s) {
+    var u = [];
+    for (var _i = 2; _i < arguments.length; _i++) {
+        u[_i - 2] = arguments[_i];
+    }
+    var would = exports.assign.apply(void 0, [s].concat(u));
     if (equality(would, s) === true) {
         return s;
     }
     return would;
 };
-export const assignOrSame = (s, ...u) => assignOrSameWith(shallowEqualStrict, s, ...u);
-export const assignIf = (s, condition, thenAssign) => {
-    if (getAsValue(condition, s)) {
-        return assignOrSame(s, getAsValue(thenAssign, s));
+exports.assignOrSame = function (s) {
+    var u = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        u[_i - 1] = arguments[_i];
+    }
+    return exports.assignOrSameWith.apply(void 0, [equality_1.shallowEqualStrict, s].concat(u));
+};
+exports.assignIf = function (s, condition, thenAssign) {
+    if (exports.getAsValue(condition, s)) {
+        return exports.assignOrSame(s, exports.getAsValue(thenAssign, s));
     }
     else {
         return s;
     }
 };
-export const assignIfMany = (s, ...stages) => stages.reduce((prev, [condition, thenAssign]) => assignIf(prev, condition, thenAssign), s);
-export const assignArrayOrSameWith = (equality, s, ...u) => {
-    const would = assignArray(s, ...u);
+exports.assignIfMany = function (s) {
+    var stages = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        stages[_i - 1] = arguments[_i];
+    }
+    return stages.reduce(function (prev, _a) {
+        var condition = _a[0], thenAssign = _a[1];
+        return exports.assignIf(prev, condition, thenAssign);
+    }, s);
+};
+exports.assignArrayOrSameWith = function (equality, s) {
+    var u = [];
+    for (var _i = 2; _i < arguments.length; _i++) {
+        u[_i - 2] = arguments[_i];
+    }
+    var would = exports.assignArray.apply(void 0, [s].concat(u));
     if (equality(would, s) === true) {
         return s;
     }
     return would;
 };
-export const assignArrayOrSame = (s, ...u) => assignArrayOrSameWith(shallowEqualStrict, s, ...u);
-export const assignArrayIf = (s, condition, thenAssign) => {
-    if (getAsValue(condition, s)) {
-        return assignArrayOrSame(s, getAsValue(thenAssign, s));
+exports.assignArrayOrSame = function (s) {
+    var u = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        u[_i - 1] = arguments[_i];
+    }
+    return exports.assignArrayOrSameWith.apply(void 0, [equality_1.shallowEqualStrict, s].concat(u));
+};
+exports.assignArrayIf = function (s, condition, thenAssign) {
+    if (exports.getAsValue(condition, s)) {
+        return exports.assignArrayOrSame(s, exports.getAsValue(thenAssign, s));
     }
     else {
         return s;
     }
 };
-export const assignArrayIfMany = (s, ...stages) => stages.reduce((prev, [condition, thenAssign]) => assignArrayIf(prev, condition, thenAssign), s);
-export const id = (a) => a;
-export const joinStr = (sep, strs) => strs.reduce((prev, str) => (!!prev && !!str ? prev + sep + str : prev || str), '');
-export function uuid(separator = '-') {
-    const s4 = () => Math.floor((1 + Math.random()) * 0x10000)
-        .toString(16)
-        .substring(1);
-    return joinStr(separator || '', [
+exports.assignArrayIfMany = function (s) {
+    var stages = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        stages[_i - 1] = arguments[_i];
+    }
+    return stages.reduce(function (prev, _a) {
+        var condition = _a[0], thenAssign = _a[1];
+        return exports.assignArrayIf(prev, condition, thenAssign);
+    }, s);
+};
+exports.id = function (a) { return a; };
+exports.joinStr = function (sep, strs) {
+    return strs.reduce(function (prev, str) { return (!!prev && !!str ? prev + sep + str : prev || str); }, '');
+};
+function uuid(separator) {
+    if (separator === void 0) { separator = '-'; }
+    var s4 = function () {
+        return Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
+    };
+    return exports.joinStr(separator || '', [
         s4() + s4(),
         s4(),
         s4(),
@@ -91,41 +154,56 @@ export function uuid(separator = '-') {
         s4() + s4() + s4()
     ]);
 }
-export const toKVArray = (kvs) => {
+exports.uuid = uuid;
+exports.toKVArray = function (kvs) {
     if (kvs instanceof Array) {
         return kvs;
     }
-    return Object.keys(kvs).map(k => [k, kvs[k]]);
+    return Object.keys(kvs).map(function (k) { return [k, kvs[k]]; });
 };
-export const toKVMap = (kvs) => {
+exports.toKVMap = function (kvs) {
     if (kvs instanceof Array) {
-        return kvs.reduce((prev, [key, value]) => Object.assign(prev, { [key]: value }), {});
+        return kvs.reduce(function (prev, _a) {
+            var key = _a[0], value = _a[1];
+            return Object.assign(prev, (_b = {}, _b[key] = value, _b));
+            var _b;
+        }, {});
     }
     return kvs;
 };
-export const objFlatMap = (mapper) => (source) => {
+exports.objFlatMap = function (mapper) { return function (source) {
     if (typeof source !== 'object') {
         throw new Error('Must be an object');
     }
-    return toKVMap(_.flatMap(Object.keys(toKVMap(source)), key => toKVArray(mapper([key, source[key]]))));
+    return exports.toKVMap(lodash_1.default.flatMap(Object.keys(exports.toKVMap(source)), function (key) {
+        return exports.toKVArray(mapper([key, source[key]]));
+    }));
+}; };
+exports.objMap = function (mapper) {
+    return exports.objFlatMap(function (kv) { return [mapper(kv)]; });
 };
-export const objMap = (mapper) => objFlatMap(kv => [mapper(kv)]);
-export const objMapValues = (mapper) => objMap(([k, v]) => [k, mapper(v, k)]);
-export const objFilter = (filter) => (source) => {
+exports.objMapValues = function (mapper) {
+    return exports.objMap(function (_a) {
+        var k = _a[0], v = _a[1];
+        return [k, mapper(v, k)];
+    });
+};
+exports.objFilter = function (filter) { return function (source) {
     if (typeof source !== 'object') {
         throw new Error('Must be an object');
     }
-    const original = toKVMap(source);
-    return toKVMap(Object.keys(original).reduce((obj, key) => {
+    var original = exports.toKVMap(source);
+    return exports.toKVMap(Object.keys(original).reduce(function (obj, key) {
         if (filter([key, original[key]])) {
-            return Object.assign(obj, { [key]: original[key] });
+            return Object.assign(obj, (_a = {}, _a[key] = original[key], _a));
         }
         else {
             return obj;
         }
+        var _a;
     }, {}));
-};
-export const normalizeError = (err) => {
+}; };
+exports.normalizeError = function (err) {
     if (!err) {
         return new Error('error.unknown');
     }
@@ -143,7 +221,8 @@ export const normalizeError = (err) => {
     }
     return new Error('error.unknown');
 };
-export function errorToString(err) {
-    return normalizeError(err).message;
+function errorToString(err) {
+    return exports.normalizeError(err).message;
 }
+exports.errorToString = errorToString;
 //# sourceMappingURL=common.js.map

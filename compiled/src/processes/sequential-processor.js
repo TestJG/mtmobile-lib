@@ -1,15 +1,17 @@
-import { Observable, Subject, ReplaySubject } from 'rxjs';
-import { assign } from '../utils/common';
-import { tryTo } from '../utils';
-import _ from 'lodash';
-import { getAsValue, errorToString } from '../../index';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var rxjs_1 = require("rxjs");
+var common_1 = require("../utils/common");
+var utils_1 = require("../utils");
+var lodash_1 = require("lodash");
+var index_1 = require("../../index");
 /**
  * Creates a Processor that executes sequentially the given tasks
  * @param runTask
  * @param opts
  */
-export function startSequentialProcessor(runTask, options) {
-    const opts = assign({
+function startSequentialProcessor(runTask, options) {
+    var opts = common_1.assign({
         caption: 'SeqProc',
         bufferSize: 1000,
         interTaskDelay: 1,
@@ -17,109 +19,118 @@ export function startSequentialProcessor(runTask, options) {
         minDelay: 10,
         maxDelay: 5000,
         taskTimeout: 5000,
-        nextDelay: (d) => d * 5,
-        isTransientError: (error) => true,
+        nextDelay: function (d) { return d * 5; },
+        isTransientError: function (error) { return true; },
         logToConsole: false
     }, options);
-    const inputCh = [];
-    const retriesCh = [];
-    const finishSub = new Subject();
-    const finishObs = finishSub.asObservable();
-    let _isAlive = true;
-    let _isActive = false;
-    let _retryPendingCount = 0;
-    let _pickedRetry = false;
-    const currentState = () => `[ ${_isAlive ? 'ALIVE' : 'DEAD'} ${_isActive ? 'ACTIVE' : 'WAITING'} PEND:${_retryPendingCount} INP:${inputCh.length} RET:${retriesCh.length} ]`;
-    const log = (msg, state = true) => {
+    var inputCh = [];
+    var retriesCh = [];
+    var finishSub = new rxjs_1.Subject();
+    var finishObs = finishSub.asObservable();
+    var _isAlive = true;
+    var _isActive = false;
+    var _retryPendingCount = 0;
+    var _pickedRetry = false;
+    var currentState = function () {
+        return "[ " + (_isAlive ? 'ALIVE' : 'DEAD') + " " + (_isActive ? 'ACTIVE' : 'WAITING') + " PEND:" + _retryPendingCount + " INP:" + inputCh.length + " RET:" + retriesCh.length + " ]";
+    };
+    var log = function (msg, state) {
+        if (state === void 0) { state = true; }
         if (opts.logToConsole) {
-            const extra = state ? `\n     - ${currentState()}` : '';
-            console.log(`${getAsValue(msg)}.${extra}`);
+            var extra = state ? "\n     - " + currentState() : '';
+            console.log(index_1.getAsValue(msg) + "." + extra);
         }
     };
-    const logWork = (work) => `(${work.item.kind} R:${work.retries} D:${work.delay}ms ID:${work.item.uid})`;
-    const onFinishedSub = new ReplaySubject(1);
-    const onFinished$ = onFinishedSub.asObservable();
-    const onTaskStartedSub = new Subject();
-    const onTaskStarted$ = onTaskStartedSub.asObservable();
-    const onTaskReStartedSub = new Subject();
-    const onTaskReStarted$ = onTaskReStartedSub.asObservable();
-    const onTaskResultSub = new Subject();
-    const onTaskResult$ = onTaskResultSub.asObservable();
-    const onTaskErrorSub = new Subject();
-    const onTaskError$ = onTaskErrorSub.asObservable();
-    const onTaskCompletedSub = new Subject();
-    const onTaskCompleted$ = onTaskCompletedSub.asObservable();
-    const isAlive = () => _isAlive;
-    const finish = () => {
+    var logWork = function (work) {
+        return "(" + work.item.kind + " R:" + work.retries + " D:" + work.delay + "ms ID:" + work.item.uid + ")";
+    };
+    var onFinishedSub = new rxjs_1.ReplaySubject(1);
+    var onFinished$ = onFinishedSub.asObservable();
+    var onTaskStartedSub = new rxjs_1.Subject();
+    var onTaskStarted$ = onTaskStartedSub.asObservable();
+    var onTaskReStartedSub = new rxjs_1.Subject();
+    var onTaskReStarted$ = onTaskReStartedSub.asObservable();
+    var onTaskResultSub = new rxjs_1.Subject();
+    var onTaskResult$ = onTaskResultSub.asObservable();
+    var onTaskErrorSub = new rxjs_1.Subject();
+    var onTaskError$ = onTaskErrorSub.asObservable();
+    var onTaskCompletedSub = new rxjs_1.Subject();
+    var onTaskCompleted$ = onTaskCompletedSub.asObservable();
+    var isAlive = function () { return _isAlive; };
+    var finish = function () {
         _isAlive = false;
         log('FINISH');
         return finishObs;
     };
-    const pickWork = () => {
-        const pickRetry = () => {
+    var pickWork = function () {
+        var pickRetry = function () {
             if (retriesCh.length) {
                 _pickedRetry = true;
                 return retriesCh.shift();
             }
             return undefined;
         };
-        const pickInput = () => {
+        var pickInput = function () {
             if (inputCh.length) {
                 _pickedRetry = false;
                 return inputCh.shift();
             }
             return undefined;
         };
-        const result = _pickedRetry
+        var result = _pickedRetry
             ? pickInput() || pickRetry()
             : pickRetry() || pickInput();
         return result;
     };
-    const runTaskOnce = (work) => {
+    var runTaskOnce = function (work) {
         if (work.retries === 0) {
             onTaskStartedSub.next(work.item);
-            log(() => 'RUN  - FIRST ' + logWork(work));
+            log(function () { return 'RUN  - FIRST ' + logWork(work); });
         }
         else {
             onTaskReStartedSub.next(work.item);
-            log(() => 'RUN  - RETRY');
+            log(function () { return 'RUN  - RETRY'; });
         }
         work.retries++;
-        tryTo(() => runTask(work.item))
+        utils_1.tryTo(function () { return runTask(work.item); })
             .subscribe({
-            next: value => {
-                log(() => `RUN  - NEXT ${JSON.stringify(value)} ` +
-                    logWork(work));
+            next: function (value) {
+                log(function () {
+                    return "RUN  - NEXT " + JSON.stringify(value) + " " +
+                        logWork(work);
+                });
                 work.sub.next(value);
                 onTaskResultSub.next([work.item, value]);
             },
-            error: error => {
+            error: function (error) {
                 if (opts.isTransientError(error, work.retries) &&
                     work.retries < opts.maxRetries) {
-                    const newDelay = _.clamp(opts.nextDelay(work.delay, work.retries), opts.minDelay, opts.maxDelay);
+                    var newDelay = lodash_1.default.clamp(opts.nextDelay(work.delay, work.retries), opts.minDelay, opts.maxDelay);
                     work.delay = newDelay;
                     _retryPendingCount++;
-                    log(() => `RUN  - ERROR ${JSON.stringify(errorToString(error))} ${logWork(work)}`);
-                    setTimeout(() => loop(), 1);
-                    setTimeout(() => pushWorkItem(work), newDelay);
+                    log(function () {
+                        return "RUN  - ERROR " + JSON.stringify(index_1.errorToString(error)) + " " + logWork(work);
+                    });
+                    setTimeout(function () { return loop(); }, 1);
+                    setTimeout(function () { return pushWorkItem(work); }, newDelay);
                 }
                 else {
                     work.sub.error(error);
                     onTaskErrorSub.next([work.item, error]);
-                    log(() => `RUN  - COMPLETE ${logWork(work)}`);
-                    setTimeout(() => loop(), 1);
+                    log(function () { return "RUN  - COMPLETE " + logWork(work); });
+                    setTimeout(function () { return loop(); }, 1);
                 }
             },
-            complete: () => {
-                setTimeout(() => loop(), 1);
+            complete: function () {
+                setTimeout(function () { return loop(); }, 1);
                 work.sub.complete();
                 onTaskCompletedSub.next(work.item);
             }
         });
     };
-    const loop = () => {
-        const work = pickWork();
-        log(() => `LOOP - PICK ${!work ? 'nothing' : logWork(work)}`);
+    var loop = function () {
+        var work = pickWork();
+        log(function () { return "LOOP - PICK " + (!work ? 'nothing' : logWork(work)); });
         if (work) {
             runTaskOnce(work);
         }
@@ -142,15 +153,15 @@ export function startSequentialProcessor(runTask, options) {
             log('LOOP - DEACTIVATED');
         }
     };
-    const pushWorkItem = (work) => {
+    var pushWorkItem = function (work) {
         if (work.retries === 0) {
             inputCh.push(work);
-            log(() => 'PUSH - INPUT ' + logWork(work));
+            log(function () { return 'PUSH - INPUT ' + logWork(work); });
         }
         else {
             _retryPendingCount--;
             retriesCh.push(work);
-            log(() => 'PUSH - RETRY ' + logWork(work));
+            log(function () { return 'PUSH - RETRY ' + logWork(work); });
         }
         if (!_isActive) {
             _isActive = true;
@@ -158,15 +169,15 @@ export function startSequentialProcessor(runTask, options) {
             log('PUSH - REACTIVATE');
         }
     };
-    const process = (item) => {
+    var process = function (item) {
         if (!_isAlive) {
             log('PROCESS - NOT ALIVE');
-            return Observable.throw(new Error('worker:finishing'));
+            return rxjs_1.Observable.throw(new Error('worker:finishing'));
         }
-        const sub = new Subject();
-        const work = {
-            item,
-            sub,
+        var sub = new rxjs_1.Subject();
+        var work = {
+            item: item,
+            sub: sub,
             delay: opts.minDelay,
             retries: 0
         };
@@ -176,17 +187,18 @@ export function startSequentialProcessor(runTask, options) {
     log('START');
     return {
         caption: opts.caption,
-        process,
-        isAlive,
-        finish,
-        onFinished$,
-        onTaskStarted$,
-        onTaskReStarted$,
-        onTaskResult$,
-        onTaskError$,
-        onTaskCompleted$
+        process: process,
+        isAlive: isAlive,
+        finish: finish,
+        onFinished$: onFinished$,
+        onTaskStarted$: onTaskStarted$,
+        onTaskReStarted$: onTaskReStarted$,
+        onTaskResult$: onTaskResult$,
+        onTaskError$: onTaskError$,
+        onTaskCompleted$: onTaskCompleted$
     };
 }
+exports.startSequentialProcessor = startSequentialProcessor;
 // /**
 //  * Creates a Processor that executes sequentially the given tasks
 //  * @param runTask

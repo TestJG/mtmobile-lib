@@ -1,45 +1,63 @@
-import { Observable } from 'rxjs';
-import { normalizeError } from './common';
-export const normalizeErrorOnCatch = (err) => Observable.throw(normalizeError(err));
-export const tryTo = (thunk) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var rxjs_1 = require("rxjs");
+var common_1 = require("./common");
+exports.normalizeErrorOnCatch = function (err) {
+    return rxjs_1.Observable.throw(common_1.normalizeError(err));
+};
+exports.tryTo = function (thunk) {
     try {
-        const result = thunk();
+        var result = thunk();
         if (Promise.resolve(result) === result ||
             typeof result['subscribe'] === 'function') {
-            return Observable.from(result);
+            return rxjs_1.Observable.from(result);
         }
-        return Observable.of(result);
+        return rxjs_1.Observable.of(result);
     }
     catch (error) {
-        return normalizeErrorOnCatch(error);
+        return exports.normalizeErrorOnCatch(error);
     }
 };
-export const rxid = (x) => Observable.of(x);
-export const wrapFunctionStream = (stream) => {
-    const conn = stream.publishReplay(1);
-    const subs = conn.connect();
-    return ((...args) => conn.first().switchMap(f => f(...args)));
+exports.rxid = function (x) { return rxjs_1.Observable.of(x); };
+exports.wrapFunctionStream = function (stream) {
+    var conn = stream.publishReplay(1);
+    var subs = conn.connect();
+    return (function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        return conn.first().switchMap(function (f) { return f.apply(void 0, args); });
+    });
 };
-export const wrapServiceStreamFromNames = (source, names) => {
-    const conn = source.publishReplay(1);
-    const subs = conn.connect();
-    return names.reduce((prev, name) => Object.assign(prev, {
-        [name]: wrapFunctionStream(conn.map(s => s[name]))
-    }), {});
+exports.wrapServiceStreamFromNames = function (source, names) {
+    var conn = source.publishReplay(1);
+    var subs = conn.connect();
+    return names.reduce(function (prev, name) {
+        return Object.assign(prev, (_a = {},
+            _a[name] = exports.wrapFunctionStream(conn.map(function (s) { return s[name]; })),
+            _a));
+        var _a;
+    }, {});
 };
-export const firstMap = (source) => (mapper) => source
-    .first()
-    .map(mapper)
-    .catch(normalizeErrorOnCatch);
-export const firstSwitchMap = (source) => (mapper) => source
-    .first()
-    .switchMap(mapper)
-    .catch(normalizeErrorOnCatch);
-export function makeState(init, updates$) {
-    const state$ = updates$
-        .scan((prev, up) => up(prev), init)
+exports.firstMap = function (source) { return function (mapper) {
+    return source
+        .first()
+        .map(mapper)
+        .catch(exports.normalizeErrorOnCatch);
+}; };
+exports.firstSwitchMap = function (source) { return function (mapper) {
+    return source
+        .first()
+        .switchMap(mapper)
+        .catch(exports.normalizeErrorOnCatch);
+}; };
+function makeState(init, updates$) {
+    var state$ = updates$
+        .scan(function (prev, up) { return up(prev); }, init)
         .publishBehavior(init);
-    const connection = state$.connect();
+    var connection = state$.connect();
     return [state$, connection];
 }
+exports.makeState = makeState;
 //# sourceMappingURL=rxutils.js.map

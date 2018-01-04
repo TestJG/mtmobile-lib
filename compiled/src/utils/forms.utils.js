@@ -1,39 +1,58 @@
-import _ from 'lodash';
-import { deepEqual, shallowEqualStrict } from './equality';
-import { assign, assignOrSame, assignArrayOrSame, assignIfMany, objMapValues, joinStr, getAsValue, errorToString } from './common';
-export const matchGroupPath = (path, allowPatterns = false) => {
-    const match = !allowPatterns
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var lodash_1 = require("lodash");
+var equality_1 = require("./equality");
+var common_1 = require("./common");
+exports.matchGroupPath = function (path, allowPatterns) {
+    if (allowPatterns === void 0) { allowPatterns = false; }
+    var match = !allowPatterns
         ? path.match(/^([^\[\.*]+)(\.([^\.].*)|(\[.*)|())$/)
         : path.match(/^(\*|[^\[\.*]+)(\.([^\.].*)|(\[.*)|())$/);
     if (!match) {
         return null;
     }
-    const step = match[1];
-    const rest = match[3] || match[4] || match[5];
-    return { step, rest };
+    var step = match[1];
+    var rest = match[3] || match[4] || match[5];
+    return { step: step, rest: rest };
 };
-export const matchListingPath = (path, allowPatterns = false) => {
-    const match = !allowPatterns
+exports.matchListingPath = function (path, allowPatterns) {
+    if (allowPatterns === void 0) { allowPatterns = false; }
+    var match = !allowPatterns
         ? path.match(/^\[([\d]+)\](\.([^\.].*)|(\[.*)|())$/)
         : path.match(/^\[(\*|[\d]+)\](\.([^\.].*)|(\[.*)|())$/);
     if (!match) {
         return null;
     }
-    const step = parseInt(match[1], 10);
-    const rest = match[3] || match[4] || match[5];
-    return { step, rest };
+    var step = parseInt(match[1], 10);
+    var rest = match[3] || match[4] || match[5];
+    return { step: step, rest: rest };
 };
-export const appendGroupPath = (groupPath, fieldName) => joinStr('.', [groupPath, fieldName]);
-export const appendListingPath = (listingPath, childIndex) => joinStr('', [listingPath, `[${isNaN(childIndex) ? '*' : childIndex}]`]);
-export const createPath = (steps) => steps.reduce((path, step) => typeof step === 'number'
-    ? appendListingPath(path, step)
-    : appendGroupPath(path, step), '');
-export const createPathOf = (...steps) => createPath(steps);
-export const extractPath = (path, allowPatterns = false) => {
-    const arr = [];
+exports.appendGroupPath = function (groupPath, fieldName) {
+    return common_1.joinStr('.', [groupPath, fieldName]);
+};
+exports.appendListingPath = function (listingPath, childIndex) {
+    return common_1.joinStr('', [listingPath, "[" + (isNaN(childIndex) ? '*' : childIndex) + "]"]);
+};
+exports.createPath = function (steps) {
+    return steps.reduce(function (path, step) {
+        return typeof step === 'number'
+            ? exports.appendListingPath(path, step)
+            : exports.appendGroupPath(path, step);
+    }, '');
+};
+exports.createPathOf = function () {
+    var steps = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        steps[_i] = arguments[_i];
+    }
+    return exports.createPath(steps);
+};
+exports.extractPath = function (path, allowPatterns) {
+    if (allowPatterns === void 0) { allowPatterns = false; }
+    var arr = [];
     while (path !== '') {
-        const match = matchListingPath(path, allowPatterns) ||
-            matchGroupPath(path, allowPatterns);
+        var match = exports.matchListingPath(path, allowPatterns) ||
+            exports.matchGroupPath(path, allowPatterns);
         if (match === null) {
             throw new Error('Invalid form path: ' + JSON.stringify(path));
         }
@@ -42,9 +61,9 @@ export const extractPath = (path, allowPatterns = false) => {
     }
     return arr;
 };
-export const checkPathInField = (path) => {
+exports.checkPathInField = function (path) {
     if (!!path) {
-        throw new Error(`Unexpected path accessing this field: ${JSON.stringify(path)}`);
+        throw new Error("Unexpected path accessing this field: " + JSON.stringify(path));
     }
 };
 ////////////////////////////////////////////////////////////////
@@ -52,187 +71,207 @@ export const checkPathInField = (path) => {
 //                     Field Manipulation                     //
 //                                                            //
 ////////////////////////////////////////////////////////////////
-export const locateInGroupOrFail = (item, path, failIfNoChild = true) => {
-    const match = matchGroupPath(path);
+exports.locateInGroupOrFail = function (item, path, failIfNoChild) {
+    if (failIfNoChild === void 0) { failIfNoChild = true; }
+    var match = exports.matchGroupPath(path);
     if (!match) {
-        throw new Error(`Unexpected path accessing this group: ${JSON.stringify(path)}`);
+        throw new Error("Unexpected path accessing this group: " + JSON.stringify(path));
     }
-    const child = item.fields[match.step];
+    var child = item.fields[match.step];
     if (!child && failIfNoChild) {
-        throw new Error(`Unexpected field name accessing this group: ${JSON.stringify(match.step)}`);
+        throw new Error("Unexpected field name accessing this group: " + JSON.stringify(match.step));
     }
     return [match.step, child, match.rest];
 };
-export const locateInListingOrFail = (item, path, failIfNoChild = true) => {
-    const match = matchListingPath(path);
+exports.locateInListingOrFail = function (item, path, failIfNoChild) {
+    if (failIfNoChild === void 0) { failIfNoChild = true; }
+    var match = exports.matchListingPath(path);
     if (!match) {
-        throw new Error(`Unexpected path accessing this listing: ${JSON.stringify(path)}`);
+        throw new Error("Unexpected path accessing this listing: " + JSON.stringify(path));
     }
-    const child = item.fields[match.step];
+    var child = item.fields[match.step];
     if (!child && failIfNoChild) {
-        throw new Error(`Unexpected field name accessing this group: ${JSON.stringify(match.step)}`);
+        throw new Error("Unexpected field name accessing this group: " + JSON.stringify(match.step));
     }
     return [match.step, child, match.rest];
 };
-const checkGroupValue = (value) => {
+var checkGroupValue = function (value) {
     if (!(value instanceof Object) || value.constructor !== Object) {
         throw new Error('Group value must be a plain JS object.');
     }
 };
-const checkListingValue = (value) => {
+var checkListingValue = function (value) {
     if (!(value instanceof Array)) {
         throw new Error('Listing value must be a plain JS array.');
     }
 };
-const validateGroupValue = (value, fields) => {
+var validateGroupValue = function (value, fields) {
     checkGroupValue(value);
-    const valueNames = Object.keys(value).sort();
-    const fieldNames = Object.keys(fields).sort();
+    var valueNames = Object.keys(value).sort();
+    var fieldNames = Object.keys(fields).sort();
     if (valueNames.length === fieldNames.length) {
-        if (fieldNames.every((fn, i) => fn === valueNames[i])) {
+        if (fieldNames.every(function (fn, i) { return fn === valueNames[i]; })) {
             return;
         }
     }
-    throw new Error(`A group value must have the same names than the group fields. ` +
-        `Expected fields ${JSON.stringify(fieldNames)} but got value names ${JSON.stringify(valueNames)}`);
+    throw new Error("A group value must have the same names than the group fields. " +
+        ("Expected fields " + JSON.stringify(fieldNames) + " but got value names " + JSON.stringify(valueNames)));
 };
-const validateListingValue = (value, fields) => {
+var validateListingValue = function (value, fields) {
     checkListingValue(value);
-    const valueArr = value;
-    const fieldsArr = fields;
+    var valueArr = value;
+    var fieldsArr = fields;
     if (valueArr.length !== fieldsArr.length) {
-        throw new Error(`A listing value must have the same length than the listing fields. ` +
-            `Expected fields length ${JSON.stringify(fieldsArr.length)} but got values length ${JSON.stringify(valueArr.length)}`);
+        throw new Error("A listing value must have the same length than the listing fields. " +
+            ("Expected fields length " + JSON.stringify(fieldsArr.length) + " but got values length " + JSON.stringify(valueArr.length)));
     }
 };
-export const createGroupValue = (fields) => objMapValues((f) => f.value)(fields);
-export const createGroupInitValue = (fields) => objMapValues((f) => f.initValue)(fields);
-export const createListingValue = (fields) => fields.map(f => f.value);
-export const createListingInitValue = (fields) => fields.map(f => f.initValue);
-const updateGroupFields = (value, fields, opts) => Object.keys(fields).reduce((fs, key) => assignOrSame(fs, {
-    [key]: setValueInternal(fs[key], value[key], '', opts)
-}), fields);
-const updateListingFields = (value, fields, opts) => assignArrayOrSame(fields, [
-    0,
-    fields.map((f, index) => setValueInternal(f, value[index], '', opts))
-]);
-const setFieldValueInternal = (item, value, opts, data) => {
-    const theValue = value === undefined
+exports.createGroupValue = function (fields) {
+    return common_1.objMapValues(function (f) { return f.value; })(fields);
+};
+exports.createGroupInitValue = function (fields) {
+    return common_1.objMapValues(function (f) { return f.initValue; })(fields);
+};
+exports.createListingValue = function (fields) {
+    return fields.map(function (f) { return f.value; });
+};
+exports.createListingInitValue = function (fields) {
+    return fields.map(function (f) { return f.initValue; });
+};
+var updateGroupFields = function (value, fields, opts) {
+    return Object.keys(fields).reduce(function (fs, key) {
+        return common_1.assignOrSame(fs, (_a = {},
+            _a[key] = setValueInternal(fs[key], value[key], '', opts),
+            _a));
+        var _a;
+    }, fields);
+};
+var updateListingFields = function (value, fields, opts) {
+    return common_1.assignArrayOrSame(fields, [
+        0,
+        fields.map(function (f, index) {
+            return setValueInternal(f, value[index], '', opts);
+        })
+    ]);
+};
+var setFieldValueInternal = function (item, value, opts, data) {
+    var theValue = value === undefined
         ? item.initValue
-        : getAsValue(value, item.value, data);
-    const newValue = item.coerce(theValue);
-    const sameValue = opts.compareValues && item.value === newValue;
+        : common_1.getAsValue(value, item.value, data);
+    var newValue = item.coerce(theValue);
+    var sameValue = opts.compareValues && item.value === newValue;
     if (sameValue && theValue === item.value) {
         return item;
     }
-    const initValue = opts.initialization ? newValue : item.initValue;
-    const errors = item.validator(newValue);
-    const isDirty = opts.initialization
+    var initValue = opts.initialization ? newValue : item.initValue;
+    var errors = item.validator(newValue);
+    var isDirty = opts.initialization
         ? false
         : item.isDirty || (opts.affectDirty ? !sameValue : false);
-    const isTouched = opts.initialization ? false : isDirty || item.isTouched;
+    var isTouched = opts.initialization ? false : isDirty || item.isTouched;
     // Derived
-    const isValid = errors.length === 0;
-    const showErrors = errors.length !== 0 && isTouched;
-    const newItem = assignOrSame(item, {
-        initValue,
+    var isValid = errors.length === 0;
+    var showErrors = errors.length !== 0 && isTouched;
+    var newItem = common_1.assignOrSame(item, {
+        initValue: initValue,
         value: newValue,
-        isDirty,
-        isTouched,
-        errors,
-        isValid,
-        showErrors
+        isDirty: isDirty,
+        isTouched: isTouched,
+        errors: errors,
+        isValid: isValid,
+        showErrors: showErrors
     });
     return newItem;
 };
-const createNewGroupFieldsFromDirectValue = (item, value, opts, data) => {
+var createNewGroupFieldsFromDirectValue = function (item, value, opts, data) {
     // If path is empty, the assignment is directed to this group
-    const theValue = value === undefined
+    var theValue = value === undefined
         ? item.initValue
-        : getAsValue(value, item.value, data);
+        : common_1.getAsValue(value, item.value, data);
     validateGroupValue(theValue, item.fields);
-    const newValue = item.coerce(theValue);
+    var newValue = item.coerce(theValue);
     validateGroupValue(newValue, item.fields);
-    const sameValue = opts.compareValues && deepEqual(item.value, newValue);
-    if (sameValue && deepEqual(theValue, item.value)) {
+    var sameValue = opts.compareValues && equality_1.deepEqual(item.value, newValue);
+    if (sameValue && equality_1.deepEqual(theValue, item.value)) {
         return null;
     }
     // compute the new fields object, assigning values to the
     // group's children
     return updateGroupFields(newValue, item.fields, opts);
 };
-const createNewListingFieldsFromDirectValue = (item, value, opts, data) => {
+var createNewListingFieldsFromDirectValue = function (item, value, opts, data) {
     // If path is empty, the assignment is directed to this group
-    const theValue = value === undefined
+    var theValue = value === undefined
         ? item.initValue
-        : getAsValue(value, item.value, data);
+        : common_1.getAsValue(value, item.value, data);
     validateListingValue(theValue, item.fields);
-    const newValue = item.coerce(theValue);
+    var newValue = item.coerce(theValue);
     validateListingValue(newValue, item.fields);
-    const sameValue = opts.compareValues && deepEqual(item.value, newValue);
-    if (sameValue && deepEqual(theValue, item.value)) {
+    var sameValue = opts.compareValues && equality_1.deepEqual(item.value, newValue);
+    if (sameValue && equality_1.deepEqual(theValue, item.value)) {
         return null;
     }
     // compute the new fields array, assigning values to the
     // listing's children
     return updateListingFields(newValue, item.fields, opts);
 };
-const createNewGroupFieldsFromChildValue = (item, value, path, opts) => {
-    const [name, child, restOfPath] = locateInGroupOrFail(item, path);
-    const newChild = setValueInternal(child, value, restOfPath, opts);
-    return assignOrSame(item.fields, { [name]: newChild });
+var createNewGroupFieldsFromChildValue = function (item, value, path, opts) {
+    var _a = exports.locateInGroupOrFail(item, path), name = _a[0], child = _a[1], restOfPath = _a[2];
+    var newChild = setValueInternal(child, value, restOfPath, opts);
+    return common_1.assignOrSame(item.fields, (_b = {}, _b[name] = newChild, _b));
+    var _b;
 };
-const createNewListingFieldsFromChildValue = (item, value, path, opts) => {
-    const [index, child, restOfPath] = locateInListingOrFail(item, path);
-    const newChild = setValueInternal(child, value, restOfPath, opts);
-    return assignArrayOrSame(item.fields, [index, [newChild]]);
+var createNewListingFieldsFromChildValue = function (item, value, path, opts) {
+    var _a = exports.locateInListingOrFail(item, path), index = _a[0], child = _a[1], restOfPath = _a[2];
+    var newChild = setValueInternal(child, value, restOfPath, opts);
+    return common_1.assignArrayOrSame(item.fields, [index, [newChild]]);
 };
-const updateFinalGroupFields = (item) => {
-    const computedValue = createGroupValue(item.fields);
-    const computedInitValue = createGroupInitValue(item.fields);
-    const errors = item.validator(computedValue);
-    const isDirty = Object.keys(item.fields).some(k => item.fields[k].isDirty);
-    const isTouched = Object.keys(item.fields).some(k => item.fields[k].isTouched);
+var updateFinalGroupFields = function (item) {
+    var computedValue = exports.createGroupValue(item.fields);
+    var computedInitValue = exports.createGroupInitValue(item.fields);
+    var errors = item.validator(computedValue);
+    var isDirty = Object.keys(item.fields).some(function (k) { return item.fields[k].isDirty; });
+    var isTouched = Object.keys(item.fields).some(function (k) { return item.fields[k].isTouched; });
     // Derived
-    const isValid = errors.length === 0 &&
-        Object.keys(item.fields).every(k => item.fields[k].isValid);
-    const showErrors = errors.length !== 0 && isTouched;
-    return assignOrSame(item, {
+    var isValid = errors.length === 0 &&
+        Object.keys(item.fields).every(function (k) { return item.fields[k].isValid; });
+    var showErrors = errors.length !== 0 && isTouched;
+    return common_1.assignOrSame(item, {
         // Config
         initValue: computedInitValue,
         // State
         value: computedValue,
-        errors,
-        isDirty,
-        isTouched,
+        errors: errors,
+        isDirty: isDirty,
+        isTouched: isTouched,
         // Derived
-        isValid,
-        showErrors
+        isValid: isValid,
+        showErrors: showErrors
     });
 };
-const updateFinalListingFields = (item) => {
-    const computedValue = createListingValue(item.fields);
-    const computedInitValue = createListingInitValue(item.fields);
-    const errors = item.validator(computedValue);
-    const isDirty = item.fields.some(f => f.isDirty);
-    const isTouched = item.fields.some(f => f.isTouched);
+var updateFinalListingFields = function (item) {
+    var computedValue = exports.createListingValue(item.fields);
+    var computedInitValue = exports.createListingInitValue(item.fields);
+    var errors = item.validator(computedValue);
+    var isDirty = item.fields.some(function (f) { return f.isDirty; });
+    var isTouched = item.fields.some(function (f) { return f.isTouched; });
     // Derived
-    const isValid = errors.length === 0 && item.fields.every(f => f.isValid);
-    const showErrors = errors.length !== 0 && isTouched;
-    return assignOrSame(item, {
+    var isValid = errors.length === 0 && item.fields.every(function (f) { return f.isValid; });
+    var showErrors = errors.length !== 0 && isTouched;
+    return common_1.assignOrSame(item, {
         // Config
         initValue: computedInitValue,
         // State
         value: computedValue,
-        errors,
-        isDirty,
-        isTouched,
+        errors: errors,
+        isDirty: isDirty,
+        isTouched: isTouched,
         // Derived
-        isValid,
-        showErrors
+        isValid: isValid,
+        showErrors: showErrors
     });
 };
-const updateGroupFieldsAux = (item, newFields, opts) => {
+var updateGroupFieldsAux = function (item, newFields, opts) {
     if (newFields === null) {
         return item;
     }
@@ -245,16 +284,16 @@ const updateGroupFieldsAux = (item, newFields, opts) => {
         return updateFinalGroupFields(item);
     }
     else {
-        const computedValue = createGroupValue(newFields);
-        return setValueInternal(assignOrSame(item, {
+        var computedValue = exports.createGroupValue(newFields);
+        return setValueInternal(common_1.assignOrSame(item, {
             fields: newFields
-        }), computedValue, '', assign(opts, {
+        }), computedValue, '', common_1.assign(opts, {
             compareValues: true,
             initialization: true
         }));
     }
 };
-const updateListingFieldsAux = (item, newFields, opts) => {
+var updateListingFieldsAux = function (item, newFields, opts) {
     if (newFields === null) {
         return item;
     }
@@ -267,20 +306,20 @@ const updateListingFieldsAux = (item, newFields, opts) => {
         return updateFinalListingFields(item);
     }
     else {
-        const computedValue = createListingValue(newFields);
-        return setValueInternal(assignOrSame(item, {
+        var computedValue = exports.createListingValue(newFields);
+        return setValueInternal(common_1.assignOrSame(item, {
             fields: newFields
-        }), computedValue, '', assign(opts, {
+        }), computedValue, '', common_1.assign(opts, {
             compareValues: true,
             initialization: true
         }));
     }
 };
-const updateFormItemInternalRec = (item, path, updater, opts, data) => {
+var updateFormItemInternalRec = function (item, path, updater, opts, data) {
     try {
         if (path.length === 0) {
-            const newItem = getAsValue(updater, item, data);
-            if (!newItem || shallowEqualStrict(newItem, item)) {
+            var newItem = common_1.getAsValue(updater, item, data);
+            if (!newItem || equality_1.shallowEqualStrict(newItem, item)) {
                 return item;
             }
             return newItem;
@@ -289,70 +328,74 @@ const updateFormItemInternalRec = (item, path, updater, opts, data) => {
             switch (item.type) {
                 case 'field': {
                     throw new Error('Unexpected path accessing this field: ' +
-                        JSON.stringify(createPath(path)));
+                        JSON.stringify(exports.createPath(path)));
                 }
                 case 'group': {
-                    const nameOrWildcard = path[0];
+                    var nameOrWildcard = path[0];
                     if (typeof nameOrWildcard !== 'string') {
                         throw new Error('Unexpected path accessing this group: ' +
-                            JSON.stringify(createPath(path)));
+                            JSON.stringify(exports.createPath(path)));
                     }
-                    const names = nameOrWildcard === '*'
+                    var names = nameOrWildcard === '*'
                         ? Object.keys(item.fields)
                         : [nameOrWildcard];
-                    const restOfPath = path.slice(1);
-                    const newFields = names.reduce((prevFields, name) => {
-                        const child = prevFields[name];
+                    var restOfPath_1 = path.slice(1);
+                    var newFields = names.reduce(function (prevFields, name) {
+                        var child = prevFields[name];
                         if (!child) {
-                            throw new Error(`Unexpected field name accessing this group: ` +
+                            throw new Error("Unexpected field name accessing this group: " +
                                 JSON.stringify(name));
                         }
-                        const newField = updateFormItemInternalRec(child, restOfPath, updater, opts, assign(data, {
-                            relativePath: appendGroupPath(data.relativePath, name)
+                        var newField = updateFormItemInternalRec(child, restOfPath_1, updater, opts, common_1.assign(data, {
+                            relativePath: exports.appendGroupPath(data.relativePath, name)
                         }));
                         if (newField && newField !== child) {
                             // If newField is not null and not the same as previous
                             // child, then set [name] to newField
-                            return assignOrSame(prevFields, {
-                                [name]: newField
-                            });
+                            return common_1.assignOrSame(prevFields, (_a = {},
+                                _a[name] = newField,
+                                _a));
                         }
                         else if (!newField && child) {
                             // If newField is null and there was a previous child,
                             // then remove child from fields
                             return Object.keys(prevFields)
-                                .filter(key => key !== name)
-                                .reduce((fs, key) => Object.assign(fs, { [key]: newField }), {});
+                                .filter(function (key) { return key !== name; })
+                                .reduce(function (fs, key) {
+                                return Object.assign(fs, (_a = {}, _a[key] = newField, _a));
+                                var _a;
+                            }, {});
                         }
                         else {
                             return prevFields;
                         }
+                        var _a;
                     }, item.fields);
                     return updateGroupFieldsAux(item, newFields, opts);
                 }
                 case 'listing': {
-                    const indexOrWildcard = path[0];
+                    var indexOrWildcard = path[0];
                     if (typeof indexOrWildcard !== 'number') {
                         throw new Error('Unexpected path accessing this listing: ' +
-                            JSON.stringify(createPath(path)));
+                            JSON.stringify(exports.createPath(path)));
                     }
-                    const indices = isNaN(indexOrWildcard)
-                        ? _.range(item.fields.length)
+                    var indices = isNaN(indexOrWildcard)
+                        ? lodash_1.default.range(item.fields.length)
                         : [indexOrWildcard];
-                    const restOfPath = path.slice(1);
-                    const newFields = indices.reduce((prevFields, index) => {
-                        const child = prevFields[index];
+                    var restOfPath_2 = path.slice(1);
+                    var newFields = indices.reduce(function (prevFields, index) {
+                        var child = prevFields[index];
                         if (!child) {
-                            throw new Error(`Unexpected field index accessing this listing: ` +
+                            throw new Error("Unexpected field index accessing this listing: " +
                                 JSON.stringify(index));
                         }
-                        const newField = updateFormItemInternalRec(child, restOfPath, updater, opts, assign(data, {
-                            relativePath: appendListingPath(data.relativePath, index)
+                        var newField = updateFormItemInternalRec(child, restOfPath_2, updater, opts, common_1.assign(data, {
+                            relativePath: exports.appendListingPath(data.relativePath, index)
                         }));
                         if (newField) {
                             // If newField is not null and not the same as previous
                             // child, then set [name] to newField
-                            return assignArrayOrSame(prevFields, [
+                            return common_1.assignArrayOrSame(prevFields, [
                                 index,
                                 [newField]
                             ]);
@@ -376,11 +419,11 @@ const updateFormItemInternalRec = (item, path, updater, opts, data) => {
         }
     }
     catch (error) {
-        const msg = `${errorToString(error)} ON ${data.relativePath}`;
+        var msg = common_1.errorToString(error) + " ON " + data.relativePath;
         throw new Error(msg);
     }
 };
-const setValueUpdater = (value, opts) => (item, data) => {
+var setValueUpdater = function (value, opts) { return function (item, data) {
     switch (item.type) {
         case 'field':
             return setFieldValueInternal(item, value, opts, data);
@@ -393,36 +436,40 @@ const setValueUpdater = (value, opts) => (item, data) => {
         default:
             throw new Error('Unknown form item type: ' + JSON.stringify(item.type));
     }
-};
-export function setValueInternal(item, value, path, options) {
-    const opts = Object.assign({
+}; };
+function setValueInternal(item, value, path, options) {
+    var opts = Object.assign({
         affectDirty: true,
         compareValues: true,
         initialization: false
     }, options);
-    return updateFormItemInternalRec(item, extractPath(path, true), setValueUpdater(value, opts), opts, { relativePath: '' });
+    return updateFormItemInternalRec(item, exports.extractPath(path, true), setValueUpdater(value, opts), opts, { relativePath: '' });
 }
-const setGroupFieldUpdater = (fieldName, formItem, opts) => (item, data) => {
+exports.setValueInternal = setValueInternal;
+var setGroupFieldUpdater = function (fieldName, formItem, opts) { return function (item, data) {
     switch (item.type) {
         case 'field':
             throw new Error('Expected to find a group but found a field');
         case 'group': {
-            const child = item.fields[fieldName];
-            const newField = getAsValue(formItem, child, data);
-            let newFields = null;
-            if (newField && newField !== child) {
+            var child = item.fields[fieldName];
+            var newField_1 = common_1.getAsValue(formItem, child, data);
+            var newFields = null;
+            if (newField_1 && newField_1 !== child) {
                 // If newField is not null and not the same as previous
                 // child, then set [fieldName] to newField
-                newFields = assignOrSame(item.fields, {
-                    [fieldName]: newField
-                });
+                newFields = common_1.assignOrSame(item.fields, (_a = {},
+                    _a[fieldName] = newField_1,
+                    _a));
             }
-            else if (!newField && child) {
+            else if (!newField_1 && child) {
                 // If newField is null and there was a previous child,
                 // then remove child from fields
                 newFields = Object.keys(item.fields)
-                    .filter(key => key !== fieldName)
-                    .reduce((fs, key) => Object.assign(fs, { [key]: newField }), {});
+                    .filter(function (key) { return key !== fieldName; })
+                    .reduce(function (fs, key) {
+                    return Object.assign(fs, (_a = {}, _a[key] = newField_1, _a));
+                    var _a;
+                }, {});
             }
             return updateGroupFieldsAux(item, newFields, opts);
         }
@@ -431,15 +478,16 @@ const setGroupFieldUpdater = (fieldName, formItem, opts) => (item, data) => {
         default:
             throw new Error('Unknown form item type: ' + JSON.stringify(item.type));
     }
-};
-export const setGroupFieldInternal = (item, path, formItem, options) => {
-    const opts = Object.assign({
+    var _a;
+}; };
+exports.setGroupFieldInternal = function (item, path, formItem, options) {
+    var opts = Object.assign({
         affectDirty: true,
         compareValues: true,
         initialization: false
     }, options);
-    let newPath = extractPath(path, true);
-    const fieldName = newPath.length >= 1 ? newPath[newPath.length - 1] : undefined;
+    var newPath = exports.extractPath(path, true);
+    var fieldName = newPath.length >= 1 ? newPath[newPath.length - 1] : undefined;
     if (typeof fieldName !== 'string') {
         throw new Error('Missing field name at the end of path: ' + JSON.stringify(path));
     }
@@ -449,12 +497,12 @@ export const setGroupFieldInternal = (item, path, formItem, options) => {
     newPath = newPath.slice(0, newPath.length - 1);
     return updateFormItemInternalRec(item, newPath, setGroupFieldUpdater(fieldName, formItem, opts), opts, { relativePath: '' });
 };
-const updateListingFieldsUpdater = (fields, opts) => (item, data) => {
+var updateListingFieldsUpdater = function (fields, opts) { return function (item, data) {
     switch (item.type) {
         case 'field':
             throw new Error('Expected to find a group but found a field');
         case 'listing': {
-            const newFields = getAsValue(fields, item.fields, data);
+            var newFields = common_1.getAsValue(fields, item.fields, data);
             return updateListingFieldsAux(item, newFields, opts);
         }
         case 'group':
@@ -462,41 +510,47 @@ const updateListingFieldsUpdater = (fields, opts) => (item, data) => {
         default:
             throw new Error('Unknown form item type: ' + JSON.stringify(item.type));
     }
-};
-export const updateListingFieldsInternal = (item, path, fields, options) => {
-    const opts = Object.assign({
+}; };
+exports.updateListingFieldsInternal = function (item, path, fields, options) {
+    var opts = Object.assign({
         affectDirty: true,
         compareValues: true,
         initialization: false
     }, options);
-    return updateFormItemInternalRec(item, extractPath(path, true), updateListingFieldsUpdater(fields, opts), opts, { relativePath: '' });
+    return updateFormItemInternalRec(item, exports.extractPath(path, true), updateListingFieldsUpdater(fields, opts), opts, { relativePath: '' });
 };
-export const getAllErrorsInternalRec = (item, path) => {
-    const currentErrors = !item.errors.length
+exports.getAllErrorsInternalRec = function (item, path) {
+    var currentErrors = !item.errors.length
         ? []
-        : [{ path, item, errors: item.errors }];
+        : [{ path: path, item: item, errors: item.errors }];
     switch (item.type) {
         case 'field': {
             return currentErrors;
         }
         case 'group': {
-            const fieldErrors = _.flatMap(Object.keys(item.fields), key => getAllErrorsInternalRec(item.fields[key], appendGroupPath(path, key)));
+            var fieldErrors = lodash_1.default.flatMap(Object.keys(item.fields), function (key) {
+                return exports.getAllErrorsInternalRec(item.fields[key], exports.appendGroupPath(path, key));
+            });
             return currentErrors.concat(fieldErrors);
         }
         case 'listing': {
-            const fieldErrors = _.flatMap(item.fields, (field, index) => getAllErrorsInternalRec(field, appendListingPath(path, index)));
+            var fieldErrors = lodash_1.default.flatMap(item.fields, function (field, index) {
+                return exports.getAllErrorsInternalRec(field, exports.appendListingPath(path, index));
+            });
             return currentErrors.concat(fieldErrors);
         }
     }
 };
-export const updateFormInfoInternal = (item, pathToFormItem, updater) => {
-    return updateFormItemInternalRec(item, extractPath(pathToFormItem, true), (formItem, data) => {
-        const newInfo = getAsValue(updater, formItem, data);
-        return assignIfMany(formItem, [newInfo.caption !== undefined, { caption: newInfo.caption }], [
+exports.updateFormInfoInternal = function (item, pathToFormItem, updater) {
+    return updateFormItemInternalRec(item, exports.extractPath(pathToFormItem, true), function (formItem, data) {
+        var newInfo = common_1.getAsValue(updater, formItem, data);
+        return common_1.assignIfMany(formItem, [newInfo.caption !== undefined, { caption: newInfo.caption }], [
             newInfo.description !== undefined,
             { description: newInfo.description }
         ], [newInfo.info !== undefined, { info: newInfo.info }]);
     }, { affectDirty: false, initialization: false, compareValues: false }, { relativePath: '' });
 };
-export const getAllErrorsInternal = (item) => getAllErrorsInternalRec(item, '');
+exports.getAllErrorsInternal = function (item) {
+    return exports.getAllErrorsInternalRec(item, '');
+};
 //# sourceMappingURL=forms.utils.js.map

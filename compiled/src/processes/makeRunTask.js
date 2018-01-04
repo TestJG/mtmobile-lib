@@ -1,18 +1,21 @@
-import { Observable } from 'rxjs';
-import { tryTo } from '../utils/rxutils';
-export function makeRunTask(runners) {
-    return (task) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var rxjs_1 = require("rxjs");
+var rxutils_1 = require("../utils/rxutils");
+function makeRunTask(runners) {
+    return function (task) {
         if (!task) {
-            return Observable.throw(new Error('argument.null.task'));
+            return rxjs_1.Observable.throw(new Error('argument.null.task'));
         }
         if (!task.kind) {
-            return Observable.throw(new Error('argument.null.task.kind'));
+            return rxjs_1.Observable.throw(new Error('argument.null.task.kind'));
         }
-        const runner = runners[task.kind];
+        var runner = runners[task.kind];
         if (!runner) {
-            return Observable.throw(new Error(`unknown.task:${task.kind}`));
+            return rxjs_1.Observable.throw(new Error("unknown.task:" + task.kind));
         }
-        return tryTo(() => runner(task.payload));
+        return rxutils_1.tryTo(function () { return runner(task.payload); });
     };
 }
+exports.makeRunTask = makeRunTask;
 //# sourceMappingURL=makeRunTask.js.map

@@ -1,67 +1,91 @@
-import { Observable } from 'rxjs';
-import { assign } from '../utils/common';
-export function startRouterProcessor(routes, opts) {
-    const routeKeys = Object.keys(routes);
-    const defaultOptions = {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var rxjs_1 = require("rxjs");
+var common_1 = require("../utils/common");
+function startRouterProcessor(routes, opts) {
+    var routeKeys = Object.keys(routes);
+    var defaultOptions = {
         caption: 'RtrProc',
         routeSeparator: '/'
     };
-    const options = assign(defaultOptions, opts || {});
-    const isAlive = () => routeKeys.some(key => routes[key].isAlive());
-    const finish = () => Observable.merge(...routeKeys.map(key => routes[key].finish())).last();
-    const process = (task) => {
-        const pos = task.kind.indexOf(options.routeSeparator);
+    var options = common_1.assign(defaultOptions, opts || {});
+    var isAlive = function () { return routeKeys.some(function (key) { return routes[key].isAlive(); }); };
+    var finish = function () {
+        return rxjs_1.Observable.merge.apply(rxjs_1.Observable, routeKeys.map(function (key) { return routes[key].finish(); })).last();
+    };
+    var process = function (task) {
+        var pos = task.kind.indexOf(options.routeSeparator);
         if (pos < 0) {
-            return Observable.throw(new Error('argument.invalid.task.kind'));
+            return rxjs_1.Observable.throw(new Error('argument.invalid.task.kind'));
         }
-        const prefix = task.kind.substr(0, pos);
-        const route = routes[prefix];
+        var prefix = task.kind.substr(0, pos);
+        var route = routes[prefix];
         if (!route) {
-            return Observable.throw(new Error('argument.invalid.task.prefix'));
+            return rxjs_1.Observable.throw(new Error('argument.invalid.task.prefix'));
         }
-        const newKind = task.kind.substr(pos + options.routeSeparator.length);
-        const newTask = assign(task, { kind: newKind });
+        var newKind = task.kind.substr(pos + options.routeSeparator.length);
+        var newTask = common_1.assign(task, { kind: newKind });
         return route.process(newTask);
     };
-    const recoverPrefix = (prefix) => (item) => assign(item, {
-        kind: `${prefix}${options.routeSeparator}${item.kind}`
-    });
-    const onFinished$ = Observable.merge(...routeKeys.map(key => routes[key].onFinished$)).last();
-    const onTaskStarted$ = Observable.merge(...routeKeys.map(key => routes[key].onTaskStarted$.map(recoverPrefix(key))));
-    const onTaskReStarted$ = Observable.merge(...routeKeys.map(key => routes[key].onTaskReStarted$.map(recoverPrefix(key))));
-    const onTaskResult$ = Observable.merge(...routeKeys.map(key => routes[key].onTaskResult$.map(([item, value]) => [recoverPrefix(key)(item), value])));
-    const onTaskError$ = Observable.merge(...routeKeys.map(key => routes[key].onTaskError$.map(([item, value]) => [recoverPrefix(key)(item), value])));
-    const onTaskCompleted$ = Observable.merge(...routeKeys.map(key => routes[key].onTaskCompleted$.map(recoverPrefix(key))));
+    var recoverPrefix = function (prefix) { return function (item) {
+        return common_1.assign(item, {
+            kind: "" + prefix + options.routeSeparator + item.kind
+        });
+    }; };
+    var onFinished$ = rxjs_1.Observable.merge.apply(rxjs_1.Observable, routeKeys.map(function (key) { return routes[key].onFinished$; })).last();
+    var onTaskStarted$ = rxjs_1.Observable.merge.apply(rxjs_1.Observable, routeKeys.map(function (key) {
+        return routes[key].onTaskStarted$.map(recoverPrefix(key));
+    }));
+    var onTaskReStarted$ = rxjs_1.Observable.merge.apply(rxjs_1.Observable, routeKeys.map(function (key) {
+        return routes[key].onTaskReStarted$.map(recoverPrefix(key));
+    }));
+    var onTaskResult$ = rxjs_1.Observable.merge.apply(rxjs_1.Observable, routeKeys.map(function (key) {
+        return routes[key].onTaskResult$.map(function (_a) {
+            var item = _a[0], value = _a[1];
+            return [recoverPrefix(key)(item), value];
+        });
+    }));
+    var onTaskError$ = rxjs_1.Observable.merge.apply(rxjs_1.Observable, routeKeys.map(function (key) {
+        return routes[key].onTaskError$.map(function (_a) {
+            var item = _a[0], value = _a[1];
+            return [recoverPrefix(key)(item), value];
+        });
+    }));
+    var onTaskCompleted$ = rxjs_1.Observable.merge.apply(rxjs_1.Observable, routeKeys.map(function (key) {
+        return routes[key].onTaskCompleted$.map(recoverPrefix(key));
+    }));
     return {
         caption: options.caption,
-        process,
-        isAlive,
-        finish,
-        onFinished$,
-        onTaskStarted$,
-        onTaskReStarted$,
-        onTaskResult$,
-        onTaskError$,
-        onTaskCompleted$
+        process: process,
+        isAlive: isAlive,
+        finish: finish,
+        onFinished$: onFinished$,
+        onTaskStarted$: onTaskStarted$,
+        onTaskReStarted$: onTaskReStarted$,
+        onTaskResult$: onTaskResult$,
+        onTaskError$: onTaskError$,
+        onTaskCompleted$: onTaskCompleted$
     };
 }
-export function startRouterProxy(processor, prefix, opts) {
-    const defaultOptions = {
+exports.startRouterProcessor = startRouterProcessor;
+function startRouterProxy(processor, prefix, opts) {
+    var defaultOptions = {
         routeSeparator: '/'
     };
-    const options = assign(defaultOptions, opts || {});
-    const isAlive = () => processor.isAlive();
-    const finish = () => Observable.throw(new Error('invalidop.proxy.finish'));
-    const process = (task) => {
-        const newTask = assign(task, {
-            kind: `${prefix}${options.routeSeparator}${task.kind}`
+    var options = common_1.assign(defaultOptions, opts || {});
+    var isAlive = function () { return processor.isAlive(); };
+    var finish = function () { return rxjs_1.Observable.throw(new Error('invalidop.proxy.finish')); };
+    var process = function (task) {
+        var newTask = common_1.assign(task, {
+            kind: "" + prefix + options.routeSeparator + task.kind
         });
         return processor.process(newTask);
     };
     return {
-        process,
-        isAlive,
-        finish
+        process: process,
+        isAlive: isAlive,
+        finish: finish
     };
 }
+exports.startRouterProxy = startRouterProxy;
 //# sourceMappingURL=router-processor.js.map
