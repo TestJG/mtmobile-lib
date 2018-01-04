@@ -94,8 +94,8 @@ export function logProcessorCore(
         } else {
             console.log(`${opts.caption}: START isAlive`);
             const result = processor.isAlive();
-            return result;
             console.log(`${opts.caption}: END isAlive: ${result}`);
+            return result;
         }
     };
 
