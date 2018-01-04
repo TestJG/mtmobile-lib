@@ -1,4 +1,5 @@
 import {
+    id,
     assign,
     assignOrSame,
     objMapValues,
@@ -59,7 +60,9 @@ export const field = <T = any>(
             description: '',
             info: undefined,
             coerce: undefined,
-            validations: undefined
+            validations: undefined,
+            initInput: undefined,
+            parser: id,
         },
         options
     );

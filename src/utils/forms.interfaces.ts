@@ -1,5 +1,6 @@
 import { Coerce, CoerceInit } from './coercion';
 import { Validator, ValidatorInit } from './validation';
+import { Parser } from './parsing';
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -46,15 +47,24 @@ export interface UpdateFormItemData {
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-export interface FormFieldInit<T = any> extends FormPartInit<T> {}
+export interface FormFieldInit<T = any> extends FormPartInit<T> {
+    // initInput: any;
+    // parser: Parser<any, T>;
+}
 
 export interface FormFieldConfig<T = any> extends FormPartConfig<T> {
     type: 'field';
+    // initInput: any;
+    // parser: Parser<any, T>;
 }
 
 export interface FormFieldState<T = any>
     extends FormFieldConfig<T>,
-        FormPartState<T> {}
+        FormPartState<T> {
+    // input: any;
+    // validInput: any;
+    // isValidInput: boolean;
+}
 
 export interface FormField<T = any> extends FormFieldState<T>, FormPart<T> {}
 
@@ -106,9 +116,13 @@ export interface FormGroup<
 
 export type FormListingValuesMapping = Array<any>;
 
-export interface FormListingFieldStates { [index: number]: FormItemState; }
+export interface FormListingFieldStates {
+    [index: number]: FormItemState;
+}
 
-export interface FormListingFields { [index: number]: FormItem; }
+export interface FormListingFields {
+    [index: number]: FormItem;
+}
 
 export interface FormListingInit<T = any> extends FormPartInit<T> {
     initValue: T;

@@ -71,8 +71,10 @@ export interface SimpleWorker {
 
 export const createForegroundWorker = (opts: {
     createWorker: () => SimpleWorker;
+    run?: (f: () => void) => void;
 }): IProcessorCore => {
     const worker = opts.createWorker();
+    const run = opts.run || ((f: () => void) => f());
 
     let status = 'open';
     const terminateUUID = uuid();
@@ -81,7 +83,8 @@ export const createForegroundWorker = (opts: {
     terminateSub.subscribe({
         complete: () => {
             status = 'closed';
-            worker.terminate();
+            run(() => worker.terminate());
+            // worker.terminate();
         }
     });
 
@@ -120,14 +123,14 @@ export const createForegroundWorker = (opts: {
         if (!!obs) {
             switch (resp.kind) {
                 case 'N':
-                    obs.next(resp.valueOrError);
+                    run(() => obs.next(resp.valueOrError));
                     break;
                 case 'E':
-                    obs.error(resp.valueOrError);
+                    run(() => obs.error(resp.valueOrError));
                     observers.delete(resp.uid);
                     break;
                 case 'C':
-                    obs.complete();
+                    run(() => obs.complete());
                     observers.delete(resp.uid);
                     break;
             }
