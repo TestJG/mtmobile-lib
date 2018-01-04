@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var lodash_1 = require("lodash");
+var _ = require("lodash");
 var equality_1 = require("./equality");
 var common_1 = require("./common");
 exports.matchGroupPath = function (path, allowPatterns) {
@@ -380,7 +380,7 @@ var updateFormItemInternalRec = function (item, path, updater, opts, data) {
                             JSON.stringify(exports.createPath(path)));
                     }
                     var indices = isNaN(indexOrWildcard)
-                        ? lodash_1.default.range(item.fields.length)
+                        ? _.range(item.fields.length)
                         : [indexOrWildcard];
                     var restOfPath_2 = path.slice(1);
                     var newFields = indices.reduce(function (prevFields, index) {
@@ -528,13 +528,13 @@ exports.getAllErrorsInternalRec = function (item, path) {
             return currentErrors;
         }
         case 'group': {
-            var fieldErrors = lodash_1.default.flatMap(Object.keys(item.fields), function (key) {
+            var fieldErrors = _.flatMap(Object.keys(item.fields), function (key) {
                 return exports.getAllErrorsInternalRec(item.fields[key], exports.appendGroupPath(path, key));
             });
             return currentErrors.concat(fieldErrors);
         }
         case 'listing': {
-            var fieldErrors = lodash_1.default.flatMap(item.fields, function (field, index) {
+            var fieldErrors = _.flatMap(item.fields, function (field, index) {
                 return exports.getAllErrorsInternalRec(field, exports.appendListingPath(path, index));
             });
             return currentErrors.concat(fieldErrors);

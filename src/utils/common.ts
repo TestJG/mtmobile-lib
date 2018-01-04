@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { EqualityComparer, shallowEqualStrict } from './equality';
 
 export const assign = <T>(s: T, ...u: Partial<T>[]): T =>

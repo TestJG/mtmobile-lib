@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var lodash_1 = require("lodash");
+var _ = require("lodash");
 var common_1 = require("./common");
 exports.emptyValidator = function (value) { return []; };
 exports.makeValidator = function (val) {
@@ -32,7 +32,7 @@ exports.mergeValidators = function (validators) {
     if (typeof validators === 'function') {
         validators = [validators];
     }
-    var realValidators = lodash_1.default.flatMap(validators, function (v) { return exports.makeValidator(v); });
+    var realValidators = _.flatMap(validators, function (v) { return exports.makeValidator(v); });
     return function (value) {
         return realValidators.reduce(function (errors, validator) { return errors.concat(validator(value)); }, []);
     };

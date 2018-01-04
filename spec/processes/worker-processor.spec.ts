@@ -68,7 +68,7 @@ describe('Processes', () => {
                         } catch (e) {
                             done.fail(e);
                         }
-                    }, 50);
+                    }, 100);
                 });
             });
 

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var lodash_1 = require("lodash");
+var _ = require("lodash");
 var equality_1 = require("./equality");
 exports.assign = function (s) {
     var u = [];
@@ -175,7 +175,7 @@ exports.objFlatMap = function (mapper) { return function (source) {
     if (typeof source !== 'object') {
         throw new Error('Must be an object');
     }
-    return exports.toKVMap(lodash_1.default.flatMap(Object.keys(exports.toKVMap(source)), function (key) {
+    return exports.toKVMap(_.flatMap(Object.keys(exports.toKVMap(source)), function (key) {
         return exports.toKVArray(mapper([key, source[key]]));
     }));
 }; };
