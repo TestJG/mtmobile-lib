@@ -11,6 +11,7 @@
         "emitDecoratorMetadata": true,
         "declarationDir": "compiled/types",
         "outDir": "compiled",
+        "allowUnreachableCode": false,
         "typeRoots": [
           "node_modules/@types"
         ]

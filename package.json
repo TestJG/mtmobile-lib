@@ -3,12 +3,16 @@
   "version": "0.1.2",
   "description": "",
   "keywords": [],
-  "main": "index.ts",
+  "main": "compiled/index.js",
+  "main:ts": "index.ts",
+  "main:js": "compiled/index.js",
   "main:rollup": "dist/mtmobile-lib.umd.js",
   "module": "dist/mtmobile-lib.es2015.js",
-  "typings": "dist/types/mtmobile-lib.d.ts",
+  "types": "compiled/types/index.d.ts",
+  "typings": "compiled/types/index.d.ts",
+  "typings:rollup": "dist/types/mtmobile-lib.d.ts",
   "files": [
-    "src"
+    "compiled"
   ],
   "author": "isierra <isierra@jgingenieros.es>",
   "repository": {
@@ -82,7 +86,6 @@
   },
   "dependencies": {
     "@types/lodash": "^4.14.87",
-    "js-csp": "^1.0.1",
     "lodash": "^4.17.4"
   }
 }

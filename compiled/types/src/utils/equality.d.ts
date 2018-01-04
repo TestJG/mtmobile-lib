@@ -1,0 +1,14 @@
+export declare type EqualityComparer<T = any> = (x: T, y: T) => boolean;
+export declare type EqualityComparerFactory<T = any> = (childComparer: EqualityComparer) => EqualityComparer<T>;
+export declare const strictEqual: <T>(x: T, y: T) => boolean;
+export declare const relaxedEqual: <T>(x: T, y: T) => boolean;
+export declare const errorEqualFact: EqualityComparerFactory;
+export declare const dateEqualFact: EqualityComparerFactory;
+export declare const arrayEqualFact: EqualityComparerFactory;
+export declare const objectEqualFact: EqualityComparerFactory;
+export declare const defaultEqualityFactories: [(string | Function | undefined), boolean, EqualityComparerFactory][];
+export declare const createEqualityComparer: (childComparer: () => EqualityComparer<any>, fallbackComparer: EqualityComparer<any>, factories: [string | Function, boolean, EqualityComparerFactory<any>][]) => EqualityComparer<any>;
+export declare const deepEqual: EqualityComparer<any>;
+export declare const deepEqualStrict: EqualityComparer<any>;
+export declare const shallowEqual: EqualityComparer<any>;
+export declare const shallowEqualStrict: EqualityComparer<any>;

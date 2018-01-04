@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { deepEqual, shallowEqual, shallowEqualStrict } from './equality';
 import {
     assign,

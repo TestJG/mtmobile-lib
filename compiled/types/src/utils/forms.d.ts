@@ -1,0 +1,16 @@
+import { ValueOrFunc } from './common';
+import { FormItem, FormFieldInit, FormField, FormGroupInit, FormGroup, FormGroupFields, FormListingInit, FormListing, FormListingFields, FormError, ExtraFormInfo } from './forms.interfaces';
+export declare const field: <T = any>(initValue: T, options?: Partial<FormFieldInit<T>>) => FormField<T>;
+export declare const group: <T = any, F extends FormGroupFields = FormGroupFields>(fields: F, options?: Partial<FormGroupInit<T>>) => FormGroup<T, F>;
+export declare const listing: <T = any, F extends FormListingFields = FormListingFields>(fields: F, options?: Partial<FormListingInit<T>>) => FormListing<T, F>;
+export declare const getFormItem: (item: FormItem<any>, path?: string) => FormItem<any>;
+export declare const getValue: (item: FormItem<any>, path?: string) => any;
+export declare const existFormItem: (item: FormItem<any>, path: string) => boolean;
+export declare const setValue: <I extends FormItem<any> = FormItem<any>>(item: I, value: any, pathToField?: string) => I;
+export declare const setValueDoNotTouch: <I extends FormItem<any> = FormItem<any>>(item: I, value: any, pathToField?: string) => I;
+export declare const resetValue: <I extends FormItem<any> = FormItem<any>>(item: I, value?: any, pathToField?: string) => I;
+export declare const setGroupField: <I extends FormItem<any> = FormItem<any>>(item: I, pathToGroupField: string, formItem: ValueOrFunc<FormItem<any>>) => I;
+export declare const insertListingFields: <I extends FormItem<any> = FormItem<any>>(item: I, pathToListing: string, newFields: ValueOrFunc<FormField<any> | FormGroup<any, FormGroupFields> | FormListing<any, FormListingFields> | FormItem<any>[]>, atPosition?: number) => I;
+export declare const removeListingFields: <I extends FormItem<any> = FormItem<any>>(item: I, pathToListing: string, atPosition: number, count?: number) => I;
+export declare const updateFormInfo: <I extends FormItem<any> = FormItem<any>>(item: I, pathToFormItem: string, updater: ValueOrFunc<Partial<ExtraFormInfo>>) => I;
+export declare const getAllErrors: (item: FormItem<any>) => FormError[];

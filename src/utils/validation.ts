@@ -1,4 +1,4 @@
-import { flatMap } from 'lodash';
+import _ from 'lodash';
 import {
     assignOrSame,
     errorToString,
@@ -49,7 +49,7 @@ export const mergeValidators = <T>(validators?: ValidatorInit<T>) => {
     if (typeof validators === 'function') {
         validators = [validators];
     }
-    const realValidators = flatMap(validators, v => makeValidator(v));
+    const realValidators = _.flatMap(validators, v => makeValidator(v));
     return (value: T) =>
         realValidators.reduce(
             (errors, validator) => errors.concat(validator(value)),
