@@ -55,7 +55,8 @@ export const field = <T = any>(
         coerce: coerceInit,
         validations: validatorInit,
         initInput,
-        parser
+        parser,
+        formatter,
     } = assign(
         <FormFieldInit<T>>{
             caption: '',
@@ -65,6 +66,7 @@ export const field = <T = any>(
             validations: undefined,
             initInput: undefined,
             parser: id,
+            formatter: id,
         },
         options
     );
@@ -85,6 +87,7 @@ export const field = <T = any>(
         coerce,
         validator,
         parser,
+        formatter,
 
         // State
         value: undefined,

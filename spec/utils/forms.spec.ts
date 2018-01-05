@@ -36,7 +36,9 @@ import {
     shouldNotBeBlank,
     shouldBeLongerThan,
     ExtraFormInfo,
-    UpdateFormItemData
+    UpdateFormItemData,
+    decimalParser,
+    decimalFormatter,
 } from '../../src/utils';
 
 interface Person {
@@ -94,6 +96,13 @@ const expectConfig = <T>(
         errors: string[];
         isValid: boolean;
         showErrors: boolean;
+        // Field-specific
+        initInput: any;
+        input: any;
+        validInput: any;
+        isValidInput: boolean;
+        parser: ([any, T] | [any])[] | Function;
+        formatter: [T, any][] | Function;
     }>
 ) => {
     if (expected.caption !== undefined) {
@@ -183,6 +192,69 @@ const expectConfig = <T>(
         it(`it's showErrors should be ${JSON.stringify(
             expected.showErrors
         )}`, () => expect(item.showErrors).toBe(expected.showErrors));
+    }
+    if (item.type === 'field') {
+        if (expected.initInput !== undefined) {
+            it(`it's initInput should be ${JSON.stringify(
+                expected.initInput
+            )}`, () => expect(item.initInput).toEqual(expected.initInput));
+        }
+        if (expected.validInput !== undefined) {
+            it(`it's validInput should be ${JSON.stringify(
+                expected.validInput
+            )}`, () => expect(item.validInput).toEqual(expected.validInput));
+        }
+        if (expected.input !== undefined) {
+            it(`it's input should be ${JSON.stringify(expected.input)}`, () =>
+                expect(item.input).toEqual(expected.input));
+        }
+        if (expected.isValidInput !== undefined) {
+            it(`it's isValidInput should be ${JSON.stringify(
+                expected.isValidInput
+            )}`, () => expect(item.isValidInput).toBe(expected.isValidInput));
+        }
+        if (expected.parser !== undefined) {
+            if (typeof expected.parser === 'function') {
+                it(`it's parser should be the same as the given function`, () =>
+                    expect(item.parser).toBe(expected.parser));
+            } else {
+                it(`it's parser should be a function`, () =>
+                    expect(item.parser).toBeInstanceOf(Function));
+
+                for (const tuple of expected.parser) {
+                    const input = tuple[0];
+                    const expectedValue =
+                        tuple.length === 2 ? tuple[1] : undefined;
+                    if (expectedValue === undefined) {
+                        it(`it's parser(${JSON.stringify(
+                            input
+                        )}) should fail`, () =>
+                            expect(() => item.parser(input)).toThrowError());
+                    } else {
+                        it(`it's parser(${JSON.stringify(
+                            input
+                        )}) should return given value`, () =>
+                            expect(item.parser(input)).toEqual(expectedValue));
+                    }
+                }
+            }
+        }
+        if (expected.formatter !== undefined) {
+            if (typeof expected.formatter === 'function') {
+                it(`it's formatter should be the same as the given function`, () =>
+                    expect(item.formatter).toBe(expected.formatter));
+            } else {
+                it(`it's formatter should be a function`, () =>
+                    expect(item.formatter).toBeInstanceOf(Function));
+
+                for (const [input, expectedText] of expected.formatter) {
+                    it(`it's formatter(${JSON.stringify(
+                        input
+                    )}) should return given value`, () =>
+                        expect(item.formatter(input)).toEqual(expectedText));
+                }
+            }
+        }
     }
 };
 
@@ -346,6 +418,29 @@ describe('Utils', () => {
                     isTouched: false,
                     errors: ['Should be less than or equal to 20'],
                     isValid: false,
+                    showErrors: false
+                });
+            });
+
+            describe('When a field is created with valid input and parse', () => {
+                const ageField = field(0, {
+                    initInput: '30',
+                    parser: decimalParser,
+                    formatter: decimalFormatter,
+                });
+
+                expectConfig(ageField, {
+                    initValue: 30,
+                    initInput: '30',
+                    validInput: '30',
+                    isValidInput: true,
+                    value: 30,
+                    isDirty: false,
+                    isTouched: false,
+                    parser: [['0', 0], ['20', 20], ['abc']],
+                    formatter: [[0, '0'], [20, '20']],
+                    errors: [],
+                    isValid: true,
                     showErrors: false
                 });
             });
@@ -1406,7 +1501,7 @@ describe('Utils', () => {
                     isDirty: true,
                     isTouched: true,
                     isValid: false,
-                    showErrors: false,
+                    showErrors: false
                 });
 
                 expectConfig(newListingDirty.fields[0], {
@@ -1415,7 +1510,7 @@ describe('Utils', () => {
                     isDirty: true,
                     isTouched: true,
                     isValid: false,
-                    showErrors: true,
+                    showErrors: true
                 });
 
                 expectConfig(newListing, {
@@ -1424,7 +1519,7 @@ describe('Utils', () => {
                     isDirty: false,
                     isTouched: false,
                     isValid: true,
-                    showErrors: false,
+                    showErrors: false
                 });
 
                 expectConfig(newListing.fields[0], {
@@ -1433,7 +1528,7 @@ describe('Utils', () => {
                     isDirty: false,
                     isTouched: false,
                     isValid: true,
-                    showErrors: false,
+                    showErrors: false
                 });
             });
 

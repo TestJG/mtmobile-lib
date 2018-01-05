@@ -1,6 +1,6 @@
 import { Coerce, CoerceInit } from './coercion';
 import { Validator, ValidatorInit } from './validation';
-import { Parser } from './parsing';
+import { Parser, Formatter } from './parsing';
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -49,13 +49,15 @@ export interface UpdateFormItemData {
 
 export interface FormFieldInit<T = any> extends FormPartInit<T> {
     initInput: any;
-    parser: Parser<any, T>;
+    parser: Parser<T>;
+    formatter: Formatter<T>;
 }
 
 export interface FormFieldConfig<T = any> extends FormPartConfig<T> {
     type: 'field';
     initInput: any;
-    parser: Parser<any, T>;
+    parser: Parser<T>;
+    formatter: Formatter<T>;
 }
 
 export interface FormFieldState<T = any>

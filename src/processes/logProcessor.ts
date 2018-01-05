@@ -42,7 +42,7 @@ export function logProcessorCore<T extends IProcessorCore>(
             processDisabled: false,
             isAliveDisabled: false,
             finishDisabled: false,
-            basicProcessLog: true,
+            basicProcessLog: false,
             caption: 'Log'
         },
         options
