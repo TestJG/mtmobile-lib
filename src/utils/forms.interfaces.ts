@@ -48,22 +48,22 @@ export interface UpdateFormItemData {
 ////////////////////////////////////////////////////////////////
 
 export interface FormFieldInit<T = any> extends FormPartInit<T> {
-    // initInput: any;
-    // parser: Parser<any, T>;
+    initInput: any;
+    parser: Parser<any, T>;
 }
 
 export interface FormFieldConfig<T = any> extends FormPartConfig<T> {
     type: 'field';
-    // initInput: any;
-    // parser: Parser<any, T>;
+    initInput: any;
+    parser: Parser<any, T>;
 }
 
 export interface FormFieldState<T = any>
     extends FormFieldConfig<T>,
         FormPartState<T> {
-    // input: any;
-    // validInput: any;
-    // isValidInput: boolean;
+    input: any;
+    validInput: any;
+    isValidInput: boolean;
 }
 
 export interface FormField<T = any> extends FormFieldState<T>, FormPart<T> {}

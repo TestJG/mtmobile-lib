@@ -53,7 +53,9 @@ export const field = <T = any>(
         description,
         info,
         coerce: coerceInit,
-        validations: validatorInit
+        validations: validatorInit,
+        initInput,
+        parser
     } = assign(
         <FormFieldInit<T>>{
             caption: '',
@@ -79,14 +81,19 @@ export const field = <T = any>(
         description,
         info,
         initValue,
+        initInput,
         coerce,
         validator,
+        parser,
 
         // State
         value: undefined,
         errors: [],
         isDirty: false,
         isTouched: false,
+        input: initInput,
+        validInput: undefined,
+        isValidInput: true,
 
         // Derived
         isValid: true,

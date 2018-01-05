@@ -1,6 +1,9 @@
 import * as _ from 'lodash';
 import { EqualityComparer, shallowEqualStrict } from './equality';
 
+export const isNothing = (x) => x === undefined || x === null;
+export const isSomething = (x) => x !== undefined && x !== null;
+
 export const assign = <T>(s: T, ...u: Partial<T>[]): T =>
     Object.assign({}, s, ...u);
 

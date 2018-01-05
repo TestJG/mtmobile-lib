@@ -32,10 +32,10 @@ export interface LogProcessorCoreOptions {
     caption: string;
 }
 
-export function logProcessorCore(
-    processor: IProcessorCore,
+export function logProcessorCore<T extends IProcessorCore>(
+    processor: T,
     options?: Partial<LogProcessorCoreOptions>
-): IProcessorCore {
+): T {
     const opts = Object.assign(
         {
             disabled: false,

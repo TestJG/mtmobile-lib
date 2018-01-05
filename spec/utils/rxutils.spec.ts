@@ -8,7 +8,6 @@ import {
     wrapServiceStreamFromNames,
     firstMap,
     firstSwitchMap,
-    rxid,
     makeState
 } from '../../src/utils/rxutils';
 
@@ -240,7 +239,7 @@ describe('Utils', () => {
 
             it('should return only the first value', done => {
                 testObs(
-                    firstSwitchMap(Observable.of(1, 2, 3))(rxid),
+                    firstSwitchMap(Observable.of(1, 2, 3))(x => Observable.of(x)),
                     [1],
                     null,
                     done
@@ -260,7 +259,7 @@ describe('Utils', () => {
 
             it('should normalize errors', done => {
                 testObs(
-                    firstSwitchMap(Observable.throw(4))(rxid),
+                    firstSwitchMap(Observable.throw(4))(x => Observable.of(x)),
                     [],
                     new Error('error.unknown'),
                     done

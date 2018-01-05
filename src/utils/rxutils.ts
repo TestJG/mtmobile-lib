@@ -1,6 +1,6 @@
 import { Observable, Subscription, ReplaySubject } from 'rxjs';
 import { Subscribable } from 'rxjs/Observable';
-import { normalizeError } from './common';
+import { isSomething, normalizeError } from './common';
 import { IScheduler } from 'rxjs/Scheduler';
 
 export type ObsLike<T = any> = Subscribable<T> | PromiseLike<T> | T;
@@ -12,8 +12,9 @@ export const tryTo = <T>(thunk: () => ObsLike<T>): Observable<T> => {
     try {
         const result = thunk();
         if (
-            Promise.resolve(<any>result) === result ||
-            typeof result['subscribe'] === 'function'
+            isSomething(result) &&
+            (Promise.resolve(<any>result) === result ||
+                typeof result['subscribe'] === 'function')
         ) {
             return Observable.from(<any>result);
         }
@@ -22,8 +23,6 @@ export const tryTo = <T>(thunk: () => ObsLike<T>): Observable<T> => {
         return normalizeErrorOnCatch(error);
     }
 };
-
-export const rxid = <T>(x: T) => Observable.of(x);
 
 type FuncOf<V> = (...args: any[]) => V;
 type FuncOfObs<V> = FuncOf<Observable<V>>;
@@ -76,4 +75,14 @@ export function makeState<TState>(
         .publishBehavior(init);
     const connection = state$.connect();
     return [state$, connection];
+}
+
+export function mapUntilCancelled<T>(
+    observable: Observable<T>,
+    cancel: Observable<T>
+) {
+    return Observable.merge(
+        observable.takeUntil(cancel),
+        cancel.first().takeUntil(observable.ignoreElements().materialize())
+    );
 }
