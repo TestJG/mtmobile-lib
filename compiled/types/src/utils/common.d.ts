@@ -1,4 +1,6 @@
 import { EqualityComparer } from './equality';
+export declare const isNothing: (x: any) => boolean;
+export declare const isSomething: (x: any) => boolean;
 export declare const assign: <T>(s: T, ...u: Partial<T>[]) => T;
 export declare const assignArray: <T>(s: T[], ...u: [number, T[]][]) => T[];
 export declare type ValueOrFunc<T = any> = T | ((...args: any[]) => T);

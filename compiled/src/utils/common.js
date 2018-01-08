@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var _ = require("lodash");
 var equality_1 = require("./equality");
+exports.isNothing = function (x) { return x === undefined || x === null; };
+exports.isSomething = function (x) { return x !== undefined && x !== null; };
 exports.assign = function (s) {
     var u = [];
     for (var _i = 1; _i < arguments.length; _i++) {

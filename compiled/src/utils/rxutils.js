@@ -8,8 +8,9 @@ exports.normalizeErrorOnCatch = function (err) {
 exports.tryTo = function (thunk) {
     try {
         var result = thunk();
-        if (Promise.resolve(result) === result ||
-            typeof result['subscribe'] === 'function') {
+        if (common_1.isSomething(result) &&
+            (Promise.resolve(result) === result ||
+                typeof result['subscribe'] === 'function')) {
             return rxjs_1.Observable.from(result);
         }
         return rxjs_1.Observable.of(result);
@@ -18,7 +19,6 @@ exports.tryTo = function (thunk) {
         return exports.normalizeErrorOnCatch(error);
     }
 };
-exports.rxid = function (x) { return rxjs_1.Observable.of(x); };
 exports.wrapFunctionStream = function (stream) {
     var conn = stream.publishReplay(1);
     var subs = conn.connect();
@@ -60,4 +60,8 @@ function makeState(init, updates$) {
     return [state$, connection];
 }
 exports.makeState = makeState;
+function mapUntilCancelled(observable, cancel) {
+    return rxjs_1.Observable.merge(observable.takeUntil(cancel), cancel.first().takeUntil(observable.ignoreElements().materialize()));
+}
+exports.mapUntilCancelled = mapUntilCancelled;
 //# sourceMappingURL=rxutils.js.map

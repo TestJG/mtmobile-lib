@@ -8,4 +8,4 @@ export interface LogProcessorCoreOptions {
     basicProcessLog: boolean;
     caption: string;
 }
-export declare function logProcessorCore(processor: IProcessorCore, options?: Partial<LogProcessorCoreOptions>): IProcessorCore;
+export declare function logProcessorCore<T extends IProcessorCore>(processor: T, options?: Partial<LogProcessorCoreOptions>): T;

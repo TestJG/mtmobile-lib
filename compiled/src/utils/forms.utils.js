@@ -154,6 +154,62 @@ var updateListingFields = function (value, fields, opts) {
         })
     ]);
 };
+var setFieldFromNewValue = function (item, newValue, opts, sameValue) {
+    var errors = item.validator(newValue);
+    var isDirty = opts.initialization
+        ? false
+        : item.isDirty || (opts.affectDirty ? !sameValue : false);
+    var isTouched = opts.initialization ? false : isDirty || item.isTouched;
+    // Derived
+    var isValid = errors.length === 0;
+    var showErrors = errors.length !== 0 && isTouched;
+    var newItem = common_1.assignOrSame(item, {
+        value: newValue,
+        isDirty: isDirty,
+        isTouched: isTouched,
+        errors: errors,
+        isValid: isValid,
+        showErrors: showErrors,
+    });
+    return newItem;
+};
+var setFieldInputInternal = function (item, inputFunc, opts, data) {
+    var theInput = inputFunc === undefined
+        ? (item.initInput === null ? item.formatter(item.initValue) : item.initInput)
+        : common_1.getAsValue(inputFunc, item.value, data);
+    try {
+        var theValue = item.parser(theInput);
+        var newValue = item.coerce(theValue);
+        var initValue = opts.initialization ? newValue : item.initValue;
+        var sameValue = opts.compareValues && item.value === newValue && theInput === item.input;
+        if (sameValue && theValue === item.value) {
+            return item;
+        }
+        var initInput = opts.initialization ? theInput : item.initInput;
+        var input = theInput;
+        var validInput = input;
+        var isValidInput = true;
+        return setFieldFromNewValue(common_1.assignOrSame(item, {
+            initValue: initValue,
+            initInput: initInput,
+            input: input,
+            validInput: validInput,
+            isValidInput: isValidInput,
+        }), newValue, opts, sameValue);
+    }
+    catch (error) {
+        var newValue = item.value;
+        var initInput = opts.initialization ? theInput : item.initInput;
+        var input = theInput;
+        var isValidInput = false;
+        return setFieldFromNewValue(common_1.assignOrSame(item, {
+            initInput: initInput,
+            input: input,
+            isValidInput: isValidInput,
+            isTouched: true,
+        }), newValue, opts, true);
+    }
+};
 var setFieldValueInternal = function (item, value, opts, data) {
     var theValue = value === undefined
         ? item.initValue
@@ -164,25 +220,58 @@ var setFieldValueInternal = function (item, value, opts, data) {
         return item;
     }
     var initValue = opts.initialization ? newValue : item.initValue;
-    var errors = item.validator(newValue);
-    var isDirty = opts.initialization
-        ? false
-        : item.isDirty || (opts.affectDirty ? !sameValue : false);
-    var isTouched = opts.initialization ? false : isDirty || item.isTouched;
-    // Derived
-    var isValid = errors.length === 0;
-    var showErrors = errors.length !== 0 && isTouched;
-    var newItem = common_1.assignOrSame(item, {
+    var input = item.formatter(newValue);
+    var validInput = input;
+    var isValidInput = true;
+    return setFieldFromNewValue(common_1.assignOrSame(item, {
         initValue: initValue,
-        value: newValue,
-        isDirty: isDirty,
-        isTouched: isTouched,
-        errors: errors,
-        isValid: isValid,
-        showErrors: showErrors
-    });
-    return newItem;
+        input: input,
+        validInput: validInput,
+        isValidInput: isValidInput,
+    }), newValue, opts, sameValue);
 };
+// const setFieldInputInternal = (
+//     item: FormField,
+//     inputFunc: ValueOrFunc,
+//     opts: SetValueOptions,
+//     data: UpdateFormItemData
+// ): FormField => {
+//     const theInput
+//     const theValue =
+//         value === undefined
+//             ? item.initValue
+//             : getAsValue(value, item.value, data);
+//     const newValue = item.coerce(theValue);
+//     const sameValue = opts.compareValues && item.value === newValue;
+//     if (sameValue && theValue === item.value) {
+//         return item;
+//     }
+//     const initValue = opts.initialization ? newValue : item.initValue;
+//     const input = item.formatter(newValue);
+//     const validInput = input;
+//     const isValidInput = true;
+//     const errors = item.validator(newValue);
+//     const isDirty = opts.initialization
+//         ? false
+//         : item.isDirty || (opts.affectDirty ? !sameValue : false);
+//     const isTouched = opts.initialization ? false : isDirty || item.isTouched;
+//     // Derived
+//     const isValid = errors.length === 0;
+//     const showErrors = errors.length !== 0 && isTouched;
+//     const newItem = assignOrSame(item, {
+//         initValue,
+//         value: newValue,
+//         isDirty,
+//         isTouched,
+//         errors,
+//         isValid,
+//         showErrors,
+//         input,
+//         validInput,
+//         isValidInput,
+//     });
+//     return newItem;
+// };
 var createNewGroupFieldsFromDirectValue = function (item, value, opts, data) {
     // If path is empty, the assignment is directed to this group
     var theValue = value === undefined
@@ -446,6 +535,29 @@ function setValueInternal(item, value, path, options) {
     return updateFormItemInternalRec(item, exports.extractPath(path, true), setValueUpdater(value, opts), opts, { relativePath: '' });
 }
 exports.setValueInternal = setValueInternal;
+var setInputUpdater = function (input, opts) { return function (item, data) {
+    switch (item.type) {
+        case 'field':
+            return setFieldInputInternal(item, input, opts, data);
+        case 'group': {
+            throw new Error('Cannot set input value to a group');
+        }
+        case 'listing': {
+            throw new Error('Cannot set input value to a listing');
+        }
+        default:
+            throw new Error('Unknown form item type: ' + JSON.stringify(item.type));
+    }
+}; };
+function setInputInternal(item, input, path, options) {
+    var opts = Object.assign({
+        affectDirty: true,
+        compareValues: true,
+        initialization: false
+    }, options);
+    return updateFormItemInternalRec(item, exports.extractPath(path, true), setInputUpdater(input, opts), opts, { relativePath: '' });
+}
+exports.setInputInternal = setInputInternal;
 var setGroupFieldUpdater = function (fieldName, formItem, opts) { return function (item, data) {
     switch (item.type) {
         case 'field':

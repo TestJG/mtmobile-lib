@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var coercion_1 = require("./coercion");
 var validation_1 = require("./validation");
+var parsing_1 = require("./parsing");
 var forms_utils_1 = require("./forms.utils");
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -16,11 +17,14 @@ exports.field = function (initValue, options) {
         info: undefined,
         coerce: undefined,
         validations: undefined,
-        initInput: undefined,
-        parser: common_1.id,
-    }, options), caption = _a.caption, description = _a.description, info = _a.info, coerceInit = _a.coerce, validatorInit = _a.validations;
+        initInput: null,
+        parser: undefined,
+        formatter: undefined
+    }, options), caption = _a.caption, description = _a.description, info = _a.info, coerceInit = _a.coerce, validatorInit = _a.validations, initInput = _a.initInput, parserInit = _a.parser, formatterInit = _a.formatter;
     var coerce = coercion_1.coerceAll(coerceInit);
     var validator = validation_1.mergeValidators(validatorInit);
+    var parser = parserInit || parsing_1.getParserFor(initValue);
+    var formatter = formatterInit || parsing_1.getFormatterFor(initValue);
     var result = {
         // Type
         type: 'field',
@@ -29,22 +33,37 @@ exports.field = function (initValue, options) {
         description: description,
         info: info,
         initValue: initValue,
+        initInput: initInput,
         coerce: coerce,
         validator: validator,
+        parser: parser,
+        formatter: formatter,
         // State
         value: undefined,
         errors: [],
         isDirty: false,
         isTouched: false,
+        input: initInput,
+        validInput: undefined,
+        isValidInput: true,
         // Derived
         isValid: true,
         showErrors: false
     };
-    return forms_utils_1.setValueInternal(result, initValue, '', {
-        affectDirty: false,
-        compareValues: false,
-        initialization: true
-    });
+    if (initInput !== null) {
+        return forms_utils_1.setInputInternal(result, initInput, '', {
+            affectDirty: false,
+            compareValues: false,
+            initialization: true
+        });
+    }
+    else {
+        return forms_utils_1.setValueInternal(result, initValue, '', {
+            affectDirty: false,
+            compareValues: false,
+            initialization: true
+        });
+    }
 };
 exports.group = function (fields, options) {
     if (!(fields instanceof Object) || fields.constructor !== Object) {
@@ -186,12 +205,22 @@ exports.setValueDoNotTouch = function (item, value, pathToField) {
         affectDirty: false
     });
 };
-exports.resetValue = function (item, value, pathToField) {
-    if (value === void 0) { value = undefined; }
+exports.setInput = function (item, input, pathToField) {
     if (pathToField === void 0) { pathToField = ''; }
+    return forms_utils_1.setInputInternal(item, input, pathToField);
+};
+exports.setInputDoNotTouch = function (item, input, pathToField) {
+    if (pathToField === void 0) { pathToField = ''; }
+    return forms_utils_1.setInputInternal(item, input, pathToField, {
+        affectDirty: false
+    });
+};
+exports.resetValue = function (item, pathToField, value) {
+    if (pathToField === void 0) { pathToField = ''; }
+    if (value === void 0) { value = undefined; }
     return forms_utils_1.setValueInternal(item, value, pathToField, {
         initialization: true,
-        compareValues: false,
+        compareValues: false
     });
 };
 exports.setGroupField = function (item, pathToGroupField, formItem) { return forms_utils_1.setGroupFieldInternal(item, pathToGroupField, formItem); };

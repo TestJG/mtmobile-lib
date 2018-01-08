@@ -28,7 +28,7 @@ function logProcessorCore(processor, options) {
         processDisabled: false,
         isAliveDisabled: false,
         finishDisabled: false,
-        basicProcessLog: true,
+        basicProcessLog: false,
         caption: 'Log'
     }, options);
     var process = function (item) {
