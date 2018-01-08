@@ -7,6 +7,7 @@ import {
     assignIf,
     assignIfMany,
     id,
+    isNothing,
     objMapValues,
     toKVArray,
     assignOrSameWith,
@@ -17,6 +18,7 @@ import {
 } from './common';
 import { Coerce, coerceAll } from './coercion';
 import { Validator, EasyValidator, mergeValidators } from './validation';
+import { Parser, Formatter, numberFormatter, numberParser } from './parsing';
 import {
     FormFieldInit,
     FormField,
@@ -26,13 +28,13 @@ import {
     FormListingInit,
     FormListing,
     FormListingFields,
+    FormListingFieldStates,
     FormItem,
     FormItemState,
     FormError,
     ExtraFormInfo,
     UpdateFormItemData
 } from './forms.interfaces';
-import { FormListingFieldStates } from '../../index';
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -252,23 +254,14 @@ const updateListingFields = (
         )
     ]);
 
-const setFieldValueInternal = (
-    item: FormItem,
-    value: ValueOrFunc,
-    opts: SetValueOptions,
-    data: UpdateFormItemData
-): FormItem => {
-    const theValue =
-        value === undefined
-            ? item.initValue
-            : getAsValue(value, item.value, data);
-    const newValue = item.coerce(theValue);
-    const sameValue = opts.compareValues && item.value === newValue;
-    if (sameValue && theValue === item.value) {
-        return item;
-    }
 
-    const initValue = opts.initialization ? newValue : item.initValue;
+const setFieldFromNewValue = (
+    item: FormField,
+    newValue: any,
+    opts: SetValueOptions,
+    sameValue: boolean
+): FormField => {
+
     const errors = item.validator(newValue);
     const isDirty = opts.initialization
         ? false
@@ -280,17 +273,138 @@ const setFieldValueInternal = (
     const showErrors = errors.length !== 0 && isTouched;
 
     const newItem = assignOrSame(item, {
-        initValue,
         value: newValue,
         isDirty,
         isTouched,
         errors,
         isValid,
-        showErrors
+        showErrors,
     });
 
     return newItem;
 };
+
+const setFieldInputInternal = (
+    item: FormField,
+    inputFunc: ValueOrFunc,
+    opts: SetValueOptions,
+    data: UpdateFormItemData
+): FormField => {
+    const theInput =
+        inputFunc === undefined
+            ? (item.initInput === null ? item.formatter(item.initValue) : item.initInput)
+            : getAsValue(inputFunc, item.value, data);
+    try {
+        const theValue = item.parser(theInput);
+        const newValue = item.coerce(theValue);
+        const initValue = opts.initialization ? newValue : item.initValue;
+        const sameValue = opts.compareValues && item.value === newValue && theInput === item.input;
+        if (sameValue && theValue === item.value) {
+            return item;
+        }
+        const initInput = opts.initialization ? theInput : item.initInput;
+        const input = theInput;
+        const validInput = input;
+        const isValidInput = true;
+
+        return setFieldFromNewValue(assignOrSame(item, {
+            initValue,
+            initInput,
+            input,
+            validInput,
+            isValidInput,
+        }), newValue, opts, sameValue);
+    } catch (error) {
+        const newValue = item.value;
+        const initInput = opts.initialization ? theInput : item.initInput;
+        const input = theInput;
+        const isValidInput = false;
+
+        return setFieldFromNewValue(assignOrSame(item, {
+            initInput,
+            input,
+            isValidInput,
+            isTouched: true,
+        }), newValue, opts, true);
+    }
+};
+
+const setFieldValueInternal = (
+    item: FormField,
+    value: ValueOrFunc,
+    opts: SetValueOptions,
+    data: UpdateFormItemData
+): FormField => {
+    const theValue =
+        value === undefined
+            ? item.initValue
+            : getAsValue(value, item.value, data);
+    const newValue = item.coerce(theValue);
+    const sameValue = opts.compareValues && item.value === newValue;
+    if (sameValue && theValue === item.value) {
+        return item;
+    }
+
+    const initValue = opts.initialization ? newValue : item.initValue;
+    const input = item.formatter(newValue);
+    const validInput = input;
+    const isValidInput = true;
+
+    return setFieldFromNewValue(assignOrSame(item, {
+        initValue,
+        input,
+        validInput,
+        isValidInput,
+    }), newValue, opts, sameValue);
+};
+
+// const setFieldInputInternal = (
+//     item: FormField,
+//     inputFunc: ValueOrFunc,
+//     opts: SetValueOptions,
+//     data: UpdateFormItemData
+// ): FormField => {
+//     const theInput
+//     const theValue =
+//         value === undefined
+//             ? item.initValue
+//             : getAsValue(value, item.value, data);
+//     const newValue = item.coerce(theValue);
+//     const sameValue = opts.compareValues && item.value === newValue;
+//     if (sameValue && theValue === item.value) {
+//         return item;
+//     }
+
+//     const initValue = opts.initialization ? newValue : item.initValue;
+//     const input = item.formatter(newValue);
+//     const validInput = input;
+//     const isValidInput = true;
+
+//     const errors = item.validator(newValue);
+//     const isDirty = opts.initialization
+//         ? false
+//         : item.isDirty || (opts.affectDirty ? !sameValue : false);
+//     const isTouched = opts.initialization ? false : isDirty || item.isTouched;
+
+//     // Derived
+//     const isValid = errors.length === 0;
+//     const showErrors = errors.length !== 0 && isTouched;
+
+//     const newItem = assignOrSame(item, {
+//         initValue,
+//         value: newValue,
+//         isDirty,
+//         isTouched,
+//         errors,
+//         isValid,
+//         showErrors,
+//         input,
+//         validInput,
+//         isValidInput,
+//     });
+
+//     return newItem;
+// };
 
 const createNewGroupFieldsFromDirectValue = (
     item: FormGroup,
@@ -694,6 +808,53 @@ export function setValueInternal(
         item,
         extractPath(path, true),
         setValueUpdater(value, opts),
+        opts,
+        { relativePath: '' }
+    );
+}
+
+const setInputUpdater = (input: ValueOrFunc, opts: SetValueOptions) => (
+    item: FormItem,
+    data: UpdateFormItemData
+): FormItem => {
+    switch (item.type) {
+        case 'field':
+            return setFieldInputInternal(item, input, opts, data);
+
+        case 'group': {
+            throw new Error('Cannot set input value to a group');
+        }
+
+        case 'listing': {
+            throw new Error('Cannot set input value to a listing');
+        }
+
+        default:
+            throw new Error(
+                'Unknown form item type: ' + JSON.stringify((<any>item).type)
+            );
+    }
+};
+
+export function setInputInternal(
+    item: FormItem,
+    input: ValueOrFunc,
+    path: string,
+    options?: Partial<SetValueOptions>
+): FormItem {
+    const opts: SetValueOptions = Object.assign(
+        <SetValueOptions>{
+            affectDirty: true,
+            compareValues: true,
+            initialization: false
+        },
+        options
+    );
+
+    return updateFormItemInternalRec(
+        item,
+        extractPath(path, true),
+        setInputUpdater(input, opts),
         opts,
         { relativePath: '' }
     );

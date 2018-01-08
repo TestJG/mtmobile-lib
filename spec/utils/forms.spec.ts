@@ -14,6 +14,8 @@ import {
     listing,
     setValue,
     setValueDoNotTouch,
+    setInput,
+    setInputDoNotTouch,
     resetValue,
     getValue,
     getFormItem,
@@ -274,6 +276,10 @@ describe('Utils', () => {
                     caption: '',
                     description: '',
                     initValue: '',
+                    initInput: null,
+                    input: '',
+                    validInput: '',
+                    isValidInput: true,
                     coerce: [['', ''], ['abc', 'abc']],
                     validator: [['', []], ['abc', []]],
                     value: '',
@@ -294,6 +300,10 @@ describe('Utils', () => {
                     caption: '',
                     description: '',
                     initValue: 10,
+                    initInput: null,
+                    input: '10',
+                    validInput: '10',
+                    isValidInput: true,
                     coerce: [[0, 0], [20, 20]],
                     validator: [[0, []], [20, []]],
                     value: 10,
@@ -432,6 +442,7 @@ describe('Utils', () => {
                 expectConfig(ageField, {
                     initValue: 30,
                     initInput: '30',
+                    input: '30',
                     validInput: '30',
                     isValidInput: true,
                     value: 30,
@@ -993,7 +1004,7 @@ describe('Utils', () => {
     });
 });
 
-// setValue
+// setValue / setInput
 describe('Utils', () => {
     describe('Forms Tests', () => {
         describe('setValue', () => {
@@ -1156,7 +1167,7 @@ describe('Utils', () => {
                 const ageField = field(40);
                 const ageFieldCopy = Object.assign({}, ageField);
                 const newAgeFieldDirty = setValue(ageField, 60, '');
-                const newAgeField = resetValue(newAgeFieldDirty, 50);
+                const newAgeField = resetValue(newAgeFieldDirty, '', 50);
 
                 it('the new field should be distinct from the original one', () =>
                     expect(newAgeField).not.toBe(ageField));
@@ -1207,6 +1218,38 @@ describe('Utils', () => {
                     value: 40,
                     isDirty: false,
                     isTouched: false
+                });
+            });
+
+            describe('When a field is created with input, its value is changed and then it is reset', () => {
+                const ageField = field(0, {
+                    initInput: '30',
+                    parser: decimalParser,
+                    formatter: decimalFormatter,
+                });
+                const ageFieldDirty = setValue(ageField, 20);
+                const resetAgeField = resetValue(ageField);
+
+                expectConfig(ageFieldDirty, {
+                    initValue: 30,
+                    initInput: '30',
+                    input: '20',
+                    validInput: '20',
+                    isValidInput: true,
+                    value: 20,
+                    isDirty: true,
+                    isTouched: true,
+                });
+
+                expectConfig(resetAgeField, {
+                    initValue: 30,
+                    initInput: '30',
+                    input: '30',
+                    validInput: '30',
+                    isValidInput: true,
+                    value: 30,
+                    isDirty: false,
+                    isTouched: false,
                 });
             });
 
@@ -1735,6 +1778,51 @@ describe('Utils', () => {
                     ]),
                     isDirty: true,
                     isTouched: true
+                });
+            });
+        });
+
+        describe('setInput', () => {
+            it('should be a function', () =>
+                expect(setInput).toBeInstanceOf(Function));
+
+            describe('When a field is created with input, its value is changed and then new input is set', () => {
+                const ageField = field(0, {
+                    initInput: '30',
+                    parser: decimalParser,
+                    formatter: decimalFormatter,
+                });
+                const ageFieldDirty = setInput(ageField, '50');
+
+                expectConfig(ageFieldDirty, {
+                    initValue: 30,
+                    initInput: '30',
+                    input: '50',
+                    validInput: '50',
+                    isValidInput: true,
+                    value: 50,
+                    isDirty: true,
+                    isTouched: true,
+                });
+            });
+
+            describe('When a field is created with input, its value is changed and then new incorrect input is set', () => {
+                const ageField = field(0, {
+                    initInput: '30',
+                    parser: decimalParser,
+                    formatter: decimalFormatter,
+                });
+                const ageFieldDirty = setInput(ageField, 'xyz');
+
+                expectConfig(ageFieldDirty, {
+                    initValue: 30,
+                    initInput: '30',
+                    input: 'xyz',
+                    validInput: '30',
+                    isValidInput: false,
+                    value: 30,
+                    isDirty: false,
+                    isTouched: true,
                 });
             });
         });

@@ -21,7 +21,7 @@ describe('Utils', () => {
                 expect(numberParser('12.34e18')).toBe(12.34e18));
 
             it('should fail parsing a bad number', () =>
-                expect(() => numberParser('xdfgj')).toThrowError());
+                expect(() => numberParser('abcd')).toThrowError());
         });
 
         describe('decimalParser', () => {
@@ -40,7 +40,6 @@ describe('Utils', () => {
             it('should fail parsing a bad number', () =>
                 expect(() => decimalParser('xdfgj')).toThrowError());
         });
-    });
 
         describe('integerParser', () => {
             it('should be a function', () =>
@@ -56,7 +55,7 @@ describe('Utils', () => {
                 expect(integerParser(16)('123.34e18')).toBe(0x123));
 
             it('should fail parsing a bad number', () =>
-                expect(() => integerParser(16)('xdfgj')).toThrowError());
+                expect(() => integerParser(16)('xyz')).toThrowError());
         });
     });
 });

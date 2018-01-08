@@ -8,6 +8,7 @@ import {
 } from './common';
 import { coerceAll } from './coercion';
 import { mergeValidators } from './validation';
+import { getFormatterFor, getParserFor } from './parsing';
 import {
     FormItem,
     FormFieldInit,
@@ -33,10 +34,10 @@ import {
     locateInListingOrFail,
     setGroupFieldInternal,
     setValueInternal,
+    setInputInternal,
     updateListingFieldsInternal,
     updateFormInfoInternal
 } from './forms.utils';
-import { skip } from 'rxjs/operator/skip';
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -55,8 +56,8 @@ export const field = <T = any>(
         coerce: coerceInit,
         validations: validatorInit,
         initInput,
-        parser,
-        formatter,
+        parser: parserInit,
+        formatter: formatterInit
     } = assign(
         <FormFieldInit<T>>{
             caption: '',
@@ -64,15 +65,17 @@ export const field = <T = any>(
             info: undefined,
             coerce: undefined,
             validations: undefined,
-            initInput: undefined,
-            parser: id,
-            formatter: id,
+            initInput: null,
+            parser: undefined,
+            formatter: undefined
         },
         options
     );
 
     const coerce = coerceAll(coerceInit);
     const validator = mergeValidators(validatorInit);
+    const parser = parserInit || getParserFor(initValue);
+    const formatter = formatterInit || getFormatterFor(initValue);
 
     const result: FormField<T> = {
         // Type
@@ -103,11 +106,19 @@ export const field = <T = any>(
         showErrors: false
     };
 
-    return <FormField<T>>setValueInternal(result, initValue, '', {
-        affectDirty: false,
-        compareValues: false,
-        initialization: true
-    });
+    if (initInput !== null) {
+        return <FormField<T>>setInputInternal(result, initInput, '', {
+            affectDirty: false,
+            compareValues: false,
+            initialization: true
+        });
+    } else {
+        return <FormField<T>>setValueInternal(result, initValue, '', {
+            affectDirty: false,
+            compareValues: false,
+            initialization: true
+        });
+    }
 };
 
 export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
@@ -308,14 +319,29 @@ export const setValueDoNotTouch = <I extends FormItem = FormItem>(
         affectDirty: false
     });
 
+export const setInput = <I extends FormItem = FormItem>(
+    item: I,
+    input: ValueOrFunc,
+    pathToField: string = ''
+): I => <I>setInputInternal(item, input, pathToField);
+
+export const setInputDoNotTouch = <I extends FormItem = FormItem>(
+    item: I,
+    input: ValueOrFunc,
+    pathToField: string = ''
+): I =>
+    <I>setInputInternal(item, input, pathToField, {
+        affectDirty: false
+    });
+
 export const resetValue = <I extends FormItem = FormItem>(
     item: I,
-    value: ValueOrFunc = undefined,
-    pathToField: string = ''
+    pathToField: string = '',
+    value: ValueOrFunc = undefined
 ): I =>
     <I>setValueInternal(item, value, pathToField, {
         initialization: true,
-        compareValues: false,
+        compareValues: false
     });
 
 export const setGroupField = <I extends FormItem = FormItem>(
