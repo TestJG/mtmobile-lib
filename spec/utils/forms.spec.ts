@@ -1803,6 +1803,9 @@ describe('Utils', () => {
                     value: 50,
                     isDirty: true,
                     isTouched: true,
+                    isValid: true,
+                    errors: [],
+                    showErrors: false,
                 });
             });
 
@@ -1811,6 +1814,7 @@ describe('Utils', () => {
                     initInput: '30',
                     parser: decimalParser,
                     formatter: decimalFormatter,
+                    parserErrorText: 'Not a number',
                 });
                 const ageFieldDirty = setInput(ageField, 'xyz');
 
@@ -1821,8 +1825,11 @@ describe('Utils', () => {
                     validInput: '30',
                     isValidInput: false,
                     value: 30,
-                    isDirty: false,
+                    isDirty: true,
                     isTouched: true,
+                    isValid: false,
+                    errors: ['Not a number'],
+                    showErrors: true,
                 });
             });
         });

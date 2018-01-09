@@ -154,20 +154,20 @@ var updateListingFields = function (value, fields, opts) {
         })
     ]);
 };
-var setFieldFromNewValue = function (item, newValue, opts, sameValue) {
-    var errors = item.validator(newValue);
+var setFieldFromNewValue = function (item, 
+    // newValue: any,
+    opts, sameValue) {
     var isDirty = opts.initialization
         ? false
         : item.isDirty || (opts.affectDirty ? !sameValue : false);
     var isTouched = opts.initialization ? false : isDirty || item.isTouched;
     // Derived
-    var isValid = errors.length === 0;
-    var showErrors = errors.length !== 0 && isTouched;
+    var isValid = item.errors.length === 0;
+    var showErrors = item.errors.length !== 0 && isTouched;
     var newItem = common_1.assignOrSame(item, {
-        value: newValue,
+        // value: newValue,
         isDirty: isDirty,
         isTouched: isTouched,
-        errors: errors,
         isValid: isValid,
         showErrors: showErrors,
     });
@@ -189,25 +189,32 @@ var setFieldInputInternal = function (item, inputFunc, opts, data) {
         var input = theInput;
         var validInput = input;
         var isValidInput = true;
+        var errors = item.validator(newValue);
         return setFieldFromNewValue(common_1.assignOrSame(item, {
+            value: newValue,
             initValue: initValue,
             initInput: initInput,
             input: input,
             validInput: validInput,
             isValidInput: isValidInput,
-        }), newValue, opts, sameValue);
+            errors: errors,
+        }), opts, sameValue);
     }
     catch (error) {
-        var newValue = item.value;
+        // const newValue = item.value;
         var initInput = opts.initialization ? theInput : item.initInput;
         var input = theInput;
         var isValidInput = false;
+        var errors = [item.parserErrorText || common_1.errorToString(error)];
+        console.log('Error ', JSON.stringify({
+            initInput: initInput, input: input, isValidInput: isValidInput, errors: errors
+        }));
         return setFieldFromNewValue(common_1.assignOrSame(item, {
+            errors: errors,
             initInput: initInput,
             input: input,
             isValidInput: isValidInput,
-            isTouched: true,
-        }), newValue, opts, true);
+        }), opts, false);
     }
 };
 var setFieldValueInternal = function (item, value, opts, data) {
@@ -223,12 +230,15 @@ var setFieldValueInternal = function (item, value, opts, data) {
     var input = item.formatter(newValue);
     var validInput = input;
     var isValidInput = true;
+    var errors = item.validator(newValue);
     return setFieldFromNewValue(common_1.assignOrSame(item, {
+        value: newValue,
         initValue: initValue,
         input: input,
         validInput: validInput,
         isValidInput: isValidInput,
-    }), newValue, opts, sameValue);
+        errors: errors,
+    }), opts, sameValue);
 };
 // const setFieldInputInternal = (
 //     item: FormField,

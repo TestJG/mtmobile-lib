@@ -57,7 +57,8 @@ export const field = <T = any>(
         validations: validatorInit,
         initInput,
         parser: parserInit,
-        formatter: formatterInit
+        formatter: formatterInit,
+        parserErrorText,
     } = assign(
         <FormFieldInit<T>>{
             caption: '',
@@ -67,7 +68,8 @@ export const field = <T = any>(
             validations: undefined,
             initInput: null,
             parser: undefined,
-            formatter: undefined
+            formatter: undefined,
+            parserErrorText: undefined,
         },
         options
     );
@@ -91,6 +93,7 @@ export const field = <T = any>(
         validator,
         parser,
         formatter,
+        parserErrorText,
 
         // State
         value: undefined,

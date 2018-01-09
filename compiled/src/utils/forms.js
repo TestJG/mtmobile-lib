@@ -19,8 +19,9 @@ exports.field = function (initValue, options) {
         validations: undefined,
         initInput: null,
         parser: undefined,
-        formatter: undefined
-    }, options), caption = _a.caption, description = _a.description, info = _a.info, coerceInit = _a.coerce, validatorInit = _a.validations, initInput = _a.initInput, parserInit = _a.parser, formatterInit = _a.formatter;
+        formatter: undefined,
+        parserErrorText: undefined,
+    }, options), caption = _a.caption, description = _a.description, info = _a.info, coerceInit = _a.coerce, validatorInit = _a.validations, initInput = _a.initInput, parserInit = _a.parser, formatterInit = _a.formatter, parserErrorText = _a.parserErrorText;
     var coerce = coercion_1.coerceAll(coerceInit);
     var validator = validation_1.mergeValidators(validatorInit);
     var parser = parserInit || parsing_1.getParserFor(initValue);
@@ -38,6 +39,7 @@ exports.field = function (initValue, options) {
         validator: validator,
         parser: parser,
         formatter: formatter,
+        parserErrorText: parserErrorText,
         // State
         value: undefined,
         errors: [],

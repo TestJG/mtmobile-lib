@@ -51,6 +51,7 @@ export interface FormFieldInit<T = any> extends FormPartInit<T> {
     initInput: any;
     parser: Parser<T>;
     formatter: Formatter<T>;
+    parserErrorText: string;
 }
 
 export interface FormFieldConfig<T = any> extends FormPartConfig<T> {
@@ -58,6 +59,7 @@ export interface FormFieldConfig<T = any> extends FormPartConfig<T> {
     initInput: any;
     parser: Parser<T>;
     formatter: Formatter<T>;
+    parserErrorText: string;
 }
 
 export interface FormFieldState<T = any>

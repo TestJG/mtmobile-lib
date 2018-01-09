@@ -257,26 +257,23 @@ const updateListingFields = (
 
 const setFieldFromNewValue = (
     item: FormField,
-    newValue: any,
+    // newValue: any,
     opts: SetValueOptions,
     sameValue: boolean
 ): FormField => {
-
-    const errors = item.validator(newValue);
     const isDirty = opts.initialization
         ? false
         : item.isDirty || (opts.affectDirty ? !sameValue : false);
     const isTouched = opts.initialization ? false : isDirty || item.isTouched;
 
     // Derived
-    const isValid = errors.length === 0;
-    const showErrors = errors.length !== 0 && isTouched;
+    const isValid = item.errors.length === 0;
+    const showErrors = item.errors.length !== 0 && isTouched;
 
     const newItem = assignOrSame(item, {
-        value: newValue,
+        // value: newValue,
         isDirty,
         isTouched,
-        errors,
         isValid,
         showErrors,
     });
@@ -306,26 +303,34 @@ const setFieldInputInternal = (
         const input = theInput;
         const validInput = input;
         const isValidInput = true;
+        const errors = item.validator(newValue);
 
         return setFieldFromNewValue(assignOrSame(item, {
+            value: newValue,
             initValue,
             initInput,
             input,
             validInput,
             isValidInput,
-        }), newValue, opts, sameValue);
+            errors,
+        }), opts, sameValue);
     } catch (error) {
-        const newValue = item.value;
+        // const newValue = item.value;
         const initInput = opts.initialization ? theInput : item.initInput;
         const input = theInput;
         const isValidInput = false;
+        const errors = [ item.parserErrorText || errorToString(error) ];
+        console.log('Error ', JSON.stringify({
+            initInput, input, isValidInput, errors
+        }));
 
         return setFieldFromNewValue(assignOrSame(item, {
+            errors,
             initInput,
             input,
             isValidInput,
-            isTouched: true,
-        }), newValue, opts, true);
+            // isTouched: true,
+        }), opts, false);
     }
 };
 
@@ -349,13 +354,16 @@ const setFieldValueInternal = (
     const input = item.formatter(newValue);
     const validInput = input;
     const isValidInput = true;
+    const errors = item.validator(newValue);
 
     return setFieldFromNewValue(assignOrSame(item, {
+        value: newValue,
         initValue,
         input,
         validInput,
         isValidInput,
-    }), newValue, opts, sameValue);
+        errors,
+    }), opts, sameValue);
 };
 
 // const setFieldInputInternal = (
