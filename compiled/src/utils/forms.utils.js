@@ -206,9 +206,6 @@ var setFieldInputInternal = function (item, inputFunc, opts, data) {
         var input = theInput;
         var isValidInput = false;
         var errors = [item.parserErrorText || common_1.errorToString(error)];
-        console.log('Error ', JSON.stringify({
-            initInput: initInput, input: input, isValidInput: isValidInput, errors: errors
-        }));
         return setFieldFromNewValue(common_1.assignOrSame(item, {
             errors: errors,
             initInput: initInput,

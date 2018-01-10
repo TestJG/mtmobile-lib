@@ -8,20 +8,26 @@ exports.makeValidator = function (val) {
         val = exports.emptyValidator;
     }
     return function (value) {
+        var result;
         try {
-            var result = val(value);
-            if (result instanceof Array) {
-                return result;
-            }
-            else if (result.trim()) {
+            result = val(value);
+        }
+        catch (error) {
+            result = [common_1.errorToString(error)];
+        }
+        if (result instanceof Array) {
+            return result;
+        }
+        else if (typeof result === 'string') {
+            if (result.trim()) {
                 return [result.trim()];
             }
             else {
                 return [];
             }
         }
-        catch (error) {
-            return [common_1.errorToString(error)];
+        else {
+            throw new Error("Expected a validation result of type string[] or string. However a " + typeof result + " was received.");
         }
     };
 };
