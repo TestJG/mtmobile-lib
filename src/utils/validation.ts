@@ -27,17 +27,22 @@ export const makeValidator = <T>(
         val = emptyValidator;
     }
     return (value: T) => {
+        let result;
         try {
-            const result = val(value);
-            if (result instanceof Array) {
-                return result;
-            } else if (result.trim()) {
+            result = val(value);
+        } catch (error) {
+            result = [errorToString(error)];
+        }
+        if (result instanceof Array) {
+            return result;
+        } else if (typeof result === 'string') {
+            if (result.trim()) {
                 return [result.trim()];
             } else {
                 return [];
             }
-        } catch (error) {
-            return [errorToString(error)];
+        } else {
+            throw new Error(`Expected a validation result of type string[] or string. However a ${typeof result} was received.`);
         }
     };
 };

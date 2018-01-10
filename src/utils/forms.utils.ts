@@ -320,9 +320,6 @@ const setFieldInputInternal = (
         const input = theInput;
         const isValidInput = false;
         const errors = [ item.parserErrorText || errorToString(error) ];
-        console.log('Error ', JSON.stringify({
-            initInput, input, isValidInput, errors
-        }));
 
         return setFieldFromNewValue(assignOrSame(item, {
             errors,

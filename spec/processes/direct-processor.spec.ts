@@ -122,32 +122,32 @@ describe('Processes', () => {
                     taskA: () =>
                         Observable.timer(5)
                             .skip(1)
-                            .concat(Observable.of(42)),
+                            .concat(Observable.of('A')),
                     taskB: (p: number) =>
                         Observable.timer(p)
                             .skip(1)
-                            .concat(Observable.of(p + 10))
+                            .concat(Observable.of('B' + p))
                 };
                 const processor = fromServiceToDirectProcessor(service);
 
                 it('calling a task after processor.finish should prevent it from running', done => {
                     testObs(
                         Observable.merge(
-                            Observable.timer(5).switchMap(() =>
-                                processor.process(task('taskB', 15))
+                            Observable.timer(10).switchMap(() =>
+                                processor.process(task('taskB', 30))
                             ),
-                            Observable.timer(1).switchMap(() =>
+                            Observable.timer(0).switchMap(() =>
                                 processor.process(task('taskA'))
                             ),
-                            Observable.timer(25).switchMap(() =>
-                                processor.process(task('taskB', 12))
+                            Observable.timer(50).switchMap(() =>
+                                processor.process(task('taskB', 20))
                             )
                         ),
-                        [42, 25],
+                        ['A', 'B30'],
                         new Error('worker:finishing'),
                         done
                     );
-                    Observable.timer(20)
+                    Observable.timer(35)
                         .switchMap(() => processor.finish())
                         .subscribe();
                 });
