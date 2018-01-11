@@ -1,6 +1,6 @@
 import { IProcessor, IProcessorCore, TaskItem } from './processor.interfaces';
 export interface WorkerItem {
-    kind: 'process' | 'terminate';
+    kind: 'process' | 'terminate' | 'unsubscribe';
     uid: string;
     task?: TaskItem;
 }
@@ -17,9 +17,9 @@ export declare const createBackgroundWorker: (opts: {
     process: (item: WorkerItem) => void;
 };
 export interface SimpleWorker {
-    onmessage: typeof Worker.prototype.onmessage;
-    postMessage: typeof Worker.prototype.postMessage;
-    terminate: typeof Worker.prototype.terminate;
+    onmessage: (msg: WorkerItemResponse) => void;
+    postMessage: (msg: WorkerItem) => void;
+    terminate: () => void;
 }
 export declare const createForegroundWorker: (opts: {
     createWorker: () => SimpleWorker;
