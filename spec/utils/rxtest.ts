@@ -194,8 +194,8 @@ export const testObsNotifications = <T = any>(
         }
     };
 
-    const tout = Observable.of(1).delay(100);
-    actual
+    const tout = Observable.timer(100);
+    return actual
         .timeoutWith(doneTimeout, ['TIMEOUT'])
         .materialize()
         .do(n => {

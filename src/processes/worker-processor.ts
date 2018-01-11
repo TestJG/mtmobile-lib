@@ -1,9 +1,9 @@
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, Observer, Subscription } from 'rxjs';
 import { IProcessor, IProcessorCore, TaskItem } from './processor.interfaces';
 import { uuid } from '../utils/common';
 
 export interface WorkerItem {
-    kind: 'process' | 'terminate';
+    kind: 'process' | 'terminate' | 'unsubscribe';
     uid: string;
     task?: TaskItem;
 }
@@ -25,28 +25,50 @@ export const createBackgroundWorker = (opts: {
         }
     });
 
+    const subscriptions = new Map<string, Subscription>();
+
     const process = (item: WorkerItem) => {
         switch (item.kind) {
             case 'process': {
-                opts.processor.process(item.task).subscribe({
+                const subs = opts.processor.process(item.task).subscribe({
                     next: v =>
-                        opts.postMessage(<WorkerItemResponse>{
-                            kind: 'N',
-                            uid: item.uid,
-                            valueOrError: v
-                        }),
-                    error: err =>
-                        opts.postMessage(<WorkerItemResponse>{
-                            kind: 'E',
-                            uid: item.uid,
-                            valueOrError: err
-                        }),
-                    complete: () =>
-                        opts.postMessage(<WorkerItemResponse>{
-                            kind: 'C',
-                            uid: item.uid
-                        })
+                        opts.postMessage(
+                            <WorkerItemResponse>{
+                                kind: 'N',
+                                uid: item.uid,
+                                valueOrError: v
+                            }
+                        ),
+                    error: err => {
+                        subscriptions.delete(item.uid);
+                        opts.postMessage(
+                            <WorkerItemResponse>{
+                                kind: 'E',
+                                uid: item.uid,
+                                valueOrError: err
+                            }
+                        );
+                    },
+                    complete: () => {
+                        subscriptions.delete(item.uid);
+                        opts.postMessage(
+                            <WorkerItemResponse>{
+                                kind: 'C',
+                                uid: item.uid
+                            }
+                        );
+                    }
                 });
+                subscriptions.set(item.uid, subs);
+                break;
+            }
+
+            case 'unsubscribe': {
+                const subs = subscriptions.get(item.uid);
+                if (subs) {
+                    subs.unsubscribe();
+                    subscriptions.delete(item.uid);
+                }
                 break;
             }
 
@@ -64,9 +86,9 @@ export const createBackgroundWorker = (opts: {
 };
 
 export interface SimpleWorker {
-    onmessage: typeof Worker.prototype.onmessage;
-    postMessage: typeof Worker.prototype.postMessage;
-    terminate: typeof Worker.prototype.terminate;
+    onmessage: (msg: WorkerItemResponse) => void;
+    postMessage: (msg: WorkerItem) => void;
+    terminate: () => void;
 }
 
 export const createForegroundWorker = (opts: {
@@ -74,65 +96,81 @@ export const createForegroundWorker = (opts: {
     run?: (f: () => void) => void;
 }): IProcessorCore => {
     const worker = opts.createWorker();
-    const run = opts.run || ((f: () => void) => f());
+    const run = opts.run || (f => f());
 
     let status = 'open';
     const terminateUUID = uuid();
     const terminateSub = new Subject<any>();
     const terminate$ = terminateSub.asObservable();
-    terminateSub.subscribe({
+    const terminateSubscription = terminateSub.subscribe({
         complete: () => {
             status = 'closed';
             run(() => worker.terminate());
-            // worker.terminate();
+            terminateSubscription.unsubscribe();
         }
     });
 
     const observers = new Map<string, Subject<any>>();
-    observers.set(terminateUUID, terminateSub);
 
     const isAlive = () => status === 'open';
 
     const finish = () => {
         if (status === 'open') {
             status = 'closing';
-            worker.postMessage(<WorkerItem>{
-                kind: 'terminate',
-                uid: terminateUUID
-            });
+            worker.postMessage(
+                <WorkerItem>{
+                    kind: 'terminate',
+                    uid: terminateUUID
+                }
+            );
         }
         return terminate$;
     };
 
     const process = (task: TaskItem): Observable<any> => {
-        const id = uuid();
-        const sub = new Subject<any>();
-        const obs$ = sub.asObservable();
-        observers.set(id, sub);
-        worker.postMessage(<WorkerItem>{
-            kind: 'process',
-            uid: id,
-            task
+        const result = <Observable<
+            any
+        >>Observable.create((o: Observer<any>) => {
+            const id = uuid();
+            const sub = new Subject<any>();
+            const obs$ = sub.asObservable();
+            observers.set(id, sub);
+            worker.postMessage({ kind: 'process', uid: id, task });
+            const subs = obs$.subscribe({
+                next: x => o.next(x),
+                error: e => o.error(e),
+                complete: () => o.complete()
+            });
+
+            return () => {
+                subs.unsubscribe();
+                worker.postMessage({ kind: 'unsubscribe', uid: id });
+            };
         });
-        return obs$;
+        return result;
     };
 
-    worker.onmessage = msg => {
-        const resp = <WorkerItemResponse>msg.data;
-        const obs = observers.get(resp.uid);
-        if (!!obs) {
-            switch (resp.kind) {
-                case 'N':
-                    run(() => obs.next(resp.valueOrError));
-                    break;
-                case 'E':
-                    run(() => obs.error(resp.valueOrError));
-                    observers.delete(resp.uid);
-                    break;
-                case 'C':
-                    run(() => obs.complete());
-                    observers.delete(resp.uid);
-                    break;
+    worker.onmessage = resp => {
+        if (resp.uid === terminateUUID) {
+            if (resp.kind === 'C') {
+                run(() => terminateSub.complete());
+            }
+        } else {
+            const obs = observers.get(resp.uid);
+            if (!!obs) {
+                switch (resp.kind) {
+                    case 'N':
+                        run(() => obs.next(resp.valueOrError));
+                        break;
+                    case 'E':
+                        run(() => obs.error(resp.valueOrError));
+                        observers.delete(resp.uid);
+                        break;
+                    case 'C':
+                        run(() => obs.complete());
+                        observers.delete(resp.uid);
+                        break;
+                }
             }
         }
     };
