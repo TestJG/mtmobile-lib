@@ -52,6 +52,9 @@ exports.firstSwitchMap = function (source) { return function (mapper) {
         .switchMap(mapper)
         .catch(exports.normalizeErrorOnCatch);
 }; };
+exports.getAsObs = function (source) {
+    return exports.tryTo(function () { return common_1.getAsValue(source); });
+};
 function makeState(init, updates$) {
     var state$ = updates$
         .scan(function (prev, up) { return up(prev); }, init)

@@ -1,9 +1,10 @@
 import { Observable, Subscription, ReplaySubject } from 'rxjs';
 import { Subscribable } from 'rxjs/Observable';
-import { isSomething, normalizeError } from './common';
+import { isSomething, normalizeError, ValueOrFunc, getAsValue } from './common';
 import { IScheduler } from 'rxjs/Scheduler';
 
 export type ObsLike<T = any> = Subscribable<T> | PromiseLike<T> | T;
+export type ObsOrFunc<T = any> = ValueOrFunc<ObsLike<T>>;
 
 export const normalizeErrorOnCatch = <T>(err: any): Observable<T> =>
     Observable.throw(normalizeError(err));
@@ -65,6 +66,9 @@ export const firstSwitchMap = <S>(source: Observable<S>) => <T>(
         .first()
         .switchMap(mapper)
         .catch(normalizeErrorOnCatch);
+
+export const getAsObs = <T = any>(source: ObsOrFunc<T>) =>
+    tryTo(() => getAsValue(source));
 
 export function makeState<TState>(
     init: TState,
