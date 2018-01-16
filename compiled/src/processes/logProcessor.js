@@ -45,8 +45,11 @@ function logProcessorCore(processor, options) {
         preCaption: '',
         taskFormatter: exports.defaultTaskFormatter(60)
     }, options);
+    if (opts.disabled) {
+        return processor;
+    }
     var process = function (item) {
-        if (opts.disabled || opts.processDisabled) {
+        if (opts.processDisabled) {
             return processor.process(item);
         }
         else {
@@ -67,7 +70,7 @@ function logProcessorCore(processor, options) {
         }
     };
     var isAlive = function () {
-        if (opts.disabled || opts.isAliveDisabled) {
+        if (opts.isAliveDisabled) {
             return processor.isAlive();
         }
         else {
@@ -80,7 +83,7 @@ function logProcessorCore(processor, options) {
         }
     };
     var finish = function () {
-        if (opts.disabled || opts.finishDisabled) {
+        if (opts.finishDisabled) {
             return processor.finish();
         }
         else {

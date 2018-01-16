@@ -65,8 +65,12 @@ export function logProcessorCore<T extends IProcessorCore>(
         options
     );
 
+    if (opts.disabled) {
+        return processor;
+    }
+
     const process = (item: TaskItem): Observable<any> => {
-        if (opts.disabled || opts.processDisabled) {
+        if (opts.processDisabled) {
             return processor.process(item);
         } else {
             const msg = opts.taskFormatter(item);
@@ -86,7 +90,7 @@ export function logProcessorCore<T extends IProcessorCore>(
     };
 
     const isAlive = (): boolean => {
-        if (opts.disabled || opts.isAliveDisabled) {
+        if (opts.isAliveDisabled) {
             return processor.isAlive();
         } else {
             const print = (op) =>
@@ -98,7 +102,7 @@ export function logProcessorCore<T extends IProcessorCore>(
     };
 
     const finish = (): Observable<void> => {
-        if (opts.disabled || opts.finishDisabled) {
+        if (opts.finishDisabled) {
             return processor.finish();
         } else {
             const print = (op) =>
