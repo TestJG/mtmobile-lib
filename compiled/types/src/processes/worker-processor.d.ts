@@ -24,4 +24,5 @@ export interface SimpleWorker {
 export declare const createForegroundWorker: (opts: {
     createWorker: () => SimpleWorker;
     run?: (f: () => void) => void;
+    caption?: string;
 }) => IProcessorCore;

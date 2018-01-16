@@ -94,9 +94,11 @@ export interface SimpleWorker {
 export const createForegroundWorker = (opts: {
     createWorker: () => SimpleWorker;
     run?: (f: () => void) => void;
+    caption?: string;
 }): IProcessorCore => {
     const worker = opts.createWorker();
     const run = opts.run || (f => f());
+    const caption = opts.caption || 'worker';
 
     let status = 'open';
     const terminateUUID = uuid();

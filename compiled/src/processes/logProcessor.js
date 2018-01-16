@@ -81,7 +81,7 @@ function logProcessorCore(processor, options) {
             var print_1 = function (op) {
                 return "" + opts.preCaption + opts.caption + ": " + op + " process.";
             };
-            console.log(print_1('START'), msg_1);
+            console.log(print_1('START') + " " + msg_1);
             var result = processor.process(item);
             if (!opts.basicProcessLog) {
                 result = result.do({

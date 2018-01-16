@@ -100,7 +100,7 @@ export function logProcessorCore<T extends IProcessorCore>(
             const msg = opts.taskFormatter(item, opts.showPayloads);
             const print = op =>
                 `${opts.preCaption}${opts.caption}: ${op} process.`;
-            console.log(print('START'), msg);
+            console.log(`${print('START')} ${msg}`);
             let result = processor.process(item);
             if (!opts.basicProcessLog) {
                 result = result.do({

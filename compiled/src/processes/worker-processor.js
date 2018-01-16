@@ -60,6 +60,7 @@ exports.createBackgroundWorker = function (opts) {
 exports.createForegroundWorker = function (opts) {
     var worker = opts.createWorker();
     var run = opts.run || (function (f) { return f(); });
+    var caption = opts.caption || 'worker';
     var status = 'open';
     var terminateUUID = common_1.uuid();
     var terminateSub = new rxjs_1.Subject();
