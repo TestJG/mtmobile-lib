@@ -144,9 +144,7 @@ exports.joinStr = function (sep, strs) {
 function uuid(separator) {
     if (separator === void 0) { separator = '-'; }
     var s4 = function () {
-        return Math.floor((1 + Math.random()) * 0x10000)
-            .toString(16)
-            .substring(1);
+        return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
     };
     return exports.joinStr(separator || '', [
         s4() + s4(),
@@ -227,4 +225,15 @@ function errorToString(err) {
     return exports.normalizeError(err).message;
 }
 exports.errorToString = errorToString;
+function capString(str, maxLength, ellipsis) {
+    if (ellipsis === void 0) { ellipsis = '...'; }
+    maxLength = maxLength >= ellipsis.length ? maxLength : ellipsis.length;
+    if (str.length >= maxLength) {
+        return str.substr(0, maxLength - ellipsis.length) + ellipsis;
+    }
+    else {
+        return str;
+    }
+}
+exports.capString = capString;
 //# sourceMappingURL=common.js.map

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var common_1 = require("../utils/common");
 function logProcessor(processor) {
     processor.onTaskStarted$.subscribe(function (t) {
         return console.log("(" + processor.caption + ") START :", JSON.stringify(t));
@@ -14,7 +15,7 @@ function logProcessor(processor) {
         return console.log("(" + processor.caption + ") ERROR :", JSON.stringify(t));
     });
     processor.onTaskCompleted$.subscribe(function (t) {
-        return console.log("(" + processor.caption + ") COMPL :", JSON.stringify(t));
+        return console.log("(" + processor.caption + ") COMPLETE :", JSON.stringify(t));
     });
     processor.onFinished$.subscribe(function () {
         return console.log("(" + processor.caption + ") FINISHED");
@@ -24,14 +25,34 @@ function logProcessor(processor) {
 exports.logProcessor = logProcessor;
 exports.defaultTaskFormatter = function (maxPayloadLength) {
     if (maxPayloadLength === void 0) { maxPayloadLength = 60; }
-    return function (item) {
-        var payload = item.payload && maxPayloadLength
+    return function (item, showPayload) {
+        var payload = showPayload && item.payload && maxPayloadLength
             ? JSON.stringify(item.payload)
-            : undefined;
-        if (maxPayloadLength && payload && payload.length > maxPayloadLength) {
-            payload = ' ' + payload.substr(0, maxPayloadLength - 3) + '...';
+            : '';
+        if (maxPayloadLength && payload) {
+            payload = common_1.capString(payload, maxPayloadLength);
         }
         return item.kind + " [" + item.uid + "]" + payload;
+    };
+};
+exports.defaultValueFormatter = function (maxValueLength) {
+    if (maxValueLength === void 0) { maxValueLength = 60; }
+    return function (value) {
+        return common_1.capString(JSON.stringify(value), maxValueLength);
+    };
+};
+exports.defaultErrorFormatter = function (showStack) {
+    if (showStack === void 0) { showStack = true; }
+    return function (error) {
+        if (error instanceof Error) {
+            var result = (error.name || 'Error') + ": " + (error.message ||
+                '(no message)');
+            if (error.stack && showStack) {
+                result = result + '\n' + error.stack;
+            }
+            return result;
+        }
+        return undefined;
     };
 };
 function logProcessorCore(processor, options) {
@@ -41,9 +62,12 @@ function logProcessorCore(processor, options) {
         isAliveDisabled: false,
         finishDisabled: false,
         basicProcessLog: false,
+        showPayloads: true,
         caption: processor.caption || 'Log',
         preCaption: '',
-        taskFormatter: exports.defaultTaskFormatter(60)
+        taskFormatter: exports.defaultTaskFormatter(60),
+        valueFormatter: exports.defaultValueFormatter(30),
+        errorFormatter: exports.defaultErrorFormatter(true)
     }, options);
     if (opts.disabled) {
         return processor;
@@ -53,7 +77,7 @@ function logProcessorCore(processor, options) {
             return processor.process(item);
         }
         else {
-            var msg_1 = opts.taskFormatter(item);
+            var msg_1 = opts.taskFormatter(item, opts.showPayloads);
             var print_1 = function (op) {
                 return "" + opts.preCaption + opts.caption + ": " + op + " process.";
             };
@@ -61,9 +85,13 @@ function logProcessorCore(processor, options) {
             var result = processor.process(item);
             if (!opts.basicProcessLog) {
                 result = result.do({
-                    next: function (x) { return console.log(print_1('NEXT'), x, msg_1); },
-                    error: function (x) { return console.log(print_1('ERROR'), x, msg_1); },
-                    complete: function () { return console.log(print_1('COMPLETE'), msg_1); },
+                    next: function (x) {
+                        return console.log(print_1('NEXT') + " " + msg_1 + " " + opts.valueFormatter(x));
+                    },
+                    error: function (x) {
+                        return console.log(print_1('ERROR') + " " + msg_1 + " " + (opts.errorFormatter(x) || opts.valueFormatter(x)));
+                    },
+                    complete: function () { return console.log(print_1('COMPLETE') + " " + msg_1); }
                 });
             }
             return result;
@@ -78,7 +106,7 @@ function logProcessorCore(processor, options) {
                 return "" + opts.preCaption + opts.caption + ": " + op + " isAlive.";
             };
             var result = processor.isAlive();
-            console.log(print_2('START'), result);
+            console.log(print_2('START') + ": " + (result ? 'isAlive' : 'isDead'));
             return result;
         }
     };
@@ -95,7 +123,10 @@ function logProcessorCore(processor, options) {
             if (!opts.basicProcessLog) {
                 result = result.do({
                     next: function () { return console.log(print_3('NEXT')); },
-                    error: function (x) { return console.log(print_3('ERROR'), x); },
+                    error: function (x) {
+                        return console.log(print_3('ERROR') + " " + (opts.errorFormatter(x) ||
+                            opts.valueFormatter(x)));
+                    },
                     complete: function () { return console.log(print_3('COMPLETE')); }
                 });
             }

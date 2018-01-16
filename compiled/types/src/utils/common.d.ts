@@ -31,3 +31,4 @@ export declare const objMapValues: (mapper: (value: any, key: string) => any) =>
 export declare const objFilter: (filter: (keyValue: [string, any]) => boolean) => (source: KeyValuePairs) => KeyValuePairsMap;
 export declare const normalizeError: (err: any) => Error;
 export declare function errorToString(err: any): string;
+export declare function capString(str: string, maxLength: number, ellipsis?: string): string;

@@ -1,8 +1,8 @@
 import * as _ from 'lodash';
 import { EqualityComparer, shallowEqualStrict } from './equality';
 
-export const isNothing = (x) => x === undefined || x === null;
-export const isSomething = (x) => x !== undefined && x !== null;
+export const isNothing = x => x === undefined || x === null;
+export const isSomething = x => x !== undefined && x !== null;
 
 export const assign = <T>(s: T, ...u: Partial<T>[]): T =>
     Object.assign({}, s, ...u);
@@ -138,9 +138,7 @@ export const joinStr = (sep: string, strs: string[]) =>
 
 export function uuid(separator: string = '-'): string {
     const s4 = () =>
-        Math.floor((1 + Math.random()) * 0x10000)
-            .toString(16)
-            .substring(1);
+        Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
 
     return joinStr(separator || '', [
         s4() + s4(),
@@ -209,7 +207,8 @@ export const objFilter = (filter: (keyValue: [string, any]) => boolean) => (
             } else {
                 return obj;
             }
-        }, {}));
+        }, {})
+    );
 };
 
 export const normalizeError = (err: any) => {
@@ -233,4 +232,17 @@ export const normalizeError = (err: any) => {
 
 export function errorToString(err: any) {
     return normalizeError(err).message;
+}
+
+export function capString(
+    str: string,
+    maxLength: number,
+    ellipsis: string = '...'
+) {
+    maxLength = maxLength >= ellipsis.length ? maxLength : ellipsis.length;
+    if (str.length >= maxLength) {
+        return str.substr(0, maxLength - ellipsis.length) + ellipsis;
+    } else {
+        return str;
+    }
 }
