@@ -1,6 +1,7 @@
 import { Observable, Subject, ReplaySubject } from 'rxjs';
 import { assign, objMapValues } from '../utils/common';
 import { ObsLike } from '../utils/rxutils';
+import { TransientError } from './errors';
 import { IProcessor, TaskItem } from './processor.interfaces';
 import { makeRunTask } from './makeRunTask';
 
@@ -42,7 +43,7 @@ export function startDirectProcessor(
             minDelay: 10,
             maxDelay: 5000,
             nextDelay: (d: number) => d * 5,
-            isTransientError: (error: any) => true
+            isTransientError: (error: any) => error instanceof TransientError
         },
         options || {}
     );

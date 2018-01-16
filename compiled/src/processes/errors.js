@@ -10,17 +10,6 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var PermanentError = (function (_super) {
-    __extends(PermanentError, _super);
-    function PermanentError(message) {
-        var _newTarget = this.constructor;
-        var _this = _super.call(this, message) || this;
-        Object.setPrototypeOf(_this, _newTarget.prototype);
-        return _this;
-    }
-    return PermanentError;
-}(Error));
-exports.PermanentError = PermanentError;
 var TransientError = (function (_super) {
     __extends(TransientError, _super);
     function TransientError(message) {

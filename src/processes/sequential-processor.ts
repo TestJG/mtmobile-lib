@@ -1,6 +1,7 @@
 import { Observable, Subject, ReplaySubject } from 'rxjs';
 import { assign, objFilter } from '../utils/common';
 import { ObsLike } from '../utils/rxutils';
+import { TransientError } from './errors';
 import { IProcessor, TaskItem } from './processor.interfaces';
 import { tryTo } from '../utils';
 import _ from 'lodash';
@@ -77,7 +78,7 @@ export function startSequentialProcessor(
             maxDelay: 5000,
             taskTimeout: 5000,
             nextDelay: (d: number) => d * 5,
-            isTransientError: (error: any) => true,
+            isTransientError: (error: any) => error instanceof TransientError,
             logToConsole: false
         },
         options

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var rxjs_1 = require("rxjs");
 var common_1 = require("../utils/common");
+var errors_1 = require("./errors");
 var makeRunTask_1 = require("./makeRunTask");
 function startDirectProcessor(runTask, options) {
     var opts = common_1.assign({
@@ -10,7 +11,7 @@ function startDirectProcessor(runTask, options) {
         minDelay: 10,
         maxDelay: 5000,
         nextDelay: function (d) { return d * 5; },
-        isTransientError: function (error) { return true; }
+        isTransientError: function (error) { return error instanceof errors_1.TransientError; }
     }, options || {});
     var onFinishedSub = new rxjs_1.ReplaySubject(1);
     var onFinished$ = onFinishedSub.asObservable();

@@ -4,7 +4,8 @@ import {
     TaskItem,
     task,
     fromServiceToDirectProcessor,
-    startDirectProcessor
+    startDirectProcessor,
+    TransientError
 } from '../../src/processes';
 import { testObs, testTaskOf } from '../utils/rxtest';
 
@@ -29,7 +30,7 @@ describe('Processes', () => {
 
             describe('When a direct processor is started with bad behaved task', () => {
                 const runner = (item: TaskItem) =>
-                    testTaskOf(5)(1, 2, 3, new Error('permanent'))();
+                    testTaskOf(5)(1, 2, 3, new TransientError('transient'))();
                 const proc = startDirectProcessor(runner, {
                     maxRetries: 3,
                     nextDelay: d => d
@@ -39,7 +40,7 @@ describe('Processes', () => {
                     testObs(
                         proc.process(task('taskA')),
                         [1, 2, 3, 1, 2, 3, 1, 2, 3],
-                        new Error('permanent'),
+                        new TransientError('transient'),
                         done
                     ));
             });
@@ -47,7 +48,7 @@ describe('Processes', () => {
             describe('When a direct processor is started with temporary error', () => {
                 let errorCount = 0;
                 const failing = (i, p) =>
-                    testTaskOf(5)(1, 2, 3, new Error('temporary'))();
+                    testTaskOf(5)(1, 2, 3, new TransientError('temporary'))();
                 const succeeding = (i, p) => testTaskOf(5)(1, 2, 3, 4)();
                 const runner = (item: TaskItem) => {
                     if (++errorCount <= 2) {

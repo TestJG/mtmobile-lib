@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var rxjs_1 = require("rxjs");
 var common_1 = require("../utils/common");
+var errors_1 = require("./errors");
 var utils_1 = require("../utils");
 var lodash_1 = require("lodash");
 var index_1 = require("../../index");
@@ -20,7 +21,7 @@ function startSequentialProcessor(runTask, options) {
         maxDelay: 5000,
         taskTimeout: 5000,
         nextDelay: function (d) { return d * 5; },
-        isTransientError: function (error) { return true; },
+        isTransientError: function (error) { return error instanceof errors_1.TransientError; },
         logToConsole: false
     }, options);
     var inputCh = [];

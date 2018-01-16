@@ -30,8 +30,8 @@ export interface LogProcessorCoreOptions {
     finishDisabled: boolean;
     basicProcessLog: boolean;
     caption: string;
+    preCaption: string;
     taskFormatter: (item: TaskItem) => string;
-    valueFormatter: (v: any, item: TaskItem) => string;
 }
 
 export const defaultTaskFormatter = (maxPayloadLength = 60) => (
@@ -47,16 +47,6 @@ export const defaultTaskFormatter = (maxPayloadLength = 60) => (
     return `${item.kind} [${item.uid}]${payload}`;
 };
 
-export const defaultValueFormatter = (maxValueLength = 30) => (
-    v: any, item: TaskItem
-) => {
-    let value = maxValueLength ? JSON.stringify(v) : undefined;
-    if (maxValueLength && value && value.length > maxValueLength) {
-        value = ' ' + value.substr(0, maxValueLength - 3) + '...';
-    }
-    return value;
-};
-
 export function logProcessorCore<T extends IProcessorCore>(
     processor: T,
     options?: Partial<LogProcessorCoreOptions>
@@ -69,8 +59,8 @@ export function logProcessorCore<T extends IProcessorCore>(
             finishDisabled: false,
             basicProcessLog: false,
             caption: (<any>processor).caption || 'Log',
-            taskFormatter: defaultTaskFormatter(60),
-            valueFormatter: defaultValueFormatter(30)
+            preCaption: '',
+            taskFormatter: defaultTaskFormatter(60)
         },
         options
     );
@@ -80,21 +70,15 @@ export function logProcessorCore<T extends IProcessorCore>(
             return processor.process(item);
         } else {
             const msg = opts.taskFormatter(item);
-            console.log(`${opts.caption}: START process. ${msg}`);
+            const print = (op) =>
+                `${opts.preCaption}${opts.caption}: ${op} process.`;
+            console.log(print('START'), msg);
             let result = processor.process(item);
             if (!opts.basicProcessLog) {
                 result = result.do({
-                    next: x => {
-                        console.log(`${opts.caption}: NEXT process. ${msg}`, x);
-                    },
-                    error: x => {
-                        console.log(`${opts.caption}: ERROR process. ${msg}`, x);
-                    },
-                    complete: () => {
-                        console.log(
-                            `${opts.caption}: COMPLETE process. ${msg}`
-                        );
-                    }
+                    next: x => console.log(print('NEXT'), x, msg),
+                    error: x => console.log(print('ERROR'), x, msg),
+                    complete: () => console.log(print('COMPLETE'), msg),
                 });
             }
             return result;
@@ -105,9 +89,10 @@ export function logProcessorCore<T extends IProcessorCore>(
         if (opts.disabled || opts.isAliveDisabled) {
             return processor.isAlive();
         } else {
-            console.log(`${opts.caption}: START isAlive`);
+            const print = (op) =>
+                `${opts.preCaption}${opts.caption}: ${op} isAlive.`;
             const result = processor.isAlive();
-            console.log(`${opts.caption}: END isAlive: ${result}`);
+            console.log(print('START'), result);
             return result;
         }
     };
@@ -116,22 +101,17 @@ export function logProcessorCore<T extends IProcessorCore>(
         if (opts.disabled || opts.finishDisabled) {
             return processor.finish();
         } else {
-            console.log(`${opts.caption}: START finish`);
+            const print = (op) =>
+                `${opts.preCaption}${opts.caption}: ${op} finish.`;
+            console.log(print('START'));
             let result = processor.finish();
             if (!opts.basicProcessLog) {
                 result = result.do({
-                    next: () => {
-                        console.log(`${opts.caption}: NEXT finish`);
-                    },
-                    error: x => {
-                        console.log(`${opts.caption}: ERROR finish`);
-                    },
-                    complete: () => {
-                        console.log(`${opts.caption}: COMPLETE finish`);
-                    }
+                    next: () => console.log(print('NEXT')),
+                    error: x => console.log(print('ERROR'), x),
+                    complete: () => console.log(print('COMPLETE'))
                 });
             }
-            console.log(`${opts.caption}: END finish`);
             return result;
         }
     };

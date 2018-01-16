@@ -4,7 +4,9 @@ import {
     TaskItem,
     task,
     makeRunTask,
-    startSequentialProcessor } from '../../src/processes';
+    startSequentialProcessor,
+    TransientError
+} from '../../src/processes';
 import { testObs } from '../utils/rxtest';
 
 describe('Processes', () => {
@@ -34,7 +36,7 @@ describe('Processes', () => {
                     Observable.timer(5)
                         .skip(1)
                         .concat(Observable.of(1, 2, 3))
-                        .concat(Observable.throw(new Error('permanent')));
+                        .concat(Observable.throw(new TransientError('transient')));
                 const proc = startSequentialProcessor(runner, {
                     maxRetries: 3,
                     nextDelay: d => d
@@ -44,7 +46,7 @@ describe('Processes', () => {
                     testObs(
                         proc.process(task('taskA')),
                         [1, 2, 3, 1, 2, 3, 1, 2, 3],
-                        new Error('permanent'),
+                        new TransientError('transient'),
                         done
                     ));
             });
@@ -57,7 +59,7 @@ describe('Processes', () => {
                         .concat(
                             ++errorCount <= 2
                                 ? Observable.of(1, 2, 3).concat(
-                                      Observable.throw(new Error('temporary'))
+                                      Observable.throw(new TransientError('temporary'))
                                   )
                                 : Observable.of(1, 2, 3, 4)
                         );
@@ -107,7 +109,7 @@ describe('Processes', () => {
                     taskB: (item: TaskItem) =>
                         Observable.timer(item.payload).switchMap(() =>
                             Observable.timer(0, 5).take(2).map(v => 10 * (v + 1)))
-                                .concat(Observable.throw(new Error('permanent'))),
+                                .concat(Observable.throw(new TransientError('transient'))),
                 });
                 const processor = startSequentialProcessor(runner, {
                     maxRetries: 3,
@@ -125,7 +127,7 @@ describe('Processes', () => {
                             }
                         }),
                         [10, 20, 100, 200, 300, 10, 20, 10, 20],
-                        new Error('permanent'),
+                        new TransientError('transient'),
                         done
                     );
                 });

@@ -34,16 +34,6 @@ exports.defaultTaskFormatter = function (maxPayloadLength) {
         return item.kind + " [" + item.uid + "]" + payload;
     };
 };
-exports.defaultValueFormatter = function (maxValueLength) {
-    if (maxValueLength === void 0) { maxValueLength = 30; }
-    return function (v, item) {
-        var value = maxValueLength ? JSON.stringify(v) : undefined;
-        if (maxValueLength && value && value.length > maxValueLength) {
-            value = ' ' + value.substr(0, maxValueLength - 3) + '...';
-        }
-        return value;
-    };
-};
 function logProcessorCore(processor, options) {
     var opts = Object.assign({
         disabled: false,
@@ -52,8 +42,8 @@ function logProcessorCore(processor, options) {
         finishDisabled: false,
         basicProcessLog: false,
         caption: processor.caption || 'Log',
-        taskFormatter: exports.defaultTaskFormatter(60),
-        valueFormatter: exports.defaultValueFormatter(30)
+        preCaption: '',
+        taskFormatter: exports.defaultTaskFormatter(60)
     }, options);
     var process = function (item) {
         if (opts.disabled || opts.processDisabled) {
@@ -61,19 +51,16 @@ function logProcessorCore(processor, options) {
         }
         else {
             var msg_1 = opts.taskFormatter(item);
-            console.log(opts.caption + ": START process. " + msg_1);
+            var print_1 = function (op) {
+                return "" + opts.preCaption + opts.caption + ": " + op + " process.";
+            };
+            console.log(print_1('START'), msg_1);
             var result = processor.process(item);
             if (!opts.basicProcessLog) {
                 result = result.do({
-                    next: function (x) {
-                        console.log(opts.caption + ": NEXT process. " + msg_1, x);
-                    },
-                    error: function (x) {
-                        console.log(opts.caption + ": ERROR process. " + msg_1, x);
-                    },
-                    complete: function () {
-                        console.log(opts.caption + ": COMPLETE process. " + msg_1);
-                    }
+                    next: function (x) { return console.log(print_1('NEXT'), x, msg_1); },
+                    error: function (x) { return console.log(print_1('ERROR'), x, msg_1); },
+                    complete: function () { return console.log(print_1('COMPLETE'), msg_1); },
                 });
             }
             return result;
@@ -84,9 +71,11 @@ function logProcessorCore(processor, options) {
             return processor.isAlive();
         }
         else {
-            console.log(opts.caption + ": START isAlive");
+            var print_2 = function (op) {
+                return "" + opts.preCaption + opts.caption + ": " + op + " isAlive.";
+            };
             var result = processor.isAlive();
-            console.log(opts.caption + ": END isAlive: " + result);
+            console.log(print_2('START'), result);
             return result;
         }
     };
@@ -95,22 +84,18 @@ function logProcessorCore(processor, options) {
             return processor.finish();
         }
         else {
-            console.log(opts.caption + ": START finish");
+            var print_3 = function (op) {
+                return "" + opts.preCaption + opts.caption + ": " + op + " finish.";
+            };
+            console.log(print_3('START'));
             var result = processor.finish();
             if (!opts.basicProcessLog) {
                 result = result.do({
-                    next: function () {
-                        console.log(opts.caption + ": NEXT finish");
-                    },
-                    error: function (x) {
-                        console.log(opts.caption + ": ERROR finish");
-                    },
-                    complete: function () {
-                        console.log(opts.caption + ": COMPLETE finish");
-                    }
+                    next: function () { return console.log(print_3('NEXT')); },
+                    error: function (x) { return console.log(print_3('ERROR'), x); },
+                    complete: function () { return console.log(print_3('COMPLETE')); }
                 });
             }
-            console.log(opts.caption + ": END finish");
             return result;
         }
     };

@@ -8,7 +8,8 @@ import {
     startDirectProcessor,
     createBackgroundWorker,
     createForegroundWorker,
-    SimpleWorker
+    SimpleWorker,
+    TransientError
 } from '../../src/processes';
 
 describe('Processes', () => {
@@ -75,7 +76,7 @@ describe('Processes', () => {
             describe('When a background worker is created from a bad behaved processor', () => {
                 const proc = fromServiceToDirectProcessor(
                     {
-                        taskA: testTaskOf(5)(1, 2, new Error('permanent')),
+                        taskA: testTaskOf(5)(1, 2, new TransientError('transient')),
                         taskB: testTaskOf(5)(10, 20, 30)
                     },
                     'Proc',
@@ -123,7 +124,7 @@ describe('Processes', () => {
                             expect(postMessageSpy).toHaveBeenCalledWith({
                                 kind: 'E',
                                 uid: '123',
-                                valueOrError: new Error('permanent')
+                                valueOrError: new TransientError('transient')
                             });
                             expect(terminateSpy).not.toHaveBeenCalled();
                             done();
