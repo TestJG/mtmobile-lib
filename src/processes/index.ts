@@ -1,3 +1,4 @@
+export * from "./errors";
 export * from "./processor.interfaces";
 export * from "./logProcessor";
 export * from "./makeRunTask";

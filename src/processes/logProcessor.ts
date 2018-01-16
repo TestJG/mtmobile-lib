@@ -30,7 +30,32 @@ export interface LogProcessorCoreOptions {
     finishDisabled: boolean;
     basicProcessLog: boolean;
     caption: string;
+    taskFormatter: (item: TaskItem) => string;
+    valueFormatter: (v: any, item: TaskItem) => string;
 }
+
+export const defaultTaskFormatter = (maxPayloadLength = 60) => (
+    item: TaskItem
+) => {
+    let payload =
+        item.payload && maxPayloadLength
+            ? JSON.stringify(item.payload)
+            : undefined;
+    if (maxPayloadLength && payload && payload.length > maxPayloadLength) {
+        payload = ' ' + payload.substr(0, maxPayloadLength - 3) + '...';
+    }
+    return `${item.kind} [${item.uid}]${payload}`;
+};
+
+export const defaultValueFormatter = (maxValueLength = 30) => (
+    v: any, item: TaskItem
+) => {
+    let value = maxValueLength ? JSON.stringify(v) : undefined;
+    if (maxValueLength && value && value.length > maxValueLength) {
+        value = ' ' + value.substr(0, maxValueLength - 3) + '...';
+    }
+    return value;
+};
 
 export function logProcessorCore<T extends IProcessorCore>(
     processor: T,
@@ -43,7 +68,9 @@ export function logProcessorCore<T extends IProcessorCore>(
             isAliveDisabled: false,
             finishDisabled: false,
             basicProcessLog: false,
-            caption: 'Log'
+            caption: (<any>processor).caption || 'Log',
+            taskFormatter: defaultTaskFormatter(60),
+            valueFormatter: defaultValueFormatter(30)
         },
         options
     );
@@ -52,38 +79,24 @@ export function logProcessorCore<T extends IProcessorCore>(
         if (opts.disabled || opts.processDisabled) {
             return processor.process(item);
         } else {
-            console.log(
-                `${opts.caption}: START process of ${item.kind} [${item.uid}]`
-            );
+            const msg = opts.taskFormatter(item);
+            console.log(`${opts.caption}: START process. ${msg}`);
             let result = processor.process(item);
             if (!opts.basicProcessLog) {
                 result = result.do({
                     next: x => {
-                        console.log(
-                            `${opts.caption}: NEXT process of ${item.kind} [${
-                                item.uid
-                            }]: ${JSON.stringify(x)}`
-                        );
+                        console.log(`${opts.caption}: NEXT process. ${msg}`, x);
                     },
                     error: x => {
-                        console.log(
-                            `${opts.caption}: ERROR process of ${item.kind} [${
-                                item.uid
-                            }]: ${x}`
-                        );
+                        console.log(`${opts.caption}: ERROR process. ${msg}`, x);
                     },
                     complete: () => {
                         console.log(
-                            `${opts.caption}: COMPLETE process of ${
-                                item.kind
-                            } [${item.uid}]`
+                            `${opts.caption}: COMPLETE process. ${msg}`
                         );
                     }
                 });
             }
-            console.log(
-                `${opts.caption}: END process of ${item.kind} [${item.uid}]`
-            );
             return result;
         }
     };
