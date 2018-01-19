@@ -16,8 +16,8 @@ exports.tryTo = function (thunk) {
     };
     var runDefers = function () {
         finishing = true;
-        for (var _i = 0, defers_1 = defers; _i < defers_1.length; _i++) {
-            var action = defers_1[_i];
+        for (var _i = 0, _a = defers.reverse(); _i < _a.length; _i++) {
+            var action = _a[_i];
             try {
                 action();
             }

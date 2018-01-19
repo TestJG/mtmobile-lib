@@ -20,7 +20,7 @@ export const tryTo = <T>(thunk: (defer: ((action: (() => void)) => void)) => Obs
     };
     const runDefers = () => {
         finishing = true;
-        for (const action of defers) {
+        for (const action of defers.reverse()) {
             try {
                 action();
             } catch (error) {
