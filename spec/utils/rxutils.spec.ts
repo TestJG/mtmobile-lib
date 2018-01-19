@@ -135,6 +135,50 @@ describe('Utils', () => {
                 );
                 testObs(actual, [1, 2, 3], new Error('an error'), done);
             });
+
+            it('on successful observable, deferred actions should be called after completion', done => {
+                const defer1 = jasmine.createSpy('defer1');
+                const defer2 = jasmine.createSpy('defer2');
+                tryTo(defer => {
+                    defer(defer1);
+                    defer(defer2);
+                    return Observable.timer(25);
+                }).subscribe({
+                    next: v => {
+                        expect(defer1).not.toHaveBeenCalled();
+                        expect(defer2).not.toHaveBeenCalled();
+                    },
+                    error: e => done.fail('Error should not be called'),
+                    complete: () =>
+                        Observable.timer(10).subscribe(() => {
+                            expect(defer1).toHaveBeenCalledTimes(1);
+                            expect(defer2).toHaveBeenCalledTimes(1);
+                            done();
+                        })
+                });
+            });
+
+            it('on failing observable, deferred actions should be called after error', done => {
+                const defer1 = jasmine.createSpy('defer1');
+                const defer2 = jasmine.createSpy('defer2');
+                tryTo(defer => {
+                    defer(defer1);
+                    defer(defer2);
+                    return Observable.timer(25).map(() => { throw new Error(); });
+                }).subscribe({
+                    next: v => {
+                        expect(defer1).not.toHaveBeenCalled();
+                        expect(defer2).not.toHaveBeenCalled();
+                    },
+                    complete: () => done.fail('Complete should not be called'),
+                    error: e =>
+                        Observable.timer(10).subscribe(() => {
+                            expect(defer1).toHaveBeenCalledTimes(1);
+                            expect(defer2).toHaveBeenCalledTimes(1);
+                            done();
+                        })
+                });
+            });
         });
 
         describe('wrapFunctionStream', () => {
@@ -239,7 +283,9 @@ describe('Utils', () => {
 
             it('should return only the first value', done => {
                 testObs(
-                    firstSwitchMap(Observable.of(1, 2, 3))(x => Observable.of(x)),
+                    firstSwitchMap(Observable.of(1, 2, 3))(x =>
+                        Observable.of(x)
+                    ),
                     [1],
                     null,
                     done

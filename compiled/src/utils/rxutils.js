@@ -6,18 +6,42 @@ exports.normalizeErrorOnCatch = function (err) {
     return rxjs_1.Observable.throw(common_1.normalizeError(err));
 };
 exports.tryTo = function (thunk) {
+    var defers = [];
+    var finishing = false;
+    var defer = function (action) {
+        if (finishing) {
+            throw new Error('Already finishing, this is not the time to defer.');
+        }
+        defers.push(action);
+    };
+    var runDefers = function () {
+        finishing = true;
+        for (var _i = 0, defers_1 = defers; _i < defers_1.length; _i++) {
+            var action = defers_1[_i];
+            try {
+                action();
+            }
+            catch (error) {
+                console.log("Error in deferred action: " + error);
+            }
+        }
+    };
+    var obs;
     try {
-        var result = thunk();
+        var result = thunk(defer);
         if (common_1.isSomething(result) &&
             (Promise.resolve(result) === result ||
                 typeof result['subscribe'] === 'function')) {
-            return rxjs_1.Observable.from(result);
+            obs = rxjs_1.Observable.from(result);
         }
-        return rxjs_1.Observable.of(result);
+        else {
+            obs = rxjs_1.Observable.of(result);
+        }
     }
     catch (error) {
-        return exports.normalizeErrorOnCatch(error);
+        obs = exports.normalizeErrorOnCatch(error);
     }
+    return obs.do({ complete: runDefers, error: runDefers });
 };
 exports.wrapFunctionStream = function (stream) {
     var conn = stream.publishReplay(1);

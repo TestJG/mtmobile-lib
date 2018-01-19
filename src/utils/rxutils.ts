@@ -9,20 +9,42 @@ export type ObsOrFunc<T = any> = ValueOrFunc<ObsLike<T>>;
 export const normalizeErrorOnCatch = <T>(err: any): Observable<T> =>
     Observable.throw(normalizeError(err));
 
-export const tryTo = <T>(thunk: () => ObsLike<T>): Observable<T> => {
+export const tryTo = <T>(thunk: (defer: ((action: (() => void)) => void)) => ObsLike<T>): Observable<T> => {
+    const defers: (() => void)[] = [];
+    let finishing = false;
+    const defer = (action: (() => void)) => {
+        if (finishing) {
+            throw new Error('Already finishing, this is not the time to defer.');
+        }
+        defers.push(action);
+    };
+    const runDefers = () => {
+        finishing = true;
+        for (const action of defers) {
+            try {
+                action();
+            } catch (error) {
+                console.log(`Error in deferred action: ${error}`);
+            }
+        }
+    };
+
+    let obs: Observable<T>;
     try {
-        const result = thunk();
+        const result = thunk(defer);
         if (
             isSomething(result) &&
             (Promise.resolve(<any>result) === result ||
                 typeof result['subscribe'] === 'function')
         ) {
-            return Observable.from(<any>result);
+            obs = Observable.from(<any>result);
+        } else {
+            obs = Observable.of(<T>result);
         }
-        return Observable.of(<T>result);
     } catch (error) {
-        return normalizeErrorOnCatch(error);
+        obs = normalizeErrorOnCatch(error);
     }
+    return obs.do({ complete: runDefers, error: runDefers });
 };
 
 type FuncOf<V> = (...args: any[]) => V;
