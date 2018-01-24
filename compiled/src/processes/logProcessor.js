@@ -76,10 +76,16 @@ function logProcessorCore(processor, options) {
         showPayloads: true,
         caption: processor.caption || 'Log',
         preCaption: '',
-        taskFormatter: exports.defaultTaskFormatter(60),
-        valueFormatter: exports.defaultValueFormatter(30),
-        errorFormatter: exports.defaultErrorFormatter(true)
     }, options);
+    if (!options.taskFormatter) {
+        options.taskFormatter = exports.defaultTaskFormatter(60);
+    }
+    if (!options.valueFormatter) {
+        options.valueFormatter = exports.defaultValueFormatter(30);
+    }
+    if (!options.errorFormatter) {
+        options.errorFormatter = exports.defaultErrorFormatter(true);
+    }
     if (opts.disabled) {
         return processor;
     }
@@ -97,13 +103,13 @@ function logProcessorCore(processor, options) {
             if (!opts.basicProcessLog) {
                 result = result.do({
                     next: function (x) {
-                        return console.log(print_1('NEXT') + " VAL: " + opts.valueFormatter(x));
+                        return console.log(print_1('NEXT ') + " VAL: " + opts.valueFormatter(x));
                     },
                     error: function (x) {
                         return console.log(print_1('ERROR') + " ERR: " + (opts.errorFormatter(x) ||
                             opts.valueFormatter(x)));
                     },
-                    complete: function () { return console.log("" + print_1('COMPLETE')); }
+                    complete: function () { return console.log("" + print_1('COMPL')); }
                 });
             }
             return result;

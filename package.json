@@ -39,7 +39,10 @@
     "transform": {
       ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
     },
-    "testPathIgnorePatterns": ["/compiled/.*", "/src/.*"],
+    "testPathIgnorePatterns": [
+      "/compiled/.*",
+      "/src/.*"
+    ],
     "testRegex": "/spec/.*\\.(test|spec)\\.(ts|tsx|js)$",
     "modulePathIgnorePatterns": [
       "models"

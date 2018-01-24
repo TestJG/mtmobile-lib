@@ -93,12 +93,22 @@ export function logProcessorCore<T extends IProcessorCore>(
             showPayloads: true,
             caption: (<any>processor).caption || 'Log',
             preCaption: '',
-            taskFormatter: defaultTaskFormatter(60),
-            valueFormatter: defaultValueFormatter(30),
-            errorFormatter: defaultErrorFormatter(true)
+            // taskFormatter: defaultTaskFormatter(60),
+            // valueFormatter: defaultValueFormatter(30),
+            // errorFormatter: defaultErrorFormatter(true)
         },
         options
     );
+
+    if (!options.taskFormatter) {
+        options.taskFormatter = defaultTaskFormatter(60);
+    }
+    if (!options.valueFormatter) {
+        options.valueFormatter = defaultValueFormatter(30);
+    }
+    if (!options.errorFormatter) {
+        options.errorFormatter = defaultErrorFormatter(true);
+    }
 
     if (opts.disabled) {
         return processor;
@@ -117,14 +127,14 @@ export function logProcessorCore<T extends IProcessorCore>(
                 result = result.do({
                     next: x =>
                         console.log(
-                            `${print('NEXT')} VAL: ${opts.valueFormatter(x)}`
+                            `${print('NEXT ')} VAL: ${opts.valueFormatter(x)}`
                         ),
                     error: x =>
                         console.log(
                             `${print('ERROR')} ERR: ${opts.errorFormatter(x) ||
                                 opts.valueFormatter(x)}`
                         ),
-                    complete: () => console.log(`${print('COMPLETE')}`)
+                    complete: () => console.log(`${print('COMPL')}`)
                 });
             }
             return result;
