@@ -23,8 +23,9 @@ function logProcessor(processor) {
     return processor;
 }
 exports.logProcessor = logProcessor;
-exports.defaultTaskFormatter = function (maxPayloadLength) {
+exports.defaultTaskFormatter = function (maxPayloadLength, maxTaskIdLength) {
     if (maxPayloadLength === void 0) { maxPayloadLength = 60; }
+    if (maxTaskIdLength === void 0) { maxTaskIdLength = undefined; }
     return function (item, showPayload) {
         var payload = showPayload && item.payload && maxPayloadLength
             ? JSON.stringify(item.payload)
@@ -32,7 +33,11 @@ exports.defaultTaskFormatter = function (maxPayloadLength) {
         if (maxPayloadLength && payload) {
             payload = common_1.capString(payload, maxPayloadLength);
         }
-        return item.kind + " [" + item.uid + "]" + payload;
+        var taskId = item.uid;
+        if (maxTaskIdLength && taskId) {
+            taskId = common_1.capString(taskId, maxTaskIdLength, '');
+        }
+        return item.kind + " [" + taskId + "]" + payload;
     };
 };
 exports.defaultValueFormatter = function (maxValueLength) {

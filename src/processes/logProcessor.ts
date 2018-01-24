@@ -37,10 +37,10 @@ export interface LogProcessorCoreOptions {
     errorFormatter: (error: any, item: TaskItem) => string;
 }
 
-export const defaultTaskFormatter = (maxPayloadLength = 60) => (
-    item: TaskItem,
-    showPayload: boolean
-) => {
+export const defaultTaskFormatter = (
+    maxPayloadLength: number = 60,
+    maxTaskIdLength: number = undefined
+) => (item: TaskItem, showPayload: boolean) => {
     let payload =
         showPayload && item.payload && maxPayloadLength
             ? JSON.stringify(item.payload)
@@ -48,7 +48,11 @@ export const defaultTaskFormatter = (maxPayloadLength = 60) => (
     if (maxPayloadLength && payload) {
         payload = capString(payload, maxPayloadLength);
     }
-    return `${item.kind} [${item.uid}]${payload}`;
+    let taskId = item.uid;
+    if (maxTaskIdLength && taskId) {
+        taskId = capString(taskId, maxTaskIdLength, '');
+    }
+    return `${item.kind} [${taskId}]${payload}`;
 };
 
 export const defaultValueFormatter = (maxValueLength = 60) => (value: any) =>
