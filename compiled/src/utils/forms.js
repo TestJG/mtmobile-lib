@@ -259,4 +259,8 @@ exports.removeListingFields = function (item, pathToListing, atPosition, count) 
 };
 exports.updateFormInfo = function (item, pathToFormItem, updater) { return forms_utils_1.updateFormInfoInternal(item, pathToFormItem, updater); };
 exports.getAllErrors = function (item) { return forms_utils_1.getAllErrorsInternal(item); };
+exports.setInfo = function (item, info, pathToField) {
+    if (pathToField === void 0) { pathToField = ''; }
+    return forms_utils_1.setInfoInternal(item, info, pathToField);
+};
 //# sourceMappingURL=forms.js.map

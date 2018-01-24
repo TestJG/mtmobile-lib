@@ -363,54 +363,6 @@ const setFieldValueInternal = (
     }), opts, sameValue);
 };
 
-// const setFieldInputInternal = (
-//     item: FormField,
-//     inputFunc: ValueOrFunc,
-//     opts: SetValueOptions,
-//     data: UpdateFormItemData
-// ): FormField => {
-//     const theInput
-//     const theValue =
-//         value === undefined
-//             ? item.initValue
-//             : getAsValue(value, item.value, data);
-//     const newValue = item.coerce(theValue);
-//     const sameValue = opts.compareValues && item.value === newValue;
-//     if (sameValue && theValue === item.value) {
-//         return item;
-//     }
-
-//     const initValue = opts.initialization ? newValue : item.initValue;
-//     const input = item.formatter(newValue);
-//     const validInput = input;
-//     const isValidInput = true;
-
-//     const errors = item.validator(newValue);
-//     const isDirty = opts.initialization
-//         ? false
-//         : item.isDirty || (opts.affectDirty ? !sameValue : false);
-//     const isTouched = opts.initialization ? false : isDirty || item.isTouched;
-
-//     // Derived
-//     const isValid = errors.length === 0;
-//     const showErrors = errors.length !== 0 && isTouched;
-
-//     const newItem = assignOrSame(item, {
-//         initValue,
-//         value: newValue,
-//         isDirty,
-//         isTouched,
-//         errors,
-//         isValid,
-//         showErrors,
-//         input,
-//         validInput,
-//         isValidInput,
-//     });
-
-//     return newItem;
-// };
-
 const createNewGroupFieldsFromDirectValue = (
     item: FormGroup,
     value: ValueOrFunc,
@@ -860,6 +812,38 @@ export function setInputInternal(
         item,
         extractPath(path, true),
         setInputUpdater(input, opts),
+        opts,
+        { relativePath: '' }
+    );
+}
+
+const setInfoUpdater = (infoFunc: ValueOrFunc, opts: SetValueOptions) => (
+    item: FormItem,
+    data: UpdateFormItemData
+): FormItem => {
+    const theInfo = getAsValue(infoFunc, item.info, data, item);
+    return assignOrSame(item, { info: theInfo });
+};
+
+export function setInfoInternal(
+    item: FormItem,
+    info: ValueOrFunc,
+    path: string,
+    options?: Partial<SetValueOptions>
+): FormItem {
+    const opts: SetValueOptions = Object.assign(
+        <SetValueOptions>{
+            affectDirty: true,
+            compareValues: true,
+            initialization: false
+        },
+        options
+    );
+
+    return updateFormItemInternalRec(
+        item,
+        extractPath(path, true),
+        setInfoUpdater(info, opts),
         opts,
         { relativePath: '' }
     );

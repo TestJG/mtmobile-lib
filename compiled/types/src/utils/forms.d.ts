@@ -16,3 +16,4 @@ export declare const insertListingFields: <I extends FormItem<any> = FormItem<an
 export declare const removeListingFields: <I extends FormItem<any> = FormItem<any>>(item: I, pathToListing: string, atPosition: number, count?: number) => I;
 export declare const updateFormInfo: <I extends FormItem<any> = FormItem<any>>(item: I, pathToFormItem: string, updater: ValueOrFunc<Partial<ExtraFormInfo>>) => I;
 export declare const getAllErrors: (item: FormItem<any>) => FormError[];
+export declare const setInfo: <I extends FormItem<any> = FormItem<any>>(item: I, info: any, pathToField?: string) => I;

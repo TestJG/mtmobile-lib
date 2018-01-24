@@ -35,6 +35,7 @@ import {
     setGroupFieldInternal,
     setValueInternal,
     setInputInternal,
+    setInfoInternal,
     updateListingFieldsInternal,
     updateFormInfoInternal
 } from './forms.utils';
@@ -408,3 +409,8 @@ export const updateFormInfo = <I extends FormItem = FormItem>(
 ): I => updateFormInfoInternal<I>(item, pathToFormItem, updater);
 
 export const getAllErrors = (item: FormItem) => getAllErrorsInternal(item);
+export const setInfo = <I extends FormItem = FormItem>(
+    item: I,
+    info: ValueOrFunc,
+    pathToField: string = ''
+): I => <I>setInfoInternal(item, info, pathToField);

@@ -237,48 +237,6 @@ var setFieldValueInternal = function (item, value, opts, data) {
         errors: errors,
     }), opts, sameValue);
 };
-// const setFieldInputInternal = (
-//     item: FormField,
-//     inputFunc: ValueOrFunc,
-//     opts: SetValueOptions,
-//     data: UpdateFormItemData
-// ): FormField => {
-//     const theInput
-//     const theValue =
-//         value === undefined
-//             ? item.initValue
-//             : getAsValue(value, item.value, data);
-//     const newValue = item.coerce(theValue);
-//     const sameValue = opts.compareValues && item.value === newValue;
-//     if (sameValue && theValue === item.value) {
-//         return item;
-//     }
-//     const initValue = opts.initialization ? newValue : item.initValue;
-//     const input = item.formatter(newValue);
-//     const validInput = input;
-//     const isValidInput = true;
-//     const errors = item.validator(newValue);
-//     const isDirty = opts.initialization
-//         ? false
-//         : item.isDirty || (opts.affectDirty ? !sameValue : false);
-//     const isTouched = opts.initialization ? false : isDirty || item.isTouched;
-//     // Derived
-//     const isValid = errors.length === 0;
-//     const showErrors = errors.length !== 0 && isTouched;
-//     const newItem = assignOrSame(item, {
-//         initValue,
-//         value: newValue,
-//         isDirty,
-//         isTouched,
-//         errors,
-//         isValid,
-//         showErrors,
-//         input,
-//         validInput,
-//         isValidInput,
-//     });
-//     return newItem;
-// };
 var createNewGroupFieldsFromDirectValue = function (item, value, opts, data) {
     // If path is empty, the assignment is directed to this group
     var theValue = value === undefined
@@ -565,6 +523,19 @@ function setInputInternal(item, input, path, options) {
     return updateFormItemInternalRec(item, exports.extractPath(path, true), setInputUpdater(input, opts), opts, { relativePath: '' });
 }
 exports.setInputInternal = setInputInternal;
+var setInfoUpdater = function (infoFunc, opts) { return function (item, data) {
+    var theInfo = common_1.getAsValue(infoFunc, item.info, data, item);
+    return common_1.assignOrSame(item, { info: theInfo });
+}; };
+function setInfoInternal(item, info, path, options) {
+    var opts = Object.assign({
+        affectDirty: true,
+        compareValues: true,
+        initialization: false
+    }, options);
+    return updateFormItemInternalRec(item, exports.extractPath(path, true), setInfoUpdater(info, opts), opts, { relativePath: '' });
+}
+exports.setInfoInternal = setInfoInternal;
 var setGroupFieldUpdater = function (fieldName, formItem, opts) { return function (item, data) {
     switch (item.type) {
         case 'field':

@@ -28,6 +28,7 @@ export interface SetValueOptions {
 }
 export declare function setValueInternal(item: FormItem, value: ValueOrFunc, path: string, options?: Partial<SetValueOptions>): FormItem;
 export declare function setInputInternal(item: FormItem, input: ValueOrFunc, path: string, options?: Partial<SetValueOptions>): FormItem;
+export declare function setInfoInternal(item: FormItem, info: ValueOrFunc, path: string, options?: Partial<SetValueOptions>): FormItem;
 export declare const setGroupFieldInternal: (item: FormItem<any>, path: string, formItem: ValueOrFunc<FormItem<any>>, options?: Partial<SetValueOptions>) => FormItem<any>;
 export declare const updateListingFieldsInternal: (item: FormItem<any>, path: string, fields: ValueOrFunc<FormListingFields & FormItem<any>[]>, options?: Partial<SetValueOptions>) => FormItem<any>;
 export declare const getAllErrorsInternalRec: (item: FormItem<any>, path: string) => FormError[];

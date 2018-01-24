@@ -16,6 +16,7 @@ import {
     setValueDoNotTouch,
     setInput,
     setInputDoNotTouch,
+    setInfo,
     resetValue,
     getValue,
     getFormItem,
@@ -1004,7 +1005,7 @@ describe('Utils', () => {
     });
 });
 
-// setValue / setInput
+// setValue / setInput / setInfo
 describe('Utils', () => {
     describe('Forms Tests', () => {
         describe('setValue', () => {
@@ -1830,6 +1831,23 @@ describe('Utils', () => {
                     isValid: false,
                     errors: ['Not a number'],
                     showErrors: true,
+                });
+            });
+        });
+
+        describe('setInfo', () => {
+            it('should be a function', () =>
+                expect(setInfo).toBeInstanceOf(Function));
+
+            describe('When a field is created with info, its info is changed', () => {
+                const ageField = field(30, { info: 42, });
+                const ageFieldDirty = setInfo(ageField, (_info, data, _field) => _info + _field.value);
+
+                expectConfig(ageFieldDirty, {
+                    value: 30,
+                    isDirty: false,
+                    isTouched: false,
+                    info: 42 + 30,
                 });
             });
         });
