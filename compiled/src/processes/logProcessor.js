@@ -103,11 +103,11 @@ function logProcessorCore(processor, options) {
             if (!opts.basicProcessLog) {
                 result = result.do({
                     next: function (x) {
-                        return console.log(print_1('NEXT ') + " VAL: " + opts.valueFormatter(x));
+                        return console.log(print_1('NEXT ') + " VAL: " + opts.valueFormatter(x, item));
                     },
                     error: function (x) {
-                        return console.log(print_1('ERROR') + " ERR: " + (opts.errorFormatter(x) ||
-                            opts.valueFormatter(x)));
+                        return console.log(print_1('ERROR') + " ERR: " + (opts.errorFormatter(x, item) ||
+                            opts.valueFormatter(x, item)));
                     },
                     complete: function () { return console.log("" + print_1('COMPL')); }
                 });
@@ -142,8 +142,8 @@ function logProcessorCore(processor, options) {
                 result = result.do({
                     next: function () { return console.log(print_3('NEXT')); },
                     error: function (x) {
-                        return console.log(print_3('ERROR') + " " + (opts.errorFormatter(x) ||
-                            opts.valueFormatter(x)));
+                        return console.log(print_3('ERROR') + " " + (opts.errorFormatter(x, undefined) ||
+                            opts.valueFormatter(x, undefined)));
                     },
                     complete: function () { return console.log(print_3('COMPLETE')); }
                 });

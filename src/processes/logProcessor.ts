@@ -127,12 +127,12 @@ export function logProcessorCore<T extends IProcessorCore>(
                 result = result.do({
                     next: x =>
                         console.log(
-                            `${print('NEXT ')} VAL: ${opts.valueFormatter(x)}`
+                            `${print('NEXT ')} VAL: ${opts.valueFormatter(x, item)}`
                         ),
                     error: x =>
                         console.log(
-                            `${print('ERROR')} ERR: ${opts.errorFormatter(x) ||
-                                opts.valueFormatter(x)}`
+                            `${print('ERROR')} ERR: ${opts.errorFormatter(x, item) ||
+                                opts.valueFormatter(x, item)}`
                         ),
                     complete: () => console.log(`${print('COMPL')}`)
                 });
@@ -166,8 +166,8 @@ export function logProcessorCore<T extends IProcessorCore>(
                     next: () => console.log(print('NEXT')),
                     error: x =>
                         console.log(
-                            `${print('ERROR')} ${opts.errorFormatter(x) ||
-                                opts.valueFormatter(x)}`
+                            `${print('ERROR')} ${opts.errorFormatter(x, undefined) ||
+                                opts.valueFormatter(x, undefined)}`
                         ),
                     complete: () => console.log(print('COMPLETE'))
                 });
