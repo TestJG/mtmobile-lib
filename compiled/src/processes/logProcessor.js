@@ -33,11 +33,17 @@ exports.defaultTaskFormatter = function (maxPayloadLength, maxTaskIdLength) {
         if (maxPayloadLength && payload) {
             payload = common_1.capString(payload, maxPayloadLength);
         }
+        if (payload) {
+            payload = " " + payload;
+        }
         var taskId = item.uid;
         if (maxTaskIdLength && taskId) {
             taskId = common_1.capString(taskId, maxTaskIdLength, '');
         }
-        return item.kind + " [" + taskId + "]" + payload;
+        if (taskId) {
+            taskId = " [" + taskId + "]";
+        }
+        return "" + item.kind + taskId + payload;
     };
 };
 exports.defaultValueFormatter = function (maxValueLength) {
@@ -84,19 +90,20 @@ function logProcessorCore(processor, options) {
         else {
             var msg_1 = opts.taskFormatter(item, opts.showPayloads);
             var print_1 = function (op) {
-                return "" + opts.preCaption + opts.caption + ": " + op + " process.";
+                return "" + opts.preCaption + opts.caption + ": " + op + " process. " + msg_1;
             };
-            console.log(print_1('START') + " " + msg_1);
+            console.log("" + print_1('START'));
             var result = processor.process(item);
             if (!opts.basicProcessLog) {
                 result = result.do({
                     next: function (x) {
-                        return console.log(print_1('NEXT') + " " + msg_1 + " " + opts.valueFormatter(x));
+                        return console.log(print_1('NEXT') + " VAL: " + opts.valueFormatter(x));
                     },
                     error: function (x) {
-                        return console.log(print_1('ERROR') + " " + msg_1 + " " + (opts.errorFormatter(x) || opts.valueFormatter(x)));
+                        return console.log(print_1('ERROR') + " ERR: " + (opts.errorFormatter(x) ||
+                            opts.valueFormatter(x)));
                     },
-                    complete: function () { return console.log(print_1('COMPLETE') + " " + msg_1); }
+                    complete: function () { return console.log("" + print_1('COMPLETE')); }
                 });
             }
             return result;

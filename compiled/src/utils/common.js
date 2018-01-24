@@ -228,7 +228,7 @@ exports.errorToString = errorToString;
 function capString(str, maxLength, ellipsis) {
     if (ellipsis === void 0) { ellipsis = '...'; }
     maxLength = maxLength >= ellipsis.length ? maxLength : ellipsis.length;
-    if (str.length >= maxLength) {
+    if (str.length > maxLength) {
         return str.substr(0, maxLength - ellipsis.length) + ellipsis;
     }
     else {

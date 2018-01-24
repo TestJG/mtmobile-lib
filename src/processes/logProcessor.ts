@@ -48,11 +48,18 @@ export const defaultTaskFormatter = (
     if (maxPayloadLength && payload) {
         payload = capString(payload, maxPayloadLength);
     }
+    if (payload) {
+        payload = ` ${payload}`;
+    }
+
     let taskId = item.uid;
     if (maxTaskIdLength && taskId) {
         taskId = capString(taskId, maxTaskIdLength, '');
     }
-    return `${item.kind} [${taskId}]${payload}`;
+    if (taskId) {
+        taskId = ` [${taskId}]`;
+    }
+    return `${item.kind}${taskId}${payload}`;
 };
 
 export const defaultValueFormatter = (maxValueLength = 60) => (value: any) =>
@@ -103,22 +110,21 @@ export function logProcessorCore<T extends IProcessorCore>(
         } else {
             const msg = opts.taskFormatter(item, opts.showPayloads);
             const print = op =>
-                `${opts.preCaption}${opts.caption}: ${op} process.`;
-            console.log(`${print('START')} ${msg}`);
+                `${opts.preCaption}${opts.caption}: ${op} process. ${msg}`;
+            console.log(`${print('START')}`);
             let result = processor.process(item);
             if (!opts.basicProcessLog) {
                 result = result.do({
                     next: x =>
                         console.log(
-                            `${print('NEXT')} ${msg} ${opts.valueFormatter(x)}`
+                            `${print('NEXT')} VAL: ${opts.valueFormatter(x)}`
                         ),
                     error: x =>
                         console.log(
-                            `${print('ERROR')} ${msg} ${opts.errorFormatter(
-                                x
-                            ) || opts.valueFormatter(x)}`
+                            `${print('ERROR')} ERR: ${opts.errorFormatter(x) ||
+                                opts.valueFormatter(x)}`
                         ),
-                    complete: () => console.log(`${print('COMPLETE')} ${msg}`)
+                    complete: () => console.log(`${print('COMPLETE')}`)
                 });
             }
             return result;

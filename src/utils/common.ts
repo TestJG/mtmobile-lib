@@ -240,7 +240,7 @@ export function capString(
     ellipsis: string = '...'
 ) {
     maxLength = maxLength >= ellipsis.length ? maxLength : ellipsis.length;
-    if (str.length >= maxLength) {
+    if (str.length > maxLength) {
         return str.substr(0, maxLength - ellipsis.length) + ellipsis;
     } else {
         return str;

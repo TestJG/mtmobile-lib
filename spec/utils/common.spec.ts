@@ -9,6 +9,7 @@ import {
     getAsValue,
     getAsValueOrError,
     joinStr,
+    capString,
     normalizeError,
     objFlatMap,
     objMap,
@@ -340,6 +341,34 @@ describe('Utils', () => {
                 expect(joinStr(' ! ', ['hello', 'world'])).toEqual(
                     'hello ! world'
                 );
+            });
+        });
+
+        describe('capString', () => {
+            it('should be a function', () => {
+                expect(capString).toBeInstanceOf(Function);
+            });
+            it('with very short string should return the same string', () => {
+                expect(capString('', 10)).toEqual('');
+                expect(capString('lorem', 10)).toEqual('lorem');
+            });
+            it('with string with max length should return the same string', () => {
+                expect(capString('lorem ipsu', 10)).toEqual('lorem ipsu');
+            });
+            it('with long string should return the same string shortened to given length', () => {
+                expect(capString('lorem ipsum', 10)).toEqual('lorem i...');
+                expect(capString('lorem ipsum dolor', 10)).toEqual('lorem i...');
+            });
+            it('with very short string and empty ellipsis should return the same string', () => {
+                expect(capString('', 10, '')).toEqual('');
+                expect(capString('lorem', 10, '')).toEqual('lorem');
+            });
+            it('with string with max length and empty ellipsis should return the same string', () => {
+                expect(capString('lorem ipsu', 10, '')).toEqual('lorem ipsu');
+            });
+            it('with long string and empty ellipsis should return the same string shortened to given length', () => {
+                expect(capString('lorem ipsu', 10, '')).toEqual('lorem ipsu');
+                expect(capString('lorem ipsum dolor', 10, '')).toEqual('lorem ipsu');
             });
         });
 
