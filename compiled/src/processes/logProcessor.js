@@ -76,16 +76,10 @@ function logProcessorCore(processor, options) {
         showPayloads: true,
         caption: processor.caption || 'Log',
         preCaption: '',
+        taskFormatter: exports.defaultTaskFormatter(60),
+        valueFormatter: exports.defaultValueFormatter(30),
+        errorFormatter: exports.defaultErrorFormatter(true)
     }, options);
-    if (!options.taskFormatter) {
-        options.taskFormatter = exports.defaultTaskFormatter(60);
-    }
-    if (!options.valueFormatter) {
-        options.valueFormatter = exports.defaultValueFormatter(30);
-    }
-    if (!options.errorFormatter) {
-        options.errorFormatter = exports.defaultErrorFormatter(true);
-    }
     if (opts.disabled) {
         return processor;
     }
