@@ -217,10 +217,10 @@ export const createGroupValue = (fields: FormGroupFields): any =>
 export const createGroupInitValue = (fields: FormGroupFields): any =>
     objMapValues((f: FormItem) => f.initValue)(fields);
 
-export const createListingValue = (fields: FormListingFields): any =>
+export const createListingValue = (fields: FormListingFields): any[] =>
     (<FormItem[]>fields).map(f => f.value);
 
-export const createListingInitValue = (fields: FormListingFields): any =>
+export const createListingInitValue = (fields: FormListingFields): any[] =>
     (<FormItem[]>fields).map(f => f.initValue);
 
 export interface SetValueOptions {

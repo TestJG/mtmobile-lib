@@ -190,7 +190,7 @@ export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
 };
 
 export const listing = <
-    T = any,
+    T extends any[] = any,
     F extends FormListingFields = FormListingFields
 >(
     fields: F,

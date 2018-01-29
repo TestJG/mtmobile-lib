@@ -19,8 +19,8 @@ export declare const locateInGroupOrFail: (item: FormGroup<any, FormGroupFields>
 export declare const locateInListingOrFail: (item: FormListing<any, FormListingFields>, path: string, failIfNoChild?: boolean) => [number, FormItem<any>, string];
 export declare const createGroupValue: (fields: FormGroupFields) => any;
 export declare const createGroupInitValue: (fields: FormGroupFields) => any;
-export declare const createListingValue: (fields: FormListingFields) => any;
-export declare const createListingInitValue: (fields: FormListingFields) => any;
+export declare const createListingValue: (fields: FormListingFields) => any[];
+export declare const createListingInitValue: (fields: FormListingFields) => any[];
 export interface SetValueOptions {
     affectDirty: boolean;
     compareValues: boolean;

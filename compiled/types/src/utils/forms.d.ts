@@ -2,7 +2,7 @@ import { ValueOrFunc } from './common';
 import { FormItem, FormFieldInit, FormField, FormGroupInit, FormGroup, FormGroupFields, FormListingInit, FormListing, FormListingFields, FormError, ExtraFormInfo } from './forms.interfaces';
 export declare const field: <T = any>(initValue: T, options?: Partial<FormFieldInit<T>>) => FormField<T>;
 export declare const group: <T = any, F extends FormGroupFields = FormGroupFields>(fields: F, options?: Partial<FormGroupInit<T>>) => FormGroup<T, F>;
-export declare const listing: <T = any, F extends FormListingFields = FormListingFields>(fields: F, options?: Partial<FormListingInit<T>>) => FormListing<T, F>;
+export declare const listing: <T extends any[] = any, F extends FormListingFields = FormListingFields>(fields: F, options?: Partial<FormListingInit<T>>) => FormListing<T, F>;
 export declare const getFormItem: (item: FormItem<any>, path?: string) => FormItem<any>;
 export declare const getValue: (item: FormItem<any>, path?: string) => any;
 export declare const existFormItem: (item: FormItem<any>, path: string) => boolean;

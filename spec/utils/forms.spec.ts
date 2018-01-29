@@ -1005,7 +1005,7 @@ describe('Utils', () => {
     });
 });
 
-// setValue / setInput / setInfo
+// setValue / setInput / reset / setInfo
 describe('Utils', () => {
     describe('Forms Tests', () => {
         describe('setValue', () => {
@@ -1504,7 +1504,7 @@ describe('Utils', () => {
                     (age: number) => age + 10,
                     '[2]'
                 );
-                const newListing = resetValue(newListingDirty);
+                const newListing = resetValue(newListingDirty, '', ['', '', 42]);
 
                 it('the new listing should be distinct from the original one', () =>
                     expect(newListing).not.toBe(aListing));
@@ -1520,8 +1520,8 @@ describe('Utils', () => {
                 });
 
                 expectConfig(newListing, {
-                    initValue: ['', '', 20],
-                    value: ['', '', 20],
+                    initValue: ['', '', 42],
+                    value: ['', '', 42],
                     isDirty: false,
                     isTouched: false
                 });
