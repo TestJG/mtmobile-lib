@@ -236,4 +236,34 @@ function capString(str, maxLength, ellipsis) {
     }
 }
 exports.capString = capString;
+exports.conditionalLog = function (enabled, options) {
+    if (enabled) {
+        var _a = Object.assign({
+            prefix: '',
+            logger: console.log.bind(console),
+        }, options), prefix_1 = _a.prefix, logger_1 = _a.logger;
+        return function (msg) {
+            var args = [];
+            for (var _i = 1; _i < arguments.length; _i++) {
+                args[_i - 1] = arguments[_i];
+            }
+            var pref = exports.getAsValue(prefix_1);
+            if (typeof msg === 'function') {
+                msg = msg.apply(void 0, args);
+                logger_1(pref + msg);
+            }
+            else {
+                logger_1.apply(void 0, [pref + msg].concat(args));
+            }
+        };
+    }
+    else {
+        return function (msg) {
+            var args = [];
+            for (var _i = 1; _i < arguments.length; _i++) {
+                args[_i - 1] = arguments[_i];
+            }
+        };
+    }
+};
 //# sourceMappingURL=common.js.map

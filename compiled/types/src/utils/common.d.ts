@@ -32,3 +32,10 @@ export declare const objFilter: (filter: (keyValue: [string, any]) => boolean) =
 export declare const normalizeError: (err: any) => Error;
 export declare function errorToString(err: any): string;
 export declare function capString(str: string, maxLength: number, ellipsis?: string): string;
+export declare const conditionalLog: (enabled: boolean, options?: Partial<{
+    prefix: ValueOrFunc<string>;
+    logger: {
+        (message?: any, ...optionalParams: any[]): void;
+        (message?: any, ...optionalParams: any[]): void;
+    };
+}>) => (msg: any, ...args: any[]) => void;

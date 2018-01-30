@@ -246,3 +246,29 @@ export function capString(
         return str;
     }
 }
+
+export const conditionalLog = (
+    enabled: boolean,
+    options?: Partial<{
+        prefix: ValueOrFunc<string>;
+        logger: typeof console.log;
+    }>
+) => {
+    if (enabled) {
+        const { prefix, logger } = Object.assign({
+            prefix: '',
+            logger: console.log.bind(console),
+        }, options);
+        return (msg, ...args) => {
+            const pref = getAsValue(prefix);
+            if (typeof msg === 'function') {
+                msg = msg(...args);
+                logger(pref + msg);
+            } else {
+                logger(pref + msg, ...args);
+            }
+        };
+    } else {
+        return (msg, ...args) => {};
+    }
+};

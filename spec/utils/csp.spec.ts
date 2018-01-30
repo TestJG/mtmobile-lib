@@ -1,5 +1,5 @@
 import { Observable, Observer } from 'rxjs';
-const {
+import {
     chan,
     go,
     spawn,
@@ -9,9 +9,12 @@ const {
     take,
     putAsync,
     CLOSED
-} = require('js-csp');
-import { firstToChannel, startLeasing } from '../../src/utils/csp';
-import { release } from 'os';
+} from 'js-csp';
+import {
+    firstToChannel,
+    startLeasing,
+    runPipeline
+} from '../../src/utils/csp';
 
 describe('Utils', () => {
     describe('CSP Tests', () => {
@@ -114,7 +117,8 @@ describe('Utils', () => {
                     .and.callFake(() => Observable.of(<void>null));
                 const res = startLeasing(leaseFn, releaseFn, {
                     timeoutSecs: 0.04,
-                    leaseMarginSecs: 0.01
+                    leaseMarginSecs: 0.01,
+                    logToConsole: false,
                 });
                 go(function*() {
                     const lease1 = yield take(res.leaseCh);
@@ -127,32 +131,38 @@ describe('Utils', () => {
                 });
             });
 
-            // fit('with a lease that succeed and two pings it should produce a valid lease that times out', done => {
-            //     // console.log('IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII');
-            //     const leaseFn = jasmine
-            //         .createSpy('leaseFn')
-            //         .and.callFake(t => Observable.of(true));
-            //     const releaseFn = jasmine
-            //         .createSpy('releaseFn')
-            //         .and.callFake(() => Observable.of(<void>null));
-            //     const res = startLeasing(leaseFn, releaseFn, { timeoutSecs: 0.04, leaseMarginSecs: 0.01 });
-            //     go(function*() {
-            //         const lease1 = yield take(res.leaseCh);
-            //         expect(leaseFn).toHaveBeenCalledWith(0.05);
-            //         expect(leaseFn).toHaveBeenCalledTimes(1);
-            //         expect(lease1).toEqual(true);
-            //         for (let i = 0; i < 5; i++) {
-            //             // console.log('PINGING #' + i);
-            //             yield take(timeout(0.02 * 1000));
-            //             yield put(res.pingCh, true);
-            //         }
-            //         yield take(timeout((0.250 - 0.01 * 5) * 1000));
-            //         expect(leaseFn).toHaveBeenCalledTimes(4);
-            //         expect(releaseFn).toHaveBeenCalled();
-            //         // console.log('OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO');
-            //         done();
-            //     });
-            // });
+            it('with a lease that succeed and two pings it should produce a valid lease that times out', done => {
+                const leaseFn = jasmine
+                    .createSpy('leaseFn')
+                    .and.callFake(t => Observable.of(true));
+                const releaseFn = jasmine
+                    .createSpy('releaseFn')
+                    .and.callFake(() => Observable.of(<void>null));
+                const res = startLeasing(leaseFn, releaseFn, {
+                    timeoutSecs: 0.04,
+                    leaseMarginSecs: 0.01,
+                    logToConsole: false
+                });
+                go(function*() {
+                    const lease1 = yield take(res.leaseCh);
+                    expect(leaseFn).toHaveBeenCalledWith(0.05);
+                    expect(leaseFn).toHaveBeenCalledTimes(1);
+                    expect(lease1).toEqual(true);
+                    for (let i = 0; i < 5; i++) {
+                        yield take(timeout(0.02 * 1000));
+                        yield put(res.pingCh, true);
+                    }
+                    yield take(timeout((0.25 - 0.01 * 5) * 1000));
+                    expect(leaseFn).toHaveBeenCalledTimes(4);
+                    expect(releaseFn).toHaveBeenCalled();
+                    done();
+                });
+            });
+        });
+
+        describe('processingPipe', () => {
+            it('should be a function', () =>
+                expect(runPipeline).toBeInstanceOf(Function));
         });
     });
 });
