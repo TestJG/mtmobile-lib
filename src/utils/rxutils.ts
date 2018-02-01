@@ -3,18 +3,39 @@ import { Subscribable } from 'rxjs/Observable';
 import { isSomething, normalizeError, ValueOrFunc, getAsValue } from './common';
 import { IScheduler } from 'rxjs/Scheduler';
 
-export type ObsLike<T = any> = Subscribable<T> | PromiseLike<T> | T;
+export type ObsLike<T = any> = Subscribable<T> | PromiseLike<T> | T[] | T;
 export type ObsOrFunc<T = any> = ValueOrFunc<ObsLike<T>>;
 
 export const normalizeErrorOnCatch = <T>(err: any): Observable<T> =>
     Observable.throw(normalizeError(err));
 
-export const tryTo = <T>(thunk: (defer: ((action: (() => void)) => void)) => ObsLike<T>): Observable<T> => {
+export const fromObsLike = <T>(
+    source: ObsLike<T>,
+    treatArraysAsValues = true
+): Observable<T> => {
+    if (
+        isSomething(source) &&
+        (Promise.resolve(<any>source) === source ||
+            typeof source['subscribe'] === 'function' ||
+            (!treatArraysAsValues && source instanceof Array))
+    ) {
+        return Observable.from(<any>source);
+    } else {
+        return Observable.of(<T>source);
+    }
+};
+
+export const tryTo = <T>(
+    thunk: (defer: ((action: (() => void)) => void)) => ObsLike<T>,
+    treatArraysAsValues = true
+): Observable<T> => {
     const defers: (() => void)[] = [];
     let finishing = false;
     const defer = (action: (() => void)) => {
         if (finishing) {
-            throw new Error('Already finishing, this is not the time to defer.');
+            throw new Error(
+                'Already finishing, this is not the time to defer.'
+            );
         }
         defers.push(action);
     };
@@ -31,16 +52,7 @@ export const tryTo = <T>(thunk: (defer: ((action: (() => void)) => void)) => Obs
 
     let obs: Observable<T>;
     try {
-        const result = thunk(defer);
-        if (
-            isSomething(result) &&
-            (Promise.resolve(<any>result) === result ||
-                typeof result['subscribe'] === 'function')
-        ) {
-            obs = Observable.from(<any>result);
-        } else {
-            obs = Observable.of(<T>result);
-        }
+        obs = fromObsLike(thunk(defer), treatArraysAsValues);
     } catch (error) {
         obs = normalizeErrorOnCatch(error);
     }
@@ -75,11 +87,7 @@ export const wrapServiceStreamFromNames = <T extends { [name: string]: any }>(
 
 export const firstMap = <S>(source: Observable<S>) => <T>(
     mapper: (s: S) => T
-) =>
-    <Observable<T>>source
-        .first()
-        .map(mapper)
-        .catch(normalizeErrorOnCatch);
+) => <Observable<T>>source.first().map(mapper).catch(normalizeErrorOnCatch);
 
 export const firstSwitchMap = <S>(source: Observable<S>) => <T>(
     mapper: (db: S) => Observable<T>

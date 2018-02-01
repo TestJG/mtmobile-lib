@@ -263,12 +263,11 @@ export const conditionalLog = (
             options
         );
 
-        const logger = opts.logger;
-        const prefix = typeof enabled === 'boolean'
-            ? (opts.prefix || '')
-            : enabled;
+        const logger: typeof console.log = opts.logger;
+        const prefix =
+            typeof enabled === 'boolean' ? opts.prefix || '' : enabled;
 
-        return (msg, ...args) => {
+        return Object.assign((msg, ...args) => {
             const pref = getAsValue(prefix);
             if (typeof msg === 'function') {
                 msg = msg(...args);
@@ -276,8 +275,29 @@ export const conditionalLog = (
             } else {
                 logger(pref + msg, ...args);
             }
-        };
+        }, {
+            enabled: true,
+            options: { prefix, logger }
+        });
     } else {
-        return (msg, ...args) => {};
+        return Object.assign((msg, ...args) => {}, {
+            enabled: false,
+            options: { prefix: '', logger: noop }
+        });
+    }
+};
+
+export const subLog = (
+    parentLog: any,
+    enabled: boolean | ValueOrFunc<string>,
+    options?: Partial<{
+        prefix: ValueOrFunc<string>;
+        logger: typeof console.log;
+    }>
+) => {
+    if (parentLog.enabled) {
+        return conditionalLog(enabled, options);
+    } else {
+        return conditionalLog(false);
     }
 };

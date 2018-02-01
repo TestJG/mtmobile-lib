@@ -23,7 +23,14 @@ import {
     id,
     noop
 } from './common';
-import { ObsOrFunc, getAsObs } from './rxutils';
+import { ObsOrFunc, getAsObs, fromObsLike } from './rxutils';
+import { isNothing } from '../../index';
+
+export const isChan = (value: any) =>
+    value instanceof Object && value.constructor.name === 'Channel';
+
+export const isInstruction = (value: any) =>
+    value instanceof Object && value.constructor.name.endsWith('Instruction');
 
 /**
  * Returns a channel that will produce { value: x } or { error: e } if the first
@@ -31,46 +38,231 @@ import { ObsOrFunc, getAsObs } from './rxutils';
  * is a complete, the channel will close.
  * @param obs The observable to use a value/error generator
  */
-export const firstToChannel = (
+export const firstToChan = (
     obs: Observable<any>,
     options?: Partial<{
-        channel: any;
-        autoClose: boolean;
+        bufferOrN;
+        transducer;
+        exHandler;
+        keepOpen: boolean;
+        includeErrors: boolean;
     }>
-): any => observableToChannel(obs.take(1), options);
+): any => observableToChan(obs.take(1), options);
 
-export const observableToChannel = (
+export const observableToChan = (
     obs: Observable<any>,
     options?: Partial<{
-        channel: any;
-        autoClose: boolean;
+        bufferOrN;
+        transducer;
+        exHandler;
+        keepOpen: boolean;
+        includeErrors: boolean;
     }>
 ): any => {
-    const opts = Object.assign({}, options);
-    const autoClose =
-        typeof opts.autoClose === 'boolean' ? opts.autoClose : !opts.channel;
-    const ch = opts.channel || chan();
-    obs.subscribe({
-        next: value => {
-            go(function*() {
-                yield put(ch, { value });
-            });
+    const opts = Object.assign(
+        {
+            keepOpen: false,
+            includeErrors: true
         },
+        options
+    );
+    const ch = chan(opts.bufferOrN, opts.transducer, opts.exHandler);
+    const finish = () => {
+        if (!opts.keepOpen) {
+            ch.close();
+        }
+    };
+    obs.subscribe({
+        next: value => putAsync(ch, value),
         error: error => {
             go(function*() {
-                yield put(ch, { error });
-                if (autoClose) {
-                    ch.close();
+                if (opts.includeErrors) {
+                    yield put(ch, error);
                 }
+                finish();
             });
         },
-        complete: () => {
-            if (autoClose) {
-                ch.close();
+        complete: finish
+    });
+    return ch;
+};
+
+export const generatorToChan = (
+    gen,
+    options?: Partial<{
+        bufferOrN;
+        transducer;
+        exHandler;
+        keepOpen: boolean;
+        includeErrors: boolean;
+    }>
+) => {
+    const opts = Object.assign(
+        {
+            keepOpen: false,
+            includeErrors: true
+        },
+        options
+    );
+    const ch = chan(opts.bufferOrN, opts.transducer, opts.exHandler);
+    go(function*() {
+        while (true) {
+            try {
+                const { done, value } = gen.next();
+                if (done) {
+                    break;
+                }
+                yield put(ch, value);
+            } catch (e) {
+                if (opts.includeErrors) {
+                    yield put(ch, e);
+                }
+                break;
             }
+        }
+        if (!opts.keepOpen) {
+            ch.close();
         }
     });
     return ch;
+};
+
+export const iterableToChan = (
+    iterable,
+    options?: Partial<{
+        bufferOrN;
+        transducer;
+        exHandler;
+        keepOpen: boolean;
+        includeErrors: boolean;
+    }>
+) => {
+    const opts = Object.assign(
+        {
+            keepOpen: false,
+            includeErrors: true
+        },
+        options
+    );
+    try {
+        const generator = iterable[Symbol.iterator]();
+        return generatorToChan(generator, options);
+    } catch (error) {
+        if (opts.includeErrors) {
+            return iterableToChan([error], options);
+        } else {
+            return iterableToChan([], options);
+        }
+    }
+};
+
+export const promiseToChan = (
+    promise: Promise<any>,
+    options?: Partial<{
+        bufferOrN;
+        transducer;
+        exHandler;
+        keepOpen: boolean;
+        includeErrors: boolean;
+    }>
+) => {
+    const opts = Object.assign(
+        {
+            keepOpen: false,
+            includeErrors: true
+        },
+        options
+    );
+    const ch = chan(opts.bufferOrN, opts.transducer, opts.exHandler);
+    const finish = () => {
+        if (!opts.keepOpen) {
+            ch.close();
+        }
+    };
+    try {
+        promise
+            .then(value => {
+                go(function*() {
+                    yield put(ch, value);
+                    finish();
+                });
+            })
+            .catch(error => {
+                go(function*() {
+                    if (opts.includeErrors) {
+                        yield put(ch, error);
+                    }
+                    finish();
+                });
+            });
+    } catch (error) {
+        go(function*() {
+            if (opts.includeErrors) {
+                yield put(ch, error);
+            }
+            finish();
+        });
+    }
+    return ch;
+};
+
+export const toChan = (
+    source: any,
+    options?: Partial<{
+        bufferOrN;
+        transducer;
+        exHandler;
+        keepOpen: boolean;
+        includeErrors: boolean;
+    }>
+) => {
+    const opts = Object.assign(
+        {
+            keepOpen: false,
+            includeErrors: true
+        },
+        options
+    );
+
+    if (isChan(source)) {
+        return source;
+    } else if (typeof source === 'function') {
+        try {
+            const newSource = source();
+            return toChan(newSource, options);
+        } catch (error) {
+            if (opts.includeErrors) {
+                return iterableToChan([error], options);
+            } else {
+                return iterableToChan([], options);
+            }
+        }
+    } else if (
+        isNothing(source) ||
+        typeof source === 'boolean' ||
+        typeof source === 'string' ||
+        typeof source === 'number'
+    ) {
+        return iterableToChan([source], options);
+    } else if (Symbol.iterator in source) {
+        return iterableToChan(source, options);
+    } else if (Symbol.observable in source) {
+        return observableToChan(source, options);
+    } else if (source && typeof source.next === 'function') {
+        return generatorToChan(source, options);
+    } else if (Promise.resolve(source) === source) {
+        return promiseToChan(source, options);
+    } else {
+        return iterableToChan([source], options);
+    }
+};
+
+export const toYielder = (source: any) => {
+    if (isInstruction(source)) {
+        return source;
+    } else {
+        return toChan(source);
+    }
 };
 
 export const channelToObservable = <T>(ch: any) =>
@@ -262,13 +454,13 @@ export const startLeasing = (
             if (!leaseGranted) {
                 if (firstTime) {
                     log('lease was not granted');
-                    putAsync(startedProm, false);
+                    yield put(startedProm, false);
                 }
                 break;
             } else {
                 if (firstTime) {
                     log('lease was granted');
-                    putAsync(startedProm, true);
+                    yield put(startedProm, true);
                 }
             }
             firstTime = false;
@@ -304,15 +496,12 @@ export interface PipelineNodeHandler {
     release: () => any;
 }
 
-export const runPipelineNode = (
-    opts: {
-        process: (value: any) => any;
-    } & Partial<{
-        inputCh: number | any;
-        initialValues: any;
-        logToConsole: boolean | ValueOrFunc<string>;
-    }>
-): PipelineNodeHandler => {
+export const runPipelineNode = (opts: {
+    process: (value: any) => any;
+    inputCh?: number | any;
+    initialValues?: any;
+    logToConsole?: boolean | ValueOrFunc<string>;
+}): PipelineNodeHandler => {
     const log = conditionalLog(opts.logToConsole);
     log('Start');
     const RELEASE = global.Symbol('RELEASE');
@@ -332,7 +521,7 @@ export const runPipelineNode = (
             });
             if (result.channel === inputCh && result.value !== RELEASE) {
                 try {
-                    log('Processing input #' + ++index);
+                    log('Processing input #' + (++index), result.value);
                     yield opts.process(result.value);
                 } catch (e) {
                     log('ERROR', e);
@@ -348,14 +537,17 @@ export const runPipelineNode = (
         go(function*() {
             let index = 0;
             for (const value of opts.initialValues) {
-                log('Insert init #' + ++index);
+                log('Insert init #' + ++index, value);
                 yield put(inputCh, value);
             }
             log('Insert init done');
         });
     }
 
-    const input = (value: any) => put(inputCh, value);
+    const input = (value: any) => {
+        log('INPUT ', value);
+        return put(inputCh, value);
+    };
     const release = () => put(inputCh, RELEASE);
     const cancel = () => cancelProm.close();
 
@@ -384,22 +576,31 @@ export class PipelineSequenceTarget {
         }
     }
 
-    static fromValue(value: any) {
+    static fromValue(
+        value: any,
+        factory?: (value: any) => PipelineSequenceTarget
+    ) {
         if (value instanceof PipelineSequenceTarget) {
             return value;
+        } else if (factory) {
+            return factory(value);
         } else {
             return new PipelineSequenceTarget(value);
         }
     }
 
-    select<T = any>(dict: Map<number | string, T>, currentIndex: number) {
+    selectWith<T = any, R = any>(
+        dict: Map<string, T>,
+        arr: T[],
+        currentIndex: number,
+        foundFn: (node: T) => R,
+        notFoundFn: (lastIndex: boolean) => R
+    ) {
         if (this.name) {
             if (!dict.has(this.name)) {
-                throw new Error(
-                    `Expected to find element with name ${this.name}`
-                );
+                return notFoundFn(false);
             }
-            return dict.get(this.name);
+            return foundFn(dict.get(this.name));
         } else {
             const index =
                 typeof this.index === 'number'
@@ -407,10 +608,47 @@ export class PipelineSequenceTarget {
                     : typeof this.offset === 'number'
                       ? currentIndex + this.offset
                       : currentIndex;
-            if (!dict.has(index)) {
-                throw new Error(`Expected to find element with index ${index}`);
+            if (index < 0 || index >= arr.length) {
+                return notFoundFn(index === arr.length);
             }
-            return dict.get(index);
+            return foundFn(arr[index]);
+        }
+    }
+
+    select<T = any>(dict: Map<string, T>, arr: T[], currentIndex: number) {
+        const notFoundFn = (lastIndex: boolean) => {
+            if (this.name) {
+                throw new Error(
+                    `Expected to find element with name ${this.name}`
+                );
+            } else if (typeof this.index === 'number') {
+                throw new Error(
+                    `Expected to find element at index ${this.index}`
+                );
+            } else if (typeof this.offset === 'number') {
+                throw new Error(
+                    `Expected to find element with offset ${this
+                        .offset} from index ${currentIndex}`
+                );
+            } else {
+                throw new Error(
+                    `Expected to find element but no index was supplied`
+                );
+            }
+        };
+        return this.selectWith(dict, arr, currentIndex, id, notFoundFn);
+    }
+
+    toString() {
+        const valStr = capString(JSON.stringify(this.value), 40);
+        if (this.name) {
+            return `name ${this.name}: ${valStr}`;
+        } else if (typeof this.index === 'number') {
+            return `index ${this.index}: ${valStr}`;
+        } else if (typeof this.offset === 'number') {
+            return `offset ${this.offset}: ${valStr}`;
+        } else {
+            return `unknown: ${valStr}`;
         }
     }
 }
@@ -428,6 +666,14 @@ export const toCurrentTarget = (value: any) => toOffsetTarget(value, 0);
 export const toNextTarget = (value: any) => toOffsetTarget(value, 1);
 export const toPreviousTarget = (value: any) => toOffsetTarget(value, -1);
 
+export interface PipelineSequenceNodeInit {
+    process: (value: any) => any;
+    name?: string;
+    inputCh?: number | any;
+    initialValues?: any;
+    logToConsole?: boolean | ValueOrFunc<string>;
+}
+
 export interface PipelineSequenceHandler {
     startedProm: any;
     finishedProm: any;
@@ -436,312 +682,104 @@ export interface PipelineSequenceHandler {
     release: () => any;
 }
 
-export const runPipelineSequence = (
-    opts: {
-        process: (value: any) => any;
-    } & Partial<{
-        inputCh: number | any;
-        initialValues: any;
-        logToConsole: boolean | ValueOrFunc<string>;
-    }>
-): PipelineSequenceHandler => {
+export const runPipelineSequence = (opts: {
+    nodes: PipelineSequenceNodeInit[];
+    processLast: (value: any) => any;
+    logToConsole?: boolean | ValueOrFunc<string>;
+}): PipelineSequenceHandler => {
+    if (!opts.nodes || opts.nodes.length === 0) {
+        throw new Error('At least one node must be supplied.');
+    }
+
     const log = conditionalLog(opts.logToConsole);
     log('Start');
     const RELEASE = global.Symbol('RELEASE');
     const startedProm = promiseChan();
-    const cancelProm = promiseChan();
+
+    const pipeDict = new Map<string, PipelineNodeHandler>();
+    const pipeArr = new Array<PipelineNodeHandler>();
+
+    const startPipeline = () => {
+        for (let i = 0; i < opts.nodes.length; i++) {
+            const nodeInit = opts.nodes[i];
+            const index = i;
+            const process = (value: any) =>
+                go(function*() {
+                    const proc = nodeInit.process(value);
+                    if (isInstruction(proc)) {
+                        yield proc;
+                        return;
+                    }
+                    const procCh = toChan(proc);
+                    while (true) {
+                        const result = yield procCh;
+                        // log('PROCESS ', index, result);
+                        if (result === CLOSED) {
+                            break;
+                        }
+                        const target = PipelineSequenceTarget.fromValue(
+                            result,
+                            toNextTarget
+                        );
+                        yield target.selectWith(
+                            pipeDict,
+                            pipeArr,
+                            index,
+                            n => n.input(target.value),
+                            last => {
+                                if (last) {
+                                    return opts.processLast(target.value);
+                                } else {
+                                    throw new Error(
+                                        'Invalid index: ' + target.toString()
+                                    );
+                                }
+                            }
+                        );
+                    }
+                });
+            const node = runPipelineNode({
+                process,
+                inputCh: nodeInit.inputCh,
+                initialValues: nodeInit.initialValues,
+                logToConsole: log.enabled && nodeInit.logToConsole
+            });
+            pipeArr.push(node);
+            if (nodeInit.name) {
+                pipeDict.set(nodeInit.name, node);
+            }
+            log('Node initialized', index, nodeInit.name);
+        }
+
+        // Return a process that finishes when all nodes finish
+        return go(function*() {
+            for (let i = 0; i < pipeArr.length; i++) {
+                yield pipeArr[i].finishedProm;
+                log('Finished node #' + i);
+                if (i + 1 < opts.nodes.length) {
+                    yield pipeArr[i + 1].release();
+                }
+            }
+        });
+    };
 
     const finishedProm = go(function*() {
         yield put(startedProm, true);
+        yield startPipeline();
     });
 
-    const input = (index: string | number, value: any) => null;
-    const release = () => null;
-    const cancel = () => cancelProm.close();
+    const input = (index: string | number, value: any) =>
+        (typeof index === 'number'
+            ? toIndexedTarget(value, index)
+            : toNamedTarget(value, index))
+            .select(pipeDict, pipeArr, 0)
+            .input(value);
+    const release = () => pipeArr[0].release();
+    const cancel = () => {
+        for (let i = 0; i < pipeArr.length; i++) {
+            pipeArr[i].cancel();
+        }
+    };
 
     return { startedProm, finishedProm, input, release, cancel };
 };
-
-// export interface PipelineNodeInit {
-//     name: string;
-//     process: (value: any) => Observable<PipelineTarget | any>;
-//     inputCh?: ValueOrFunc<any>;
-//     bufferSize?: number;
-//     cancelFast?: boolean;
-// }
-
-// export interface PipelineNode {
-//     name: string;
-//     inputCh: any;
-//     statusCh: any;
-// }
-
-// export interface PipelineChannels {
-//     statusCh: any;
-//     cancelCh: any;
-//     inputChByName: { [key: string]: any };
-//     inputChByIndex: any[];
-// }
-
-// export const runPipelineNode = (
-//     req: PipelineNodeInit & {
-//         outputCh: any;
-//         cancelCh?: any;
-//     },
-//     options?: Partial<{
-//         logToConsole: boolean;
-//     }>
-// ): PipelineNode => {
-//     const opts = Object.assign(
-//         {
-//             logToConsole: false
-//         },
-//         options
-//     );
-
-//     const name = req.name;
-//     const log = conditionalLog(opts.logToConsole, {
-//         prefix: `PIPELINE NODE [${name}]: `
-//     });
-//     const outputCh = req.outputCh;
-//     const inputCh = getAsValue(req.inputCh) || chan(req.bufferSize);
-//     const cancelCh = req.cancelCh || chan();
-//     const statusCh = chan(1);
-//     const waitChannels = req.cancelFast
-//         ? [cancelCh, inputCh]
-//         : [inputCh, cancelCh];
-//     log('Start');
-
-//     go(function*() {
-//         putAsync(statusCh, true);
-//         try {
-//             while (true) {
-//                 log('Waiting');
-//                 const result = yield alts([inputCh, cancelCh], {
-//                     priority: true
-//                 });
-//                 if (result.channel === cancelCh) {
-//                     log('cancelling');
-//                     break;
-//                 } else {
-//                     log(
-//                         () =>
-//                             `process ${capString(
-//                                 JSON.stringify(result.value),
-//                                 40
-//                             )}`
-//                     );
-//                     const doneCh = chan();
-//                     const processed = req.process(result.value).do({
-//                         next: value =>
-//                             log(
-//                                 () =>
-//                                     `processed INTO ${capString(
-//                                         JSON.stringify(value),
-//                                         40
-//                                     )}`
-//                             ),
-//                         error: error => {
-//                             putAsync(doneCh, false);
-//                             log(() => `process ERROR! ${error}`);
-//                         },
-//                         complete: () => {
-//                             putAsync(doneCh, true);
-//                             log(`process DONE!`);
-//                         }
-//                     });
-//                     observableToChannel(processed, outputCh, false);
-//                     const done = yield take(doneCh);
-//                     if (!done) {
-//                         log('breaking due to ERROR');
-//                         break;
-//                     }
-//                 }
-//             }
-//             putAsync(statusCh, false);
-//         } catch (error) {
-//             log('PROCESSING ERROR', error);
-//             putAsync(statusCh, false);
-//             throw error;
-//         }
-//     });
-
-//     return { name, inputCh, statusCh };
-// };
-
-// export const runPipeline = (
-//     nodes: (PipelineNodeInit & {
-//         initialValues?: ObsOrFunc<any>;
-//     })[],
-//     options: Partial<{
-//         leasing: ValueOrFunc<LeaseChannels>;
-//         leasingPingTimeSecs: number;
-//         logToConsole: boolean;
-//     }>
-// ): PipelineChannels => {
-//     const opts = Object.assign(
-//         {
-//             logToConsole: false,
-//             leasing: <ValueOrFunc<LeaseChannels>>null,
-//             leasingPingTimeSecs: 60
-//         },
-//         options
-//     );
-
-//     const log = conditionalLog(opts.logToConsole, {
-//         prefix: () => `PIPELINE: `
-//     });
-
-//     const cancelCh = chan();
-//     const cancelMult = mult(cancelCh);
-//     const statusCh = chan(1);
-//     const inputChByName = {};
-//     const inputChByIndex = [];
-//     const cancellingCh = chan();
-//     const isCancelling = [false];
-//     mult.tap(cancelMult, cancellingCh);
-
-//     go(function* () {
-//         yield take(cancellingCh);
-//         isCancelling[0] = true;
-//     });
-
-//     function* runPipeline$$() {
-//         const nodesByNameAndIndex = new Map<string | number, PipelineNode>();
-//         const startChannels = [];
-//         const finishChannels = [];
-
-//         for (let i = 0; i < nodes.length; i++) {
-//             const index = i; /// Avoid closure problems!!!
-//             const node = nodes[index];
-//             const nodeLog = conditionalLog(opts.logToConsole, {
-//                 prefix: () => `PIPELINE [${node.name}]: `
-//             });
-//             nodeLog('INIT');
-//             const outputCh = chan();
-//             const nodeCancelCh = chan();
-//             const startCh = chan();
-//             const finishCh = chan();
-//             startChannels.push(startCh);
-//             finishChannels.push(finishCh);
-
-//             mult.tap(cancelMult, nodeCancelCh);
-//             const nodeController = runPipelineNode({
-//                 name: node.name,
-//                 process: node.process,
-//                 inputCh: node.inputCh,
-//                 bufferSize: node.bufferSize,
-//                 cancelFast: node.cancelFast,
-//                 outputCh,
-//                 cancelCh: nodeCancelCh
-//             });
-//             nodesByNameAndIndex.set(index, nodeController);
-//             nodesByNameAndIndex.set(node.name, nodeController);
-//             const inputNoCancellingCh = removeInto(_ => isCancelling[0], node.inputCh);
-//             inputChByName[node.name] = inputNoCancellingCh;
-//             inputChByIndex[index] = inputNoCancellingCh;
-
-//             if (node.initialValues) {
-//                 // Insert initial values into input channel
-//                 observableToChannel(
-//                     getAsObs(node.initialValues),
-//                     removeInto(
-//                         x => !!x.error,
-//                         mapInto(x => x.value, inputNoCancellingCh)
-//                     ),
-//                     false
-//                 );
-//             }
-
-//             // Start processing processed outputs
-//             go(function*() {
-//                 nodeLog('Starting');
-//                 yield take(startCh);
-//                 let error: any;
-//                 try {
-//                     while (true) {
-//                         const result = alts([outputCh, nodeCancelCh], {
-//                             priority: true
-//                         });
-//                         if (result.channel === nodeCancelCh) {
-//                             nodeLog('cancelled');
-//                             break;
-//                         } else {
-//                             const outValue = PipelineTarget.fromValue(
-//                                 result.value
-//                             );
-//                             const targetNode = outValue.select(
-//                                 nodesByNameAndIndex,
-//                                 index
-//                             );
-//                             yield put(targetNode.inputCh, outValue.value);
-//                         }
-//                     }
-//                 } catch (e) {
-//                     error = e;
-//                     nodeLog('ERROR', e);
-//                 }
-//                 mult.untap(cancelMult, nodeCancelCh);
-//                 yield put(finishCh, error || true);
-//                 nodeLog('Finished');
-//             });
-//         }
-
-//         for (let i = 0; i < startChannels.length; i++) {
-//             yield put(startChannels[i], true);
-//         }
-
-//         for (let i = 0; i < finishChannels.length; i++) {
-//             yield take(finishChannels[i]);
-//         }
-//     }
-
-//     function* main$$() {
-//         log('MAIN Start');
-//         const leasing = getAsValue(opts.leasing);
-//         if (leasing) {
-//             log('Using LEASING');
-
-//             const leaseAcquired: boolean = yield take(leasing.leaseCh);
-
-//             if (leaseAcquired) {
-//                 log('Lease acquired');
-//                 const cancelLeaseCh = chan();
-//                 mult.tap(cancelMult, cancelLeaseCh);
-//                 go(startPinging, {
-//                     pingCh: leasing.pingCh,
-//                     pingValue: true,
-//                     pingTimeMilliseconds: opts.leasingPingTimeSecs * 1000,
-//                     cancelCh: cancelLeaseCh,
-//                     pingAsync: false,
-//                     onFinish: () => {
-//                         mult.untap(cancelMult, cancelLeaseCh);
-//                         putAsync(leasing.releaseCh, true);
-//                     }
-//                 });
-
-//                 putAsync(statusCh, true);
-
-//                 yield take(go(runPipeline$$));
-
-//                 putAsync(statusCh, false);
-//             } else {
-//                 log('Lease NOT ACQUIRED');
-//                 putAsync(statusCh, false);
-//             }
-//         } else {
-//             log('NOT using LEASING');
-
-//             putAsync(statusCh, true);
-
-//             yield take(go(runPipeline$$));
-
-//             putAsync(statusCh, false);
-//         }
-//         log('MAIN End');
-//     }
-
-//     go(main$$);
-
-//     return { statusCh, inputChByName, inputChByIndex };
-// };

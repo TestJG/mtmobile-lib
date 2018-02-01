@@ -34,10 +34,14 @@ export const testObsNotifications = <T = any>(
 
     const toStr = (n: Notification<any>) => {
         switch (n.kind) {
-            case 'N':
-                return `a VALUE ${JSON.stringify(n.value)}`;
-            case 'E':
-                return `an ERROR ${JSON.stringify(n.error.message || n.error)}`;
+            case 'N': {
+                const str = n.value instanceof Error ? `${n.value.name || 'Error'}('${n.value.message}')` : JSON.stringify(n.value);
+                return `a VALUE ${str}`;
+            }
+            case 'E': {
+                const str = n.error instanceof Error ? `${n.error.name || 'Error'}('${n.error.message}')` : JSON.stringify(n.error);
+                return `an ERROR ${str}`;
+            }
             case 'C':
                 return `a COMPLETE`;
             default:

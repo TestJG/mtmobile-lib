@@ -1,1 +1,1 @@
-npm run test:watch
+yarn run test:watch

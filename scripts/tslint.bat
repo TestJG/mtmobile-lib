@@ -1,1 +1,1 @@
-npm run lint
+yarn run lint

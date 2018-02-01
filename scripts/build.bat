@@ -1,2 +1,2 @@
-npm run build
+yarn run build
 REM npm run build:rollup
