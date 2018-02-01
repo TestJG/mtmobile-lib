@@ -129,6 +129,7 @@ export const assignArrayIfMany = <T>(
     );
 
 export const id = <T>(a: T) => a;
+export const noop = () => {};
 
 export const joinStr = (sep: string, strs: string[]) =>
     strs.reduce(
@@ -248,17 +249,25 @@ export function capString(
 }
 
 export const conditionalLog = (
-    enabled: boolean,
+    enabled: boolean | ValueOrFunc<string>,
     options?: Partial<{
         prefix: ValueOrFunc<string>;
         logger: typeof console.log;
     }>
 ) => {
-    if (enabled) {
-        const { prefix, logger } = Object.assign({
-            prefix: '',
-            logger: console.log.bind(console),
-        }, options);
+    if (isSomething(enabled) && enabled !== false) {
+        const opts = Object.assign(
+            {
+                logger: console.log.bind(console)
+            },
+            options
+        );
+
+        const logger = opts.logger;
+        const prefix = typeof enabled === 'boolean'
+            ? (opts.prefix || '')
+            : enabled;
+
         return (msg, ...args) => {
             const pref = getAsValue(prefix);
             if (typeof msg === 'function') {
