@@ -248,37 +248,57 @@ export function capString(
     }
 }
 
+export interface LogOpts {
+    logs?: boolean | ValueOrFunc<string>;
+}
+
+const getLogToConsole = (
+    logOpts: boolean | ValueOrFunc<string> | LogOpts | null | undefined,
+    defaultPrefix: ValueOrFunc<string>
+): ValueOrFunc<string> | null => {
+    if (isNothing(logOpts) || logOpts === false) {
+        return null;
+    } else if (logOpts === true) {
+        return defaultPrefix;
+    } else if (typeof logOpts === 'object') {
+        return getLogToConsole(logOpts.logs, defaultPrefix);
+    } else {
+        return logOpts;
+    }
+};
+
 export const conditionalLog = (
-    enabled: boolean | ValueOrFunc<string>,
+    logOpts?: boolean | ValueOrFunc<string> | LogOpts | null | undefined,
     options?: Partial<{
         prefix: ValueOrFunc<string>;
         logger: typeof console.log;
     }>
 ) => {
-    if (isSomething(enabled) && enabled !== false) {
-        const opts = Object.assign(
-            {
-                logger: console.log.bind(console)
-            },
-            options
-        );
-
+    const opts = Object.assign(
+        {
+            logger: console.log.bind(console)
+        },
+        options
+    );
+    const prefix = getLogToConsole(logOpts, opts.prefix);
+    if (prefix) {
         const logger: typeof console.log = opts.logger;
-        const prefix =
-            typeof enabled === 'boolean' ? opts.prefix || '' : enabled;
 
-        return Object.assign((msg, ...args) => {
-            const pref = getAsValue(prefix);
-            if (typeof msg === 'function') {
-                msg = msg(...args);
-                logger(pref + msg);
-            } else {
-                logger(pref + msg, ...args);
+        return Object.assign(
+            (msg, ...args) => {
+                const pref = getAsValue(prefix);
+                if (typeof msg === 'function') {
+                    msg = msg(...args);
+                    logger(pref + msg);
+                } else {
+                    logger(pref + msg, ...args);
+                }
+            },
+            {
+                enabled: true,
+                options: { prefix, logger }
             }
-        }, {
-            enabled: true,
-            options: { prefix, logger }
-        });
+        );
     } else {
         return Object.assign((msg, ...args) => {}, {
             enabled: false,
@@ -299,5 +319,20 @@ export const subLog = (
         return conditionalLog(enabled, options);
     } else {
         return conditionalLog(false);
+    }
+};
+
+export const logTee = <T>(caption: string, thunk: () => T) => {
+    console.log(`START: ${caption}`);
+    const startTime = new Date().getTime();
+    try {
+        const result = thunk();
+        const ms = new Date().getTime() - startTime;
+        console.log(`END  : ${caption} [${ms}ms]`);
+        return result;
+    } catch (error) {
+        const ms = new Date().getTime() - startTime;
+        console.log(`ERROR: ${caption} (${error.message}) [${ms}ms]`);
+        throw error;
     }
 };

@@ -1,26 +1,40 @@
-import { Observable } from 'rxjs';
-import { ValueOrFunc } from './common';
-/**
- * Returns a channel that will produce { value: x } or { error: e } if the first
- * issue of the observable is a value or an error. Afterwards, or if the issue
- * is a complete, the channel will close.
- * @param obs The observable to use a value/error generator
- */
-export declare const firstToChannel: (obs: Observable<any>, channel?: any, autoClose?: boolean, finishCh?: any) => any;
-export declare const observableToChannel: (obs: Observable<any>, channel?: any, autoClose?: boolean, finishCh?: any) => any;
-export declare function startPinging(req: {
+import { Observable, Observer } from 'rxjs';
+import { LogOpts } from './common';
+export declare const isChan: (value: any) => boolean;
+export declare const isInstruction: (value: any) => any;
+export declare type ToChanOptions = {
+    bufferOrN;
+    transducer;
+    exHandler;
+    keepOpen: boolean;
+    includeErrors: boolean;
+} & LogOpts;
+export declare const bufferedObserver: (options?: Partial<ToChanOptions>) => Observer<any> & {
+    channel: any;
+};
+export declare const generatorToChan: (gen: any, options?: Partial<ToChanOptions>) => any;
+export declare const iterableToChan: (iterable: any, options?: Partial<ToChanOptions>) => any;
+export declare const promiseToChan: (promise: Promise<any>, options?: Partial<ToChanOptions>) => any;
+export declare const firstToChan: (obs: Observable<any>, options?: Partial<ToChanOptions>) => any;
+export declare const observableToChan: (obs: Observable<any>, options?: Partial<ToChanOptions>) => any;
+export declare const toChan: (source: any, options?: Partial<ToChanOptions>) => any;
+export declare const toYielder: (source: any) => any;
+export declare const chanToObservable: <T>(ch: any, options?: {
+    logs?: string | boolean | ((...args: any[]) => string);
+}) => Observable<T>;
+export interface PingHandler {
+    release: () => any;
+    finishedProm: any;
+}
+export declare const startPinging: (pingCh: any, pingTimeMilliseconds: number, options?: Partial<{
+    pingAsync: boolean;
+    autoClose: boolean;
+} & LogOpts>) => PingHandler;
+export interface LeaseHandler {
+    release: () => any;
     pingCh: any;
-    pingValue: any;
-    pingTimeMilliseconds: number;
-    cancelCh: any;
-    pingAsync?: boolean;
-    logToConsole?: boolean;
-    onFinish?: (error: any) => void;
-}): IterableIterator<any>;
-export interface LeaseChannels {
-    leaseCh: any;
-    pingCh: any;
-    releaseCh: any;
+    startedProm: any;
+    finishedProm: any;
 }
 /**
  * Starts a leasing process that works like so:
@@ -33,81 +47,75 @@ export interface LeaseChannels {
  * -
  * @param leaseFn   A leasing function to perform a lease for a given amount of
  *                  time. This is a client defined operation. It should accept a
- *                  duration in seconds and return an observable that returns
- *                  true or false whether the lease is acquired for the given
+ *                  duration in seconds and return a channel that returns
+ *                  true or false whether the lease was acquired for the given
  *                  time or not.
  * @param releaseFn A lease releasing function. This is a client defined
  *                  operation that should release a previously acquired lease.
- *                  It could be called even if no lease is reserved, to ensure
+ *                  It could be called even if no lease was reserved, to ensure
  *                  release.
- * @param options   - timeoutSecs: Represents maximum time in seconds when the
- *                  client is expected to use the ping channel to communicate
- *                  it's interest in keeping the lease. If that time elapses and
- *                  no ping is received the lease will be released.
+ * @param options   - leaseTimeoutSecs: Represents the lease time in seconds.
  *                  - leaseMarginSecs: Represents a margin time in seconds to
- *                  add to timeoutSecs to reserve the lease. After that time the
- *                  underlying lease mechanism could decide to automatically
- *                  release the lease for other processes.
- *                  - autoClose: Indicates whether the lease channels will be
- *                  closed after the process has stopped.
+ *                  subtract from leaseTimeoutSecs to consider that the client
+ *                  will not issue a ping in time.
  *                  - logToConsole: Indicates whether the process steps should
  *                  be logged to the console.
- * @returns A lease channels to communicate with the client code, with channels:
- *          - leaseCh:  To communicate lease status. true to indicate the first
- *                      lease acquisition, before that the lease cannot be
- *                      considered taken. false to indicate that the lease was
- *                      not taken or that it was released, due to timeout or
- *                      explicit request.
  */
-export declare const startLeasing: (leaseFn: (leaseTimeSecs: number) => Observable<boolean>, releaseFn: () => Observable<void>, options?: Partial<{
-    timeoutSecs: number;
+export declare const startLeasing: (leaseFn: (leaseTimeSecs: number) => any, releaseFn: () => any, options?: Partial<{
+    leaseTimeoutSecs: number;
     leaseMarginSecs: number;
-    autoClose: boolean;
-    logToConsole: boolean;
-}>) => LeaseChannels;
-export declare class PipelineTarget {
-    value: any;
-    targetName?: string;
-    targetIndex?: number;
-    targetOffset?: number;
-    constructor(value: any, options?: {
-        targetName?: string;
-        targetIndex?: number;
-        targetOffset?: number;
-    });
-    static fromValue(value: any): PipelineTarget;
-    select<T>(dict: Map<number | string, T>, currentIndex: number): T;
+} & LogOpts>) => LeaseHandler;
+export interface PipelineNodeHandler {
+    startedProm: any;
+    finishedProm: any;
+    input: (value: any) => any;
+    cancel: () => void;
+    release: () => any;
 }
-export interface PipelineNodeInit {
-    name: string;
-    process: (value: any) => Observable<PipelineTarget | any>;
-    inputCh?: ValueOrFunc<any>;
-    bufferSize?: number;
-    cancelFast?: boolean;
-}
-export interface PipelineNode {
-    name: string;
-    inputCh: any;
-    statusCh: any;
-}
-export interface PipelineChannels {
-    statusCh: any;
-    inputChByName: {
-        [key: string]: any;
-    };
-    inputChByIndex: any[];
-}
-export declare const runPipelineNode: (req: PipelineNodeInit & {
-    outputCh: any;
-    cancelCh?: any;
-}, options?: Partial<{
-    logToConsole: boolean;
-}>) => PipelineNode;
-export declare const runPipeline: (nodes: (PipelineNodeInit & {
+export declare const runPipelineNode: (opts: {
+    process: (value: any) => any;
+} & Partial<{
+    inputCh?: any;
     initialValues?: any;
-})[], options: Partial<{
-    cancelCh: any;
-    leasing: ValueOrFunc<LeaseChannels>;
-    leasingPingTimeSecs: number;
-    logToConsole: boolean;
-}>) => PipelineChannels;
+} & LogOpts>) => PipelineNodeHandler;
+export declare class PipelineSequenceTarget {
+    value: any;
+    name?: string;
+    index?: number;
+    offset?: number;
+    constructor(value: any, options?: {
+        name: string;
+    } | {
+        index: number;
+    } | {
+        offset: number;
+    });
+    static fromValue(value: any, factory?: (value: any) => PipelineSequenceTarget): PipelineSequenceTarget;
+    selectWith<T = any, R = any>(dict: Map<string, T>, arr: T[], currentIndex: number, foundFn: (node: T) => R, notFoundFn: (lastIndex: boolean) => R): R;
+    select<T = any>(dict: Map<string, T>, arr: T[], currentIndex: number): T;
+    toString(): string;
+}
+export declare const toNamedTarget: (value: any, name: string) => PipelineSequenceTarget;
+export declare const toIndexedTarget: (value: any, index: number) => PipelineSequenceTarget;
+export declare const toOffsetTarget: (value: any, offset: number) => PipelineSequenceTarget;
+export declare const toCurrentTarget: (value: any) => PipelineSequenceTarget;
+export declare const toNextTarget: (value: any) => PipelineSequenceTarget;
+export declare const toPreviousTarget: (value: any) => PipelineSequenceTarget;
+export declare type PipelineSequenceNodeInit = {
+    process: (value: any) => any;
+} & Partial<{
+    name: string;
+    inputCh: number | any;
+    initialValues: any;
+} & LogOpts>;
+export interface PipelineSequenceHandler {
+    startedProm: any;
+    finishedProm: any;
+    input: (index: string | number, value: any) => any;
+    cancel: () => void;
+    release: () => any;
+}
+export declare const runPipelineSequence: (opts: {
+    nodes: PipelineSequenceNodeInit[];
+    processLast: (value: any) => any;
+} & Partial<LogOpts>) => PipelineSequenceHandler;

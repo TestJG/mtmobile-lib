@@ -29,8 +29,8 @@
     "build:rollup": "tsc && rollup -c && rimraf compiled && typedoc --out dist/docs --target es6 --theme minimal --exclude '**/*.spec.ts' src",
     "build": "tsc && typedoc --out compiled/docs --target es6 --theme minimal --exclude '**/*.spec.ts' src",
     "start": "tsc-watch --onSuccess \"rollup -c\"",
-    "test": "jest --verbose",
-    "test:watch": "jest --watch",
+    "test": "jest --verbose --all",
+    "test:watch": "jest --watch --onlyChanged",
     "test:prod": "npm run lint && npm run test -- --coverage --no-cache",
     "deploy-docs": "ts-node tools/gh-pages-publish",
     "semantic-release-prepare": "ts-node tools/semantic-release-prepare"

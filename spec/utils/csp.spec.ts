@@ -14,7 +14,7 @@ import {
 } from 'js-csp';
 import { testObs } from './rxtest';
 import {
-    channelToObservable,
+    chanToObservable,
     observableToChan,
     firstToChan,
     generatorToChan,
@@ -74,13 +74,13 @@ describe('Utils', () => {
                 expect(isInstruction(take(chan()))).toBeTruthy());
         });
 
-        describe('channelToObservable', () => {
+        describe('chanToObservable', () => {
             it('should be a function', () =>
-                expect(channelToObservable).toBeInstanceOf(Function));
+                expect(chanToObservable).toBeInstanceOf(Function));
 
             it('with values in the channel and closing afterwards it should produce the values and complete', done => {
                 const ch = chan();
-                testObs(channelToObservable(ch), [1, 2, 3, 4, 5], null, done);
+                testObs(chanToObservable(ch), [1, 2, 3, 4, 5], null, done);
                 go(function*() {
                     for (let i = 0; i < 5; i++) {
                         yield put(ch, i + 1);
@@ -92,7 +92,7 @@ describe('Utils', () => {
             it('with values in the channel and leaving it open it should produce the values and TIMEOUT', done => {
                 const ch = chan();
                 testObs(
-                    channelToObservable(ch),
+                    chanToObservable(ch),
                     [1, 2, 3, 4, 5, 'TIMEOUT'],
                     null,
                     done,
@@ -113,52 +113,71 @@ describe('Utils', () => {
             it('with many values it should produce the values in the channel', done => {
                 const it = [10, 20, 30];
                 const ch = iterableToChan(it);
-                testObs(channelToObservable(ch), [10, 20, 30], null, done);
+                testObs(chanToObservable(ch), [10, 20, 30], null, done);
             });
 
             it('when keepOpen it should not close the channel', done => {
                 const it = [10, 20, 30];
                 const ch = iterableToChan(it, { keepOpen: true });
-                testObs(channelToObservable(ch), [10, 20, 30, 'TIMEOUT'], null, done);
+                testObs(
+                    chanToObservable(ch),
+                    [10, 20, 30, 'TIMEOUT'],
+                    null,
+                    done
+                );
             });
 
             it('with a real iterator it should produce the values in the channel', done => {
                 const it = {};
-                it[Symbol.iterator] = function* () {
+                it[Symbol.iterator] = function*() {
                     yield 10;
                     yield 20;
                     yield 30;
                 };
                 const ch = iterableToChan(it);
-                testObs(channelToObservable(ch), [10, 20, 30], null, done);
+                testObs(chanToObservable(ch), [10, 20, 30], null, done);
             });
 
             it('with a failing iterator it should produce the values in the channel', done => {
                 const it = {};
-                it[Symbol.iterator] = function* () {
+                it[Symbol.iterator] = function*() {
                     yield 10;
                     yield 20;
                     throw new Error('unexpected');
                 };
                 const ch = iterableToChan(it);
-                testObs(channelToObservable(ch), [10, 20, new Error('unexpected')], null, done);
+                testObs(
+                    chanToObservable(ch),
+                    [10, 20, new Error('unexpected')],
+                    null,
+                    done
+                );
             });
 
             it('with a failing iterator and not including errors it should produce the values in the channel', done => {
                 const it = {};
-                it[Symbol.iterator] = function* () {
+                it[Symbol.iterator] = function*() {
                     yield 10;
                     yield 20;
                     throw new Error('unexpected');
                 };
                 const ch = iterableToChan(it, { includeErrors: false });
-                testObs(channelToObservable(ch), [10, 20], null, done);
+                testObs(chanToObservable(ch), [10, 20], null, done);
             });
 
             it('with a non iterator it should produce no values in the channel', done => {
                 const it = {};
                 const ch = iterableToChan(it);
-                testObs(channelToObservable(ch), [new TypeError('iterable[_rxjs.Symbol.iterator] is not a function')], null, done);
+                testObs(
+                    chanToObservable(ch),
+                    [
+                        new TypeError(
+                            'iterable[_rxjs.Symbol.iterator] is not a function'
+                        )
+                    ],
+                    null,
+                    done
+                );
             });
         });
 
@@ -167,49 +186,64 @@ describe('Utils', () => {
                 expect(generatorToChan).toBeInstanceOf(Function));
 
             it('with a real generator it should produce the values in the channel', done => {
-                const gen = function* () {
+                const gen = function*() {
                     yield 10;
                     yield 20;
                     yield 30;
                 };
                 const ch = generatorToChan(gen());
-                testObs(channelToObservable(ch), [10, 20, 30], null, done);
+                testObs(chanToObservable(ch), [10, 20, 30], null, done);
             });
 
             it('with keepOpen it should produce the values and leave the channel open', done => {
-                const gen = function* () {
+                const gen = function*() {
                     yield 10;
                     yield 20;
                     yield 30;
                 };
                 const ch = generatorToChan(gen(), { keepOpen: true });
-                testObs(channelToObservable(ch), [10, 20, 30, 'TIMEOUT'], null, done);
+                testObs(
+                    chanToObservable(ch),
+                    [10, 20, 30, 'TIMEOUT'],
+                    null,
+                    done
+                );
             });
 
             it('with a failing generator it should produce the values in the channel', done => {
-                const gen = function* () {
+                const gen = function*() {
                     yield 10;
                     yield 20;
                     throw new Error('unexpected');
                 };
                 const ch = generatorToChan(gen());
-                testObs(channelToObservable(ch), [10, 20, new Error('unexpected')], null, done);
+                testObs(
+                    chanToObservable(ch),
+                    [10, 20, new Error('unexpected')],
+                    null,
+                    done
+                );
             });
 
             it('with a failing generator and not including errors it should produce the values in the channel', done => {
-                const gen = function* () {
+                const gen = function*() {
                     yield 10;
                     yield 20;
                     throw new Error('unexpected');
                 };
                 const ch = generatorToChan(gen(), { includeErrors: false });
-                testObs(channelToObservable(ch), [10, 20], null, done);
+                testObs(chanToObservable(ch), [10, 20], null, done);
             });
 
             it('with a non generator it should produce no values in the channel', done => {
                 const gen = {};
                 const ch = generatorToChan(gen);
-                testObs(channelToObservable(ch), [new TypeError('gen.next is not a function')], null, done);
+                testObs(
+                    chanToObservable(ch),
+                    [new TypeError('gen.next is not a function')],
+                    null,
+                    done
+                );
             });
         });
 
@@ -218,33 +252,51 @@ describe('Utils', () => {
                 expect(promiseToChan).toBeInstanceOf(Function));
 
             it('with a resolving promise it should produce the value in the channel', done => {
-                const prom = Observable.timer(10).switchMap(() => Observable.of(10)).toPromise();
+                const prom = Observable.timer(10)
+                    .switchMap(() => Observable.of(10))
+                    .toPromise();
                 const ch = promiseToChan(prom);
-                testObs(channelToObservable(ch), [10], null, done);
+                testObs(chanToObservable(ch), [10], null, done);
             });
 
             it('with a resolving promise and keepOpen it should produce the value and leave the channel open', done => {
-                const prom = Observable.timer(10).switchMap(() => Observable.of(10)).toPromise();
+                const prom = Observable.timer(10)
+                    .switchMap(() => Observable.of(10))
+                    .toPromise();
                 const ch = promiseToChan(prom, { keepOpen: true });
-                testObs(channelToObservable(ch), [10, 'TIMEOUT'], null, done);
+                testObs(chanToObservable(ch), [10, 'TIMEOUT'], null, done);
             });
 
             it('with a rejecting promise it should produce the error in the channel', done => {
-                const prom = Observable.timer(10).switchMap(() => Observable.throw(new Error('unexpected'))).toPromise();
+                const prom = Observable.timer(10)
+                    .switchMap(() => Observable.throw(new Error('unexpected')))
+                    .toPromise();
                 const ch = promiseToChan(prom);
-                testObs(channelToObservable(ch), [new Error('unexpected')], null, done);
+                testObs(
+                    chanToObservable(ch),
+                    [new Error('unexpected')],
+                    null,
+                    done
+                );
             });
 
             it('with a rejecting promise and no include errors it should produce an empty channel', done => {
-                const prom = Observable.timer(10).switchMap(() => Observable.throw(new Error('unexpected'))).toPromise();
+                const prom = Observable.timer(10)
+                    .switchMap(() => Observable.throw(new Error('unexpected')))
+                    .toPromise();
                 const ch = promiseToChan(prom, { includeErrors: false });
-                testObs(channelToObservable(ch), [], null, done);
+                testObs(chanToObservable(ch), [], null, done);
             });
 
             it('with a non-promise it should produce the error in the channel', done => {
                 const prom = {};
                 const ch = promiseToChan(<any>prom);
-                testObs(channelToObservable(ch), [new TypeError('promise.then is not a function')], null, done);
+                testObs(
+                    chanToObservable(ch),
+                    [new TypeError('promise.then is not a function')],
+                    null,
+                    done
+                );
             });
         });
 
@@ -255,13 +307,13 @@ describe('Utils', () => {
             it('with one value observable it should produce the value in the channel', done => {
                 const obs = Observable.timer(10).map(() => 42);
                 const ch = firstToChan(obs);
-                testObs(channelToObservable(ch), [42], null, done);
+                testObs(chanToObservable(ch), [42], null, done);
             });
 
             it('with many value observable it should produce the first value in the channel', done => {
                 const obs = Observable.timer(10, 1).take(5).map(v => v + 10);
                 const ch = firstToChan(obs);
-                testObs(channelToObservable(ch), [10], null, done);
+                testObs(chanToObservable(ch), [10], null, done);
             });
 
             it('with a failing observable it should produce the error in the channel', done => {
@@ -269,12 +321,7 @@ describe('Utils', () => {
                     Observable.throw(new Error('test'))
                 );
                 const ch = firstToChan(obs);
-                testObs(
-                    channelToObservable(ch),
-                    [new Error('test')],
-                    null,
-                    done
-                );
+                testObs(chanToObservable(ch), [new Error('test')], null, done);
             });
 
             it('with an empty observable it should produce a CLOSED channel', done => {
@@ -282,37 +329,32 @@ describe('Utils', () => {
                     Observable.empty()
                 );
                 const ch = firstToChan(obs);
-                testObs(channelToObservable(ch), [], null, done);
+                testObs(chanToObservable(ch), [], null, done);
             });
 
             it('with an uncompleted observable it should produce the value and leave the channel open', done => {
                 const obs = Observable.timer(10).map(() => 42);
                 const ch = firstToChan(obs, { keepOpen: true });
-                testObs(channelToObservable(ch), [42, 'TIMEOUT'], null, done, {
+                testObs(chanToObservable(ch), [42, 'TIMEOUT'], null, done, {
                     doneTimeout: 100
                 });
             });
         });
 
-        describe('observableToChannel', () => {
+        describe('observableToChan', () => {
             it('should be a function', () =>
                 expect(observableToChan).toBeInstanceOf(Function));
 
             it('with one value observable it should produce the value in the channel', done => {
                 const obs = Observable.timer(10).map(() => 42);
                 const ch = observableToChan(obs);
-                testObs(channelToObservable(ch), [42], null, done);
+                testObs(chanToObservable(ch), [42], null, done);
             });
 
-            it('with many value observable it should produce the first value in the channel', done => {
+            it('with many value observable it should produce the values in the channel', done => {
                 const obs = Observable.timer(10, 1).take(5).map(v => v + 10);
                 const ch = observableToChan(obs);
-                testObs(
-                    channelToObservable(ch),
-                    [10, 11, 12, 13, 14],
-                    null,
-                    done
-                );
+                testObs(chanToObservable(ch), [10, 11, 12, 13, 14], null, done);
             });
 
             it('with a failing observable it should produce the error in the channel', done => {
@@ -320,12 +362,7 @@ describe('Utils', () => {
                     Observable.throw(new Error('test'))
                 );
                 const ch = observableToChan(obs);
-                testObs(
-                    channelToObservable(ch),
-                    [new Error('test')],
-                    null,
-                    done
-                );
+                testObs(chanToObservable(ch), [new Error('test')], null, done);
             });
 
             it('with an empty observable it should produce a CLOSED channel', done => {
@@ -333,19 +370,55 @@ describe('Utils', () => {
                     Observable.empty()
                 );
                 const ch = observableToChan(obs);
-                testObs(channelToObservable(ch), [], null, done);
+                testObs(chanToObservable(ch), [], null, done);
             });
 
             it('with an uncompleted observable it should produce the value and leave the channel open', done => {
                 const obs = Observable.timer(10).map(() => 42);
                 const ch = observableToChan(obs, { keepOpen: true });
-                testObs(
-                    channelToObservable(ch),
-                    [42, 'TIMEOUT'],
-                    null,
-                    done,
-                    { doneTimeout: 100 }
-                );
+                testObs(chanToObservable(ch), [42, 'TIMEOUT'], null, done, {
+                    doneTimeout: 100
+                });
+            });
+        });
+
+        describe('toChan', () => {
+            it('should be a function', () =>
+                expect(toChan).toBeInstanceOf(Function));
+
+            it('with an iterator it should produce the values in the channel', done => {
+                const it = {};
+                it[Symbol.iterator] = function*() {
+                    yield 10;
+                    yield 20;
+                    yield 30;
+                };
+                const ch = toChan(it);
+                testObs(chanToObservable(ch), [10, 20, 30], null, done);
+            });
+
+            it('with a generator it should produce the values in the channel', done => {
+                const gen = function*() {
+                    yield 10;
+                    yield 20;
+                    yield 30;
+                };
+                const ch = toChan(gen());
+                testObs(chanToObservable(ch), [10, 20, 30], null, done);
+            });
+
+            it('with a promise it should produce the value in the channel', done => {
+                const prom = Observable.timer(10)
+                    .switchMap(() => Observable.of(10))
+                    .toPromise();
+                const ch = toChan(prom);
+                testObs(chanToObservable(ch), [10], null, done);
+            });
+
+            it('with observable it should produce the values in the channel', done => {
+                const obs = Observable.timer(10, 1).take(5).map(v => v + 10);
+                const ch = toChan(obs);
+                testObs(chanToObservable(ch), [10, 11, 12, 13, 14], null, done);
             });
         });
 
@@ -412,7 +485,7 @@ describe('Utils', () => {
                 const res = startLeasing(leaseFn, releaseFn, {
                     leaseTimeoutSecs: 0.05,
                     leaseMarginSecs: 0.01,
-                    logToConsole: false
+                    logs: false
                 });
                 go(function*() {
                     const started = yield res.startedProm;
@@ -435,11 +508,11 @@ describe('Utils', () => {
                 const lease = startLeasing(leaseFn, releaseFn, {
                     leaseTimeoutSecs: 0.05,
                     leaseMarginSecs: 0.01,
-                    logToConsole:
+                    logs:
                         false && (() => `LEAS [${new Date().toISOString()}]: `)
                 });
                 const pinger = startPinging(lease.pingCh, 20, {
-                    logToConsole:
+                    logs:
                         false && (() => `PING [${new Date().toISOString()}]: `)
                 });
                 go(function*() {
@@ -690,14 +763,14 @@ describe('Utils', () => {
                 const node = runPipelineNode({
                     process: (value: any) => put(outputCh, value),
                     initialValues: [0, 1, 2, 3, 4],
-                    logToConsole: false && 'PIPE NODE: '
+                    logs: false && 'PIPE NODE: '
                 });
                 testObs(
-                    channelToObservable(outputCh),
+                    chanToObservable(outputCh),
                     [0, 1, 2, 3, 4],
                     null,
                     done,
-                    { logActualValues: false, doneTimeout: 100 }
+                    { logs: false, doneTimeout: 100 }
                 );
                 go(function*() {
                     yield timeout(50);
@@ -711,32 +784,26 @@ describe('Utils', () => {
             it('should be a function', () =>
                 expect(runPipelineSequence).toBeInstanceOf(Function));
 
-            fit('it should work as expected', done => {
+            it('a pipeline sequence with one node returning single value should work as expected', done => {
                 const outputCh = chan();
                 const pipe = runPipelineSequence({
-                    nodes: [{
-                        name: 'first',
-                        process: x => x + 1,
-                        initialValues: [0, 1, 2, 3, 4],
-                        logToConsole: true && 'PIPE NODE [first] ',
-                    }, {
-                        name: 'second',
-                        process: x => x * 10,
-                        logToConsole: false && 'PIPE NODE [second] ',
-                    }, {
-                        name: 'third',
-                        process: x => x - 10,
-                        logToConsole: false && 'PIPE NODE [third] ',
-                    }, ],
+                    nodes: [
+                        {
+                            name: 'first',
+                            process: x => x + 1,
+                            initialValues: [0, 1, 2, 3, 4],
+                            logs: false && 'PIPE NODE [first] '
+                        }
+                    ],
                     processLast: v => put(outputCh, v),
-                    logToConsole: true && 'PIPE: '
+                    logs: false && 'PIPE: '
                 });
                 testObs(
-                    channelToObservable(outputCh),
-                    [0, 1, 2, 3, 4],
+                    chanToObservable(outputCh),
+                    [1, 2, 3, 4, 5],
                     null,
                     done,
-                    { logActualValues: false, doneTimeout: 100 }
+                    { logs: false, doneTimeout: 100 }
                 );
                 go(function*() {
                     yield timeout(50);
@@ -744,6 +811,167 @@ describe('Utils', () => {
                     outputCh.close();
                 });
             });
+
+            it('a pipeline sequence with one node returning an array of values should work as expected', done => {
+                const outputCh = chan();
+                const pipe = runPipelineSequence({
+                    nodes: [
+                        {
+                            name: 'first',
+                            process: x => [x + 1, x * 10],
+                            initialValues: [0, 1, 2, 3, 4],
+                            logs: false && 'PIPE NODE [first] '
+                        }
+                    ],
+                    processLast: v => put(outputCh, v),
+                    logs: false && 'PIPE: '
+                });
+                testObs(
+                    chanToObservable(outputCh),
+                    [1, 0, 2, 10, 3, 20, 4, 30, 5, 40],
+                    null,
+                    done,
+                    { logs: false, doneTimeout: 100 }
+                );
+                go(function*() {
+                    yield timeout(50);
+                    yield pipe.release();
+                    outputCh.close();
+                });
+            });
+
+            it('a pipeline sequence with one node returning a generator of values should work as expected', done => {
+                const outputCh = chan();
+                const pipe = runPipelineSequence({
+                    nodes: [
+                        {
+                            name: 'first',
+                            process: x =>
+                                (function*() {
+                                    yield x + 1;
+                                    yield x * 10;
+                                })(),
+                            initialValues: [0, 1, 2, 3, 4],
+                            logs: false && 'PIPE NODE [first] '
+                        }
+                    ],
+                    processLast: v => put(outputCh, v),
+                    logs: false && 'PIPE: '
+                });
+                testObs(
+                    chanToObservable(outputCh),
+                    [1, 0, 2, 10, 3, 20, 4, 30, 5, 40],
+                    null,
+                    done,
+                    { logs: false, doneTimeout: 100 }
+                );
+                go(function*() {
+                    yield timeout(50);
+                    yield pipe.release();
+                    outputCh.close();
+                });
+            });
+
+            it('a pipeline sequence with one node returning an observable of values should work as expected', done => {
+                const outputCh = chan();
+                const pipe = runPipelineSequence({
+                    nodes: [
+                        {
+                            name: 'first',
+                            process: x => Observable.of(x + 1, x * 10),
+                            initialValues: [0, 1, 2, 3, 4],
+                            logs: false && 'PIPE NODE [first] '
+                        }
+                    ],
+                    processLast: v => putAsync(outputCh, v),
+                    logs: false && 'PIPE: '
+                });
+                testObs(
+                    chanToObservable(outputCh),
+                    [1, 0, 2, 10, 3, 20, 4, 30, 5, 40],
+                    null,
+                    done,
+                    { logs: false, doneTimeout: 100 }
+                );
+                go(function*() {
+                    yield timeout(50);
+                    yield pipe.release();
+                    outputCh.close();
+                });
+            });
+
+            it('a pipeline sequence with three nodes should work as expected', done => {
+                const outputCh = chan();
+                const pipe = runPipelineSequence({
+                    nodes: [
+                        {
+                            name: 'first',
+                            process: x => x + 1,
+                            initialValues: [0, 1, 2, 3, 4],
+                            logs: true && 'PIPE NODE [first] '
+                        },
+                        {
+                            name: 'second',
+                            process: x => [x * 10, x + 10],
+                            logs: true && 'PIPE NODE [second] '
+                        },
+                        {
+                            name: 'third',
+                            process: x => Observable.timer(5).map(() => x + 25),
+                            logs: true && 'PIPE NODE [third] '
+                        },
+                    ],
+                    processLast: v => putAsync(outputCh, v),
+                    logs: false && 'PIPE: '
+                });
+                testObs(
+                    chanToObservable(outputCh),
+                    [35, 36, 45, 37, 55, 38, 65],
+                    null,
+                    done,
+                    { logs: false, doneTimeout: 100 }
+                );
+                go(function*() {
+                    yield timeout(50);
+                    yield pipe.release();
+                    outputCh.close();
+                });
+            });
+
+            // it('it should work as expected', done => {
+            //     const outputCh = chan();
+            //     const pipe = runPipelineSequence({
+            //         nodes: [
+            //         {
+            //             name: 'first',
+            //             process: x => x + 1,
+            //             initialValues: [0, 1, 2, 3, 4],
+            //             logs: true && 'PIPE NODE [first] ',
+            //         // }, {
+            //         //     name: 'second',
+            //         //     process: x => x * 10,
+            //         //     logs: false && 'PIPE NODE [second] ',
+            //         // }, {
+            //         //     name: 'third',
+            //         //     process: x => x - 10,
+            //         //     logs: false && 'PIPE NODE [third] ',
+            //         }, ],
+            //         processLast: v => put(outputCh, v),
+            //         logs: true && 'PIPE: '
+            //     });
+            //     testObs(
+            //         chanToObservable(outputCh),
+            //         [1, 2, 3, 4, 5],
+            //         null,
+            //         done,
+            //         { logActualValues: false, doneTimeout: 100 }
+            //     );
+            //     go(function*() {
+            //         yield timeout(50);
+            //         yield pipe.release();
+            //         outputCh.close();
+            //     });
+            // });
         });
     });
 });

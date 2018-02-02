@@ -17,6 +17,8 @@ import {
 } from 'js-csp';
 import {
     conditionalLog,
+    LogOpts,
+    logTee,
     ValueOrFunc,
     getAsValue,
     capString,
@@ -32,33 +34,17 @@ export const isChan = (value: any) =>
 export const isInstruction = (value: any) =>
     value instanceof Object && value.constructor.name.endsWith('Instruction');
 
-/**
- * Returns a channel that will produce { value: x } or { error: e } if the first
- * issue of the observable is a value or an error. Afterwards, or if the issue
- * is a complete, the channel will close.
- * @param obs The observable to use a value/error generator
- */
-export const firstToChan = (
-    obs: Observable<any>,
-    options?: Partial<{
-        bufferOrN;
-        transducer;
-        exHandler;
-        keepOpen: boolean;
-        includeErrors: boolean;
-    }>
-): any => observableToChan(obs.take(1), options);
+export type ToChanOptions = {
+    bufferOrN;
+    transducer;
+    exHandler;
+    keepOpen: boolean;
+    includeErrors: boolean;
+} & LogOpts;
 
-export const observableToChan = (
-    obs: Observable<any>,
-    options?: Partial<{
-        bufferOrN;
-        transducer;
-        exHandler;
-        keepOpen: boolean;
-        includeErrors: boolean;
-    }>
-): any => {
+export const bufferedObserver = (
+    options?: Partial<ToChanOptions>
+): Observer<any> & { channel: any } => {
     const opts = Object.assign(
         {
             keepOpen: false,
@@ -66,37 +52,88 @@ export const observableToChan = (
         },
         options
     );
-    const ch = chan(opts.bufferOrN, opts.transducer, opts.exHandler);
+    const log = conditionalLog(opts, { prefix: 'BUFFER: ' });
+    const channel = chan(opts.bufferOrN, opts.transducer, opts.exHandler);
+    const data = {
+        buffer: [],
+        isClosed: false,
+        waiter: null
+    };
     const finish = () => {
-        if (!opts.keepOpen) {
-            ch.close();
+        data.isClosed = true;
+        if (data.buffer.length === 0 && data.waiter) {
+            putAsync(data.waiter, false);
         }
     };
-    obs.subscribe({
-        next: value => putAsync(ch, value),
-        error: error => {
-            go(function*() {
-                if (opts.includeErrors) {
-                    yield put(ch, error);
+    const checkClosed = () => {
+        if (data.isClosed) {
+            throw new Error('Observer is closed');
+        }
+    };
+    const push = (value: any) => {
+        data.buffer.push(value);
+        log('PUSH', value, data.buffer);
+        if (data.buffer.length === 1 && data.waiter) {
+            putAsync(data.waiter, true);
+        }
+    };
+    const next = (value: any) => {
+        checkClosed();
+        push(value);
+    };
+    const error = (e: any) => {
+        checkClosed();
+        if (opts.includeErrors) {
+            push(e);
+        }
+        finish();
+    };
+    const complete = () => {
+        log('OBS: COMPLETE');
+        checkClosed();
+        finish();
+    };
+
+    go(function*() {
+        while (true) {
+            if (data.buffer.length === 0) {
+                if (data.isClosed) {
+                    log('GO: BREAK');
+                    break;
                 }
-                finish();
-            });
-        },
-        complete: finish
+                if (data.waiter) {
+                    throw new Error('I should not be already waiting!!!');
+                }
+                data.waiter = chan();
+                log('GO: WAIT', new Date().toISOString(), data.buffer);
+                const wait = yield data.waiter;
+                data.waiter = null;
+                if (wait === false) {
+                    log('GO: BREAK');
+                    break;
+                }
+            }
+            const value = data.buffer.shift();
+            log('GO: PUT', value, data.buffer);
+            yield put(channel, value);
+        }
+        log('GO: CLOSING', opts.keepOpen, data.buffer);
+        if (!opts.keepOpen) {
+            channel.close();
+        }
     });
-    return ch;
+
+    channel['MyChannel'] = true;
+    const result = { next, error, complete, channel };
+    Object.defineProperty(result, 'closed', {
+        enumerable: true,
+        configurable: false,
+        get: () => data.isClosed
+    });
+    return result;
 };
 
-export const generatorToChan = (
-    gen,
-    options?: Partial<{
-        bufferOrN;
-        transducer;
-        exHandler;
-        keepOpen: boolean;
-        includeErrors: boolean;
-    }>
-) => {
+export const generatorToChan = (gen, options?: Partial<ToChanOptions>) => {
     const opts = Object.assign(
         {
             keepOpen: false,
@@ -127,16 +164,7 @@ export const generatorToChan = (
     return ch;
 };
 
-export const iterableToChan = (
-    iterable,
-    options?: Partial<{
-        bufferOrN;
-        transducer;
-        exHandler;
-        keepOpen: boolean;
-        includeErrors: boolean;
-    }>
-) => {
+export const iterableToChan = (iterable, options?: Partial<ToChanOptions>) => {
     const opts = Object.assign(
         {
             keepOpen: false,
@@ -158,13 +186,7 @@ export const iterableToChan = (
 
 export const promiseToChan = (
     promise: Promise<any>,
-    options?: Partial<{
-        bufferOrN;
-        transducer;
-        exHandler;
-        keepOpen: boolean;
-        includeErrors: boolean;
-    }>
+    options?: Partial<ToChanOptions>
 ) => {
     const opts = Object.assign(
         {
@@ -206,16 +228,21 @@ export const promiseToChan = (
     return ch;
 };
 
-export const toChan = (
-    source: any,
-    options?: Partial<{
-        bufferOrN;
-        transducer;
-        exHandler;
-        keepOpen: boolean;
-        includeErrors: boolean;
-    }>
-) => {
+export const firstToChan = (
+    obs: Observable<any>,
+    options?: Partial<ToChanOptions>
+): any => observableToChan(obs.take(1), options);
+
+export const observableToChan = (
+    obs: Observable<any>,
+    options?: Partial<ToChanOptions>
+): any => {
+    const observer = bufferedObserver(options);
+    obs.subscribe(observer);
+    return observer.channel;
+};
+
+export const toChan = (source: any, options?: Partial<ToChanOptions>) => {
     const opts = Object.assign(
         {
             keepOpen: false,
@@ -265,24 +292,36 @@ export const toYielder = (source: any) => {
     }
 };
 
-export const channelToObservable = <T>(ch: any) =>
-    <Observable<T>>Observable.create((o: Observer<T>) => {
+export const chanToObservable = <T>(
+    ch: any,
+    options?: {
+        logs?: boolean | ValueOrFunc<string>;
+    }
+) => {
+    const opts = Object.assign({}, options);
+    const log = conditionalLog(opts, { prefix: 'CHAN_OBS: ' });
+    return <Observable<T>>Observable.create((o: Observer<T>) => {
+        log('Start');
         const cancelCh = promiseChan();
         go(function*() {
             while (true) {
-                const result = yield alts([cancelCh, ch], { priority: true });
+                const result = yield alts([ch, cancelCh], { priority: true });
                 if (result.channel === cancelCh || result.value === CLOSED) {
+                    log('Completing', result.value);
                     o.complete();
                     break;
                 } else {
+                    log('Value', result.value);
                     o.next(<T>result.value);
                 }
             }
         });
         return () => {
+            log('Unsubscribe');
             putAsync(cancelCh, true);
         };
     });
+};
 
 export interface PingHandler {
     release: () => any;
@@ -292,17 +331,17 @@ export interface PingHandler {
 export const startPinging = (
     pingCh: any,
     pingTimeMilliseconds: number,
-    options?: Partial<{
-        pingAsync: boolean;
-        autoClose: boolean;
-        logToConsole: boolean | ValueOrFunc<string>;
-    }>
+    options?: Partial<
+        {
+            pingAsync: boolean;
+            autoClose: boolean;
+        } & LogOpts
+    >
 ): PingHandler => {
     const opts = Object.assign(
         {
             pingAsync: false,
-            autoClose: false,
-            logToConsole: false
+            autoClose: false
         },
         options
     );
@@ -310,7 +349,7 @@ export const startPinging = (
     const releaseCh = promiseChan();
 
     const finishedProm = go(function*() {
-        const log = conditionalLog(opts.logToConsole);
+        const log = conditionalLog(opts);
         log('Start');
 
         let error: any;
@@ -387,26 +426,26 @@ export interface LeaseHandler {
 export const startLeasing = (
     leaseFn: (leaseTimeSecs: number) => any,
     releaseFn: () => any,
-    options?: Partial<{
-        leaseTimeoutSecs: number;
-        leaseMarginSecs: number;
-        logToConsole: boolean | ValueOrFunc<string>;
-    }>
+    options?: Partial<
+        {
+            leaseTimeoutSecs: number;
+            leaseMarginSecs: number;
+        } & LogOpts
+    >
 ): LeaseHandler => {
     const opts = Object.assign(
         {
-            leaseTimeoutSecs: 60,
-            logToConsole: false
+            leaseTimeoutSecs: 60
         },
         options
     );
-    const { leaseTimeoutSecs, logToConsole } = opts;
+    const { leaseTimeoutSecs } = opts;
     const leaseMarginSecs =
         typeof opts.leaseMarginSecs === 'number'
             ? opts.leaseMarginSecs
             : leaseTimeoutSecs * 0.1;
 
-    const log = conditionalLog(logToConsole);
+    const log = conditionalLog(opts);
     log('Start');
 
     // const leaseCh = chan();
@@ -496,13 +535,17 @@ export interface PipelineNodeHandler {
     release: () => any;
 }
 
-export const runPipelineNode = (opts: {
-    process: (value: any) => any;
-    inputCh?: number | any;
-    initialValues?: any;
-    logToConsole?: boolean | ValueOrFunc<string>;
-}): PipelineNodeHandler => {
-    const log = conditionalLog(opts.logToConsole);
+export const runPipelineNode = (
+    opts: {
+        process: (value: any) => any;
+    } & Partial<
+        {
+            inputCh?: number | any;
+            initialValues?: any;
+        } & LogOpts
+    >
+): PipelineNodeHandler => {
+    const log = conditionalLog(opts);
     log('Start');
     const RELEASE = global.Symbol('RELEASE');
     const startedProm = promiseChan();
@@ -521,7 +564,7 @@ export const runPipelineNode = (opts: {
             });
             if (result.channel === inputCh && result.value !== RELEASE) {
                 try {
-                    log('Processing input #' + (++index), result.value);
+                    log('Processing input #' + ++index, result.value);
                     yield opts.process(result.value);
                 } catch (e) {
                     log('ERROR', e);
@@ -666,13 +709,15 @@ export const toCurrentTarget = (value: any) => toOffsetTarget(value, 0);
 export const toNextTarget = (value: any) => toOffsetTarget(value, 1);
 export const toPreviousTarget = (value: any) => toOffsetTarget(value, -1);
 
-export interface PipelineSequenceNodeInit {
+export type PipelineSequenceNodeInit = {
     process: (value: any) => any;
-    name?: string;
-    inputCh?: number | any;
-    initialValues?: any;
-    logToConsole?: boolean | ValueOrFunc<string>;
-}
+} & Partial<
+    {
+        name: string;
+        inputCh: number | any;
+        initialValues: any;
+    } & LogOpts
+>;
 
 export interface PipelineSequenceHandler {
     startedProm: any;
@@ -682,16 +727,17 @@ export interface PipelineSequenceHandler {
     release: () => any;
 }
 
-export const runPipelineSequence = (opts: {
-    nodes: PipelineSequenceNodeInit[];
-    processLast: (value: any) => any;
-    logToConsole?: boolean | ValueOrFunc<string>;
-}): PipelineSequenceHandler => {
+export const runPipelineSequence = (
+    opts: {
+        nodes: PipelineSequenceNodeInit[];
+        processLast: (value: any) => any;
+    } & Partial<LogOpts>
+): PipelineSequenceHandler => {
     if (!opts.nodes || opts.nodes.length === 0) {
         throw new Error('At least one node must be supplied.');
     }
 
-    const log = conditionalLog(opts.logToConsole);
+    const log = conditionalLog(opts);
     log('Start');
     const RELEASE = global.Symbol('RELEASE');
     const startedProm = promiseChan();
@@ -713,7 +759,6 @@ export const runPipelineSequence = (opts: {
                     const procCh = toChan(proc);
                     while (true) {
                         const result = yield procCh;
-                        // log('PROCESS ', index, result);
                         if (result === CLOSED) {
                             break;
                         }
@@ -742,7 +787,7 @@ export const runPipelineSequence = (opts: {
                 process,
                 inputCh: nodeInit.inputCh,
                 initialValues: nodeInit.initialValues,
-                logToConsole: log.enabled && nodeInit.logToConsole
+                logs: log.enabled && nodeInit.logs
             });
             pipeArr.push(node);
             if (nodeInit.name) {

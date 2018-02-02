@@ -15,6 +15,7 @@ export declare const assignArrayOrSame: <T>(s: T[], ...u: [number, T[]][]) => T[
 export declare const assignArrayIf: <T>(s: T[], condition: ValueOrFunc<boolean>, thenAssign: ValueOrFunc<[number, T[]]>) => T[];
 export declare const assignArrayIfMany: <T>(s: T[], ...stages: [ValueOrFunc<boolean>, ValueOrFunc<[number, T[]]>][]) => T[];
 export declare const id: <T>(a: T) => T;
+export declare const noop: () => void;
 export declare const joinStr: (sep: string, strs: string[]) => string;
 export declare function uuid(separator?: string): string;
 export declare type KeyValuePair = [string, any];
@@ -32,10 +33,39 @@ export declare const objFilter: (filter: (keyValue: [string, any]) => boolean) =
 export declare const normalizeError: (err: any) => Error;
 export declare function errorToString(err: any): string;
 export declare function capString(str: string, maxLength: number, ellipsis?: string): string;
-export declare const conditionalLog: (enabled: boolean, options?: Partial<{
+export interface LogOpts {
+    logs?: boolean | ValueOrFunc<string>;
+}
+export declare const conditionalLog: (logOpts?: string | boolean | LogOpts | ((...args: any[]) => string), options?: Partial<{
     prefix: ValueOrFunc<string>;
     logger: {
         (message?: any, ...optionalParams: any[]): void;
         (message?: any, ...optionalParams: any[]): void;
     };
-}>) => (msg: any, ...args: any[]) => void;
+}>) => ((msg: any, ...args: any[]) => void) & {
+    enabled: boolean;
+    options: {
+        prefix: ValueOrFunc<string>;
+        logger: {
+            (message?: any, ...optionalParams: any[]): void;
+            (message?: any, ...optionalParams: any[]): void;
+        };
+    };
+};
+export declare const subLog: (parentLog: any, enabled: string | boolean | ((...args: any[]) => string), options?: Partial<{
+    prefix: ValueOrFunc<string>;
+    logger: {
+        (message?: any, ...optionalParams: any[]): void;
+        (message?: any, ...optionalParams: any[]): void;
+    };
+}>) => ((msg: any, ...args: any[]) => void) & {
+    enabled: boolean;
+    options: {
+        prefix: ValueOrFunc<string>;
+        logger: {
+            (message?: any, ...optionalParams: any[]): void;
+            (message?: any, ...optionalParams: any[]): void;
+        };
+    };
+};
+export declare const logTee: <T>(caption: string, thunk: () => T) => T;

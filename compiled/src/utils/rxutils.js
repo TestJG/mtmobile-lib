@@ -5,7 +5,20 @@ var common_1 = require("./common");
 exports.normalizeErrorOnCatch = function (err) {
     return rxjs_1.Observable.throw(common_1.normalizeError(err));
 };
-exports.tryTo = function (thunk) {
+exports.fromObsLike = function (source, treatArraysAsValues) {
+    if (treatArraysAsValues === void 0) { treatArraysAsValues = true; }
+    if (common_1.isSomething(source) &&
+        (Promise.resolve(source) === source ||
+            typeof source['subscribe'] === 'function' ||
+            (!treatArraysAsValues && source instanceof Array))) {
+        return rxjs_1.Observable.from(source);
+    }
+    else {
+        return rxjs_1.Observable.of(source);
+    }
+};
+exports.tryTo = function (thunk, treatArraysAsValues) {
+    if (treatArraysAsValues === void 0) { treatArraysAsValues = true; }
     var defers = [];
     var finishing = false;
     var defer = function (action) {
@@ -28,15 +41,7 @@ exports.tryTo = function (thunk) {
     };
     var obs;
     try {
-        var result = thunk(defer);
-        if (common_1.isSomething(result) &&
-            (Promise.resolve(result) === result ||
-                typeof result['subscribe'] === 'function')) {
-            obs = rxjs_1.Observable.from(result);
-        }
-        else {
-            obs = rxjs_1.Observable.of(result);
-        }
+        obs = exports.fromObsLike(thunk(defer), treatArraysAsValues);
     }
     catch (error) {
         obs = exports.normalizeErrorOnCatch(error);
@@ -64,12 +69,7 @@ exports.wrapServiceStreamFromNames = function (source, names) {
         var _a;
     }, {});
 };
-exports.firstMap = function (source) { return function (mapper) {
-    return source
-        .first()
-        .map(mapper)
-        .catch(exports.normalizeErrorOnCatch);
-}; };
+exports.firstMap = function (source) { return function (mapper) { return source.first().map(mapper).catch(exports.normalizeErrorOnCatch); }; };
 exports.firstSwitchMap = function (source) { return function (mapper) {
     return source
         .first()

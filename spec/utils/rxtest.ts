@@ -1,19 +1,18 @@
 import { Observable, Notification } from 'rxjs';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
 import { deepEqual } from '../../src/utils/equality';
-import { joinStr, conditionalLog, ValueOrFunc } from '../../src/utils';
+import { joinStr, conditionalLog, ValueOrFunc, LogOpts } from '../../src/utils';
 
 export interface DoneCallback {
     (...args: any[]): any;
     fail(error?: string | { message: string }): any;
 }
 
-export interface TestObsOptions<T = any> {
+export type TestObsOptions<T = any> = {
     anyValue: T;
     anyError: any;
     doneTimeout: number;
-    logActualValues: boolean | ValueOrFunc<string>;
-}
+} & LogOpts;
 
 export const testObsNotifications = <T = any>(
     actual: Observable<T>,
@@ -21,16 +20,16 @@ export const testObsNotifications = <T = any>(
     done: DoneCallback,
     options?: Partial<TestObsOptions<T>>
 ) => {
-    const { anyValue, anyError, doneTimeout, logActualValues } = Object.assign(
+    const opts = Object.assign(
         <TestObsOptions<T>>{
             anyValue: undefined,
             anyError: undefined,
             doneTimeout: 500,
-            logActualValues: false
         },
         options
     );
-    const log = conditionalLog(logActualValues, { prefix: 'TEST_OBS: ',  });
+    const { anyValue, anyError, doneTimeout } = opts;
+    const log = conditionalLog(opts, { prefix: 'TEST_OBS: ',  });
 
     const toStr = (n: Notification<any>) => {
         switch (n.kind) {

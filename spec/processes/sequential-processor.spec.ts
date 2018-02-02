@@ -114,7 +114,7 @@ describe('Processes', () => {
                 const processor = startSequentialProcessor(runner, {
                     maxRetries: 3,
                     nextDelay: d => 2 * d,
-                    logToConsole: false
+                    logs: false
                 });
 
                 it('it should reschedule the failing task 3 times', done => {
