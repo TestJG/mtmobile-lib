@@ -124,7 +124,6 @@ exports.bufferedObserver = function (options) {
             }
         });
     });
-    channel['MyChannel'] = true;
     var result = { next: next, error: error, complete: complete, channel: channel };
     Object.defineProperty(result, 'closed', {
         enumerable: true,

@@ -123,7 +123,6 @@ export const bufferedObserver = (
         }
     });
 
-    channel['MyChannel'] = true;
     const result = { next, error, complete, channel };
     Object.defineProperty(result, 'closed', {
         enumerable: true,
