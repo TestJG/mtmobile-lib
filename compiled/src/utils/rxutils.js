@@ -91,4 +91,18 @@ function mapUntilCancelled(observable, cancel) {
     return rxjs_1.Observable.merge(observable.takeUntil(cancel), cancel.first().takeUntil(observable.ignoreElements().materialize()));
 }
 exports.mapUntilCancelled = mapUntilCancelled;
+function logObserver(logger, maxLength, logNext, logErrors, logComplete) {
+    if (logger === void 0) { logger = console.log; }
+    if (maxLength === void 0) { maxLength = 80; }
+    if (logNext === void 0) { logNext = true; }
+    if (logErrors === void 0) { logErrors = true; }
+    if (logComplete === void 0) { logComplete = true; }
+    var next = logNext
+        ? function (v) { return logger('NEXT : ', common_1.capString(JSON.stringify(v), maxLength)); }
+        : common_1.noop;
+    var error = logErrors ? function (v) { return logger('ERROR: ', v); } : common_1.noop;
+    var complete = logComplete ? function () { return logger('COMPLETE'); } : common_1.noop;
+    return { next: next, error: error, complete: complete };
+}
+exports.logObserver = logObserver;
 //# sourceMappingURL=rxutils.js.map

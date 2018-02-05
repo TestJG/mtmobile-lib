@@ -632,7 +632,7 @@ exports.runPipelineNode = function (opts) {
                         if (value === js_csp_1.CLOSED) {
                             return [3 /*break*/, 4];
                         }
-                        log('Insert init #' + (++index), value);
+                        log('Insert init #' + ++index, value);
                         return [4 /*yield*/, js_csp_1.put(inputCh, value)];
                     case 3:
                         _a.sent();
@@ -791,7 +791,7 @@ exports.runPipelineSequence = function (opts) {
                                                 target = PipelineSequenceTarget.fromValue(result, exports.toNextTarget);
                                                 return [4 /*yield*/, target.selectWith(pipeDict, pipeArr, index, function (n) { return n.input(target.value); }, function (last) {
                                                         if (last) {
-                                                            return opts.processLast(target.value);
+                                                            return exports.toYielder(opts.processLast(target.value));
                                                         }
                                                         else {
                                                             throw new Error('Invalid index: ' + target.toString());

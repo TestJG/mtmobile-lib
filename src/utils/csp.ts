@@ -575,7 +575,7 @@ export const runPipelineNode = (
         }
     });
 
-    if (opts.initialValues ) {
+    if (opts.initialValues) {
         go(function*() {
             let index = 0;
             const initCh = toChan(opts.initialValues);
@@ -584,7 +584,7 @@ export const runPipelineNode = (
                 if (value === CLOSED) {
                     break;
                 }
-                log('Insert init #' + (++index), value);
+                log('Insert init #' + ++index, value);
                 yield put(inputCh, value);
             }
             log('Insert init done');
@@ -777,7 +777,9 @@ export const runPipelineSequence = (
                             n => n.input(target.value),
                             last => {
                                 if (last) {
-                                    return opts.processLast(target.value);
+                                    return toYielder(
+                                        opts.processLast(target.value)
+                                    );
                                 } else {
                                     throw new Error(
                                         'Invalid index: ' + target.toString()

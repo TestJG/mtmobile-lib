@@ -1,6 +1,14 @@
-import { Observable, Subscription, ReplaySubject } from 'rxjs';
+import { Observable, Subscription, ReplaySubject, Observer } from 'rxjs';
 import { Subscribable } from 'rxjs/Observable';
-import { isSomething, normalizeError, ValueOrFunc, getAsValue } from './common';
+import {
+    isSomething,
+    normalizeError,
+    ValueOrFunc,
+    getAsValue,
+    conditionalLog,
+    capString,
+    noop
+} from './common';
 import { IScheduler } from 'rxjs/Scheduler';
 
 export type ObsLike<T = any> = Subscribable<T> | PromiseLike<T> | T[] | T;
@@ -119,4 +127,19 @@ export function mapUntilCancelled<T>(
         observable.takeUntil(cancel),
         cancel.first().takeUntil(observable.ignoreElements().materialize())
     );
+}
+
+export function logObserver(
+    logger = console.log,
+    maxLength = 80,
+    logNext = true,
+    logErrors = true,
+    logComplete = true
+) {
+    const next = logNext
+        ? v => logger('NEXT : ', capString(JSON.stringify(v), maxLength))
+        : noop;
+    const error = logErrors ? v => logger('ERROR: ', v) : noop;
+    const complete = logComplete ? () => logger('COMPLETE') : noop;
+    return <Observer<any>>{ next, error, complete };
 }

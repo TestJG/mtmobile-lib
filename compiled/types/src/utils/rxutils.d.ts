@@ -1,4 +1,4 @@
-import { Observable, Subscription } from 'rxjs';
+import { Observable, Subscription, Observer } from 'rxjs';
 import { Subscribable } from 'rxjs/Observable';
 import { ValueOrFunc } from './common';
 export declare type ObsLike<T = any> = Subscribable<T> | PromiseLike<T> | T[] | T;
@@ -15,3 +15,7 @@ export declare const firstSwitchMap: <S>(source: Observable<S>) => <T>(mapper: (
 export declare const getAsObs: <T = any>(source: ValueOrFunc<ObsLike<T>>) => Observable<T>;
 export declare function makeState<TState>(init: TState, updates$: Observable<(state: TState) => TState>): [Observable<TState>, Subscription];
 export declare function mapUntilCancelled<T>(observable: Observable<T>, cancel: Observable<T>): Observable<T>;
+export declare function logObserver(logger?: {
+    (message?: any, ...optionalParams: any[]): void;
+    (message?: any, ...optionalParams: any[]): void;
+}, maxLength?: number, logNext?: boolean, logErrors?: boolean, logComplete?: boolean): Observer<any>;
