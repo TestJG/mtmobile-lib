@@ -575,11 +575,16 @@ export const runPipelineNode = (
         }
     });
 
-    if (opts.initialValues) {
+    if (opts.initialValues ) {
         go(function*() {
             let index = 0;
-            for (const value of opts.initialValues) {
-                log('Insert init #' + ++index, value);
+            const initCh = toChan(opts.initialValues);
+            while (true) {
+                const value = yield initCh;
+                if (value === CLOSED) {
+                    break;
+                }
+                log('Insert init #' + (++index), value);
                 yield put(inputCh, value);
             }
             log('Insert init done');

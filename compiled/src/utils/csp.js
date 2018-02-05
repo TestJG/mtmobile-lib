@@ -617,23 +617,25 @@ exports.runPipelineNode = function (opts) {
     });
     if (opts.initialValues) {
         js_csp_1.go(function () {
-            var index, _i, _a, value;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var index, initCh, value;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
                         index = 0;
-                        _i = 0, _a = opts.initialValues;
-                        _b.label = 1;
+                        initCh = exports.toChan(opts.initialValues);
+                        _a.label = 1;
                     case 1:
-                        if (!(_i < _a.length)) return [3 /*break*/, 4];
-                        value = _a[_i];
-                        log('Insert init #' + ++index, value);
-                        return [4 /*yield*/, js_csp_1.put(inputCh, value)];
+                        if (!true) return [3 /*break*/, 4];
+                        return [4 /*yield*/, initCh];
                     case 2:
-                        _b.sent();
-                        _b.label = 3;
+                        value = _a.sent();
+                        if (value === js_csp_1.CLOSED) {
+                            return [3 /*break*/, 4];
+                        }
+                        log('Insert init #' + (++index), value);
+                        return [4 /*yield*/, js_csp_1.put(inputCh, value)];
                     case 3:
-                        _i++;
+                        _a.sent();
                         return [3 /*break*/, 1];
                     case 4:
                         log('Insert init done');

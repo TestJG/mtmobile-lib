@@ -522,7 +522,7 @@ describe('Utils', () => {
                     expect(leaseFn).toHaveBeenCalledTimes(1);
                     yield timeout(300);
                     yield pinger.release();
-                    yield timeout(100);
+                    yield timeout(200);
                     expect(leaseFn.calls.count()).toBeGreaterThanOrEqual(1);
                     expect(leaseFn.calls.count()).toBeLessThanOrEqual(10);
                     expect(releaseFn).toHaveBeenCalled();
@@ -758,7 +758,27 @@ describe('Utils', () => {
             it('should be a function', () =>
                 expect(runPipelineNode).toBeInstanceOf(Function));
 
-            it('it should work as expected', done => {
+            it('it should work as expected with no initial values', done => {
+                const outputCh = chan();
+                const node = runPipelineNode({
+                    process: (value: any) => put(outputCh, value),
+                    logs: false && 'PIPE NODE: '
+                });
+                testObs(
+                    chanToObservable(outputCh),
+                    [],
+                    null,
+                    done,
+                    { logs: false, doneTimeout: 100 }
+                );
+                go(function*() {
+                    yield timeout(50);
+                    yield node.release();
+                    outputCh.close();
+                });
+            });
+
+            it('it should work as expected with array initial values', done => {
                 const outputCh = chan();
                 const node = runPipelineNode({
                     process: (value: any) => put(outputCh, value),
@@ -774,6 +794,27 @@ describe('Utils', () => {
                 );
                 go(function*() {
                     yield timeout(50);
+                    yield node.release();
+                    outputCh.close();
+                });
+            });
+
+            it('it should work as expected with observable initial values', done => {
+                const outputCh = chan();
+                const node = runPipelineNode({
+                    process: (value: any) => put(outputCh, value),
+                    initialValues: Observable.timer(10, 10).take(5),
+                    logs: false && 'PIPE NODE: '
+                });
+                testObs(
+                    chanToObservable(outputCh),
+                    [0, 1, 2, 3, 4],
+                    null,
+                    done,
+                    { logs: false, doneTimeout: 100 }
+                );
+                go(function*() {
+                    yield timeout(100);
                     yield node.release();
                     outputCh.close();
                 });
@@ -926,13 +967,13 @@ describe('Utils', () => {
                 });
                 testObs(
                     chanToObservable(outputCh),
-                    [35, 36, 45, 37, 55, 38, 65],
+                    [35, 36, 45, 37, 55, 38, 65, 39, 75, 40],
                     null,
                     done,
                     { logs: false, doneTimeout: 100 }
                 );
                 go(function*() {
-                    yield timeout(50);
+                    yield timeout(100);
                     yield pipe.release();
                     outputCh.close();
                 });
