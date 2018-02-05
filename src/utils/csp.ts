@@ -488,7 +488,7 @@ export const startLeasing = (
     const finishedProm = go(function*() {
         let firstTime = true;
         while (true) {
-            const leaseGranted = yield leaseFn(leaseTimeoutSecs);
+            const leaseGranted = yield toYielder(leaseFn(leaseTimeoutSecs));
             if (!leaseGranted) {
                 if (firstTime) {
                     log('lease was not granted');
@@ -503,7 +503,7 @@ export const startLeasing = (
             }
             firstTime = false;
 
-            const continueLeasing = yield onePing();
+            const continueLeasing = yield toYielder(onePing());
 
             if (!continueLeasing) {
                 log('releasing lease');
@@ -564,7 +564,7 @@ export const runPipelineNode = (
             if (result.channel === inputCh && result.value !== RELEASE) {
                 try {
                     log('Processing input #' + ++index, result.value);
-                    yield opts.process(result.value);
+                    yield toYielder(opts.process(result.value));
                 } catch (e) {
                     log('ERROR', e);
                 }
@@ -806,7 +806,7 @@ export const runPipelineSequence = (
                 yield pipeArr[i].finishedProm;
                 log('Finished node #' + i);
                 if (i + 1 < opts.nodes.length) {
-                    yield pipeArr[i + 1].release();
+                    yield toYielder(pipeArr[i + 1].release());
                 }
             }
         });

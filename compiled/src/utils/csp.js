@@ -513,7 +513,7 @@ exports.startLeasing = function (leaseFn, releaseFn, options) {
                     _a.label = 1;
                 case 1:
                     if (!true) return [3 /*break*/, 11];
-                    return [4 /*yield*/, leaseFn(leaseTimeoutSecs)];
+                    return [4 /*yield*/, exports.toYielder(leaseFn(leaseTimeoutSecs))];
                 case 2:
                     leaseGranted = _a.sent();
                     if (!!leaseGranted) return [3 /*break*/, 5];
@@ -533,7 +533,7 @@ exports.startLeasing = function (leaseFn, releaseFn, options) {
                     _a.label = 7;
                 case 7:
                     firstTime = false;
-                    return [4 /*yield*/, onePing()];
+                    return [4 /*yield*/, exports.toYielder(onePing())];
                 case 8:
                     continueLeasing = _a.sent();
                     if (!!continueLeasing) return [3 /*break*/, 10];
@@ -598,7 +598,7 @@ exports.runPipelineNode = function (opts) {
                 case 4:
                     _a.trys.push([4, 6, , 7]);
                     log('Processing input #' + ++index, result.value);
-                    return [4 /*yield*/, opts.process(result.value)];
+                    return [4 /*yield*/, exports.toYielder(opts.process(result.value))];
                 case 5:
                     _a.sent();
                     return [3 /*break*/, 7];
@@ -847,7 +847,7 @@ exports.runPipelineSequence = function (opts) {
                         _a.sent();
                         log('Finished node #' + i);
                         if (!(i + 1 < opts.nodes.length)) return [3 /*break*/, 4];
-                        return [4 /*yield*/, pipeArr[i + 1].release()];
+                        return [4 /*yield*/, exports.toYielder(pipeArr[i + 1].release())];
                     case 3:
                         _a.sent();
                         _a.label = 4;
