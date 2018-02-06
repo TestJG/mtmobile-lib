@@ -242,7 +242,7 @@ var getLogToConsole = function (logOpts, defaultPrefix) {
         return null;
     }
     else if (logOpts === true) {
-        return defaultPrefix;
+        return defaultPrefix || 'LOG: ';
     }
     else if (typeof logOpts === 'object') {
         return getLogToConsole(logOpts.logs, defaultPrefix);

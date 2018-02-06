@@ -18,6 +18,7 @@ import {
 import {
     conditionalLog,
     LogOpts,
+    Logger,
     logTee,
     ValueOrFunc,
     getAsValue,
@@ -34,6 +35,12 @@ export const isChan = (value: any) =>
 export const isInstruction = (value: any) =>
     value instanceof Object && value.constructor.name.endsWith('Instruction');
 
+export const promiseOf = (value: any) => {
+    const ch = promiseChan();
+    putAsync(ch, value);
+    return ch;
+};
+
 export type ToChanOptions = {
     bufferOrN;
     transducer;
@@ -44,7 +51,7 @@ export type ToChanOptions = {
 
 export const bufferedObserver = (
     options?: Partial<ToChanOptions>
-): Observer<any> & { channel: any } => {
+): Observer<any> & { channel: any } & Logger => {
     const opts = Object.assign(
         {
             keepOpen: false,
@@ -123,7 +130,7 @@ export const bufferedObserver = (
         }
     });
 
-    const result = { next, error, complete, channel };
+    const result = { next, error, complete, channel, log };
     Object.defineProperty(result, 'closed', {
         enumerable: true,
         configurable: false,
@@ -140,6 +147,7 @@ export const generatorToChan = (gen, options?: Partial<ToChanOptions>) => {
         },
         options
     );
+    const log = conditionalLog(opts, { prefix: 'GEN-CHAN: ' });
     const ch = chan(opts.bufferOrN, opts.transducer, opts.exHandler);
     go(function*() {
         while (true) {
@@ -160,7 +168,7 @@ export const generatorToChan = (gen, options?: Partial<ToChanOptions>) => {
             ch.close();
         }
     });
-    return ch;
+    return Object.assign(ch, { log });
 };
 
 export const iterableToChan = (iterable, options?: Partial<ToChanOptions>) => {
@@ -194,6 +202,7 @@ export const promiseToChan = (
         },
         options
     );
+    const log = conditionalLog(opts, { prefix: 'PROMISE-CHAN: ' });
     const ch = chan(opts.bufferOrN, opts.transducer, opts.exHandler);
     const finish = () => {
         if (!opts.keepOpen) {
@@ -224,7 +233,7 @@ export const promiseToChan = (
             finish();
         });
     }
-    return ch;
+    return Object.assign(ch, { log });
 };
 
 export const firstToChan = (
@@ -293,13 +302,11 @@ export const toYielder = (source: any) => {
 
 export const chanToObservable = <T>(
     ch: any,
-    options?: {
-        logs?: boolean | ValueOrFunc<string>;
-    }
-) => {
+    options?: Partial<LogOpts>
+): Observable<T> & Logger => {
     const opts = Object.assign({}, options);
-    const log = conditionalLog(opts, { prefix: 'CHAN_OBS: ' });
-    return <Observable<T>>Observable.create((o: Observer<T>) => {
+    const log = conditionalLog(opts, { prefix: 'OBS_CHAN: ' });
+    const obsResult = <Observable<T>>Observable.create((o: Observer<T>) => {
         log('Start');
         const cancelCh = promiseChan();
         go(function*() {
@@ -320,6 +327,7 @@ export const chanToObservable = <T>(
             putAsync(cancelCh, true);
         };
     });
+    return Object.assign(obsResult, { log });
 };
 
 export interface PingHandler {
@@ -336,7 +344,7 @@ export const startPinging = (
             autoClose: boolean;
         } & LogOpts
     >
-): PingHandler => {
+): PingHandler & Logger => {
     const opts = Object.assign(
         {
             pingAsync: false,
@@ -346,9 +354,9 @@ export const startPinging = (
     );
     const { pingAsync } = opts;
     const releaseCh = promiseChan();
+    const log = conditionalLog(opts, { prefix: 'PINGER: ' });
 
     const finishedProm = go(function*() {
-        const log = conditionalLog(opts);
         log('Start');
 
         let error: any;
@@ -387,7 +395,7 @@ export const startPinging = (
             yield put(releaseCh, true);
         });
 
-    return { release, finishedProm };
+    return { release, finishedProm, log };
 };
 
 export interface LeaseHandler {
@@ -431,7 +439,7 @@ export const startLeasing = (
             leaseMarginSecs: number;
         } & LogOpts
     >
-): LeaseHandler => {
+): LeaseHandler & Logger => {
     const opts = Object.assign(
         {
             leaseTimeoutSecs: 60
@@ -444,11 +452,11 @@ export const startLeasing = (
             ? opts.leaseMarginSecs
             : leaseTimeoutSecs * 0.1;
 
-    const log = conditionalLog(opts);
+    const log = conditionalLog(opts, { prefix: 'LEASING: ' });
     log('Start');
 
     // const leaseCh = chan();
-    const releaseCh = chan();
+    const releaseCh = promiseChan();
     const pingCh = chan();
     const startedProm = promiseChan();
     const timeoutSecs = leaseTimeoutSecs - leaseMarginSecs;
@@ -503,11 +511,12 @@ export const startLeasing = (
             }
             firstTime = false;
 
-            const continueLeasing = yield toYielder(onePing());
+            const continueLeasing = yield onePing();
 
             if (!continueLeasing) {
                 log('releasing lease');
-                yield put(releaseFn(), true);
+                yield put(releaseCh, true);
+                yield toYielder(releaseFn());
                 break;
             }
             log('continue lease');
@@ -523,7 +532,7 @@ export const startLeasing = (
             yield put(releaseCh, true);
         });
 
-    return { release, pingCh, startedProm, finishedProm };
+    return { release, pingCh, startedProm, finishedProm, log };
 };
 
 export interface PipelineNodeHandler {
@@ -543,7 +552,7 @@ export const runPipelineNode = (
             initialValues?: any;
         } & LogOpts
     >
-): PipelineNodeHandler => {
+): PipelineNodeHandler & Logger => {
     const log = conditionalLog(opts);
     log('Start');
     const RELEASE = global.Symbol('RELEASE');
@@ -598,7 +607,7 @@ export const runPipelineNode = (
     const release = () => put(inputCh, RELEASE);
     const cancel = () => cancelProm.close();
 
-    return { startedProm, finishedProm, input, release, cancel };
+    return { startedProm, finishedProm, input, release, cancel, log };
 };
 
 export class PipelineSequenceTarget {
@@ -736,7 +745,7 @@ export const runPipelineSequence = (
         nodes: PipelineSequenceNodeInit[];
         processLast: (value: any) => any;
     } & Partial<LogOpts>
-): PipelineSequenceHandler => {
+): PipelineSequenceHandler & Logger => {
     if (!opts.nodes || opts.nodes.length === 0) {
         throw new Error('At least one node must be supplied.');
     }
@@ -832,5 +841,5 @@ export const runPipelineSequence = (
         }
     };
 
-    return { startedProm, finishedProm, input, release, cancel };
+    return { startedProm, finishedProm, input, release, cancel, log };
 };

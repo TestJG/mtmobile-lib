@@ -37,6 +37,11 @@ exports.isChan = function (value) {
 exports.isInstruction = function (value) {
     return value instanceof Object && value.constructor.name.endsWith('Instruction');
 };
+exports.promiseOf = function (value) {
+    var ch = js_csp_1.promiseChan();
+    js_csp_1.putAsync(ch, value);
+    return ch;
+};
 exports.bufferedObserver = function (options) {
     var opts = Object.assign({
         keepOpen: false,
@@ -124,7 +129,7 @@ exports.bufferedObserver = function (options) {
             }
         });
     });
-    var result = { next: next, error: error, complete: complete, channel: channel };
+    var result = { next: next, error: error, complete: complete, channel: channel, log: log };
     Object.defineProperty(result, 'closed', {
         enumerable: true,
         configurable: false,
@@ -137,6 +142,7 @@ exports.generatorToChan = function (gen, options) {
         keepOpen: false,
         includeErrors: true
     }, options);
+    var log = common_1.conditionalLog(opts, { prefix: 'GEN-CHAN: ' });
     var ch = js_csp_1.chan(opts.bufferOrN, opts.transducer, opts.exHandler);
     js_csp_1.go(function () {
         var _a, done, value, e_1;
@@ -172,7 +178,7 @@ exports.generatorToChan = function (gen, options) {
             }
         });
     });
-    return ch;
+    return Object.assign(ch, { log: log });
 };
 exports.iterableToChan = function (iterable, options) {
     var opts = Object.assign({
@@ -197,6 +203,7 @@ exports.promiseToChan = function (promise, options) {
         keepOpen: false,
         includeErrors: true
     }, options);
+    var log = common_1.conditionalLog(opts, { prefix: 'PROMISE-CHAN: ' });
     var ch = js_csp_1.chan(opts.bufferOrN, opts.transducer, opts.exHandler);
     var finish = function () {
         if (!opts.keepOpen) {
@@ -253,7 +260,7 @@ exports.promiseToChan = function (promise, options) {
             });
         });
     }
-    return ch;
+    return Object.assign(ch, { log: log });
 };
 exports.firstToChan = function (obs, options) { return exports.observableToChan(obs.take(1), options); };
 exports.observableToChan = function (obs, options) {
@@ -315,8 +322,8 @@ exports.toYielder = function (source) {
 };
 exports.chanToObservable = function (ch, options) {
     var opts = Object.assign({}, options);
-    var log = common_1.conditionalLog(opts, { prefix: 'CHAN_OBS: ' });
-    return rxjs_1.Observable.create(function (o) {
+    var log = common_1.conditionalLog(opts, { prefix: 'OBS_CHAN: ' });
+    var obsResult = rxjs_1.Observable.create(function (o) {
         log('Start');
         var cancelCh = js_csp_1.promiseChan();
         js_csp_1.go(function () {
@@ -347,6 +354,7 @@ exports.chanToObservable = function (ch, options) {
             js_csp_1.putAsync(cancelCh, true);
         };
     });
+    return Object.assign(obsResult, { log: log });
 };
 exports.startPinging = function (pingCh, pingTimeMilliseconds, options) {
     var opts = Object.assign({
@@ -355,12 +363,12 @@ exports.startPinging = function (pingCh, pingTimeMilliseconds, options) {
     }, options);
     var pingAsync = opts.pingAsync;
     var releaseCh = js_csp_1.promiseChan();
+    var log = common_1.conditionalLog(opts, { prefix: 'PINGER: ' });
     var finishedProm = js_csp_1.go(function () {
-        var log, error, index, result, e_2;
+        var error, index, result, e_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    log = common_1.conditionalLog(opts);
                     log('Start');
                     index = 0;
                     _a.label = 1;
@@ -414,7 +422,7 @@ exports.startPinging = function (pingCh, pingTimeMilliseconds, options) {
             });
         });
     };
-    return { release: release, finishedProm: finishedProm };
+    return { release: release, finishedProm: finishedProm, log: log };
 };
 /**
  * Starts a leasing process that works like so:
@@ -449,10 +457,10 @@ exports.startLeasing = function (leaseFn, releaseFn, options) {
     var leaseMarginSecs = typeof opts.leaseMarginSecs === 'number'
         ? opts.leaseMarginSecs
         : leaseTimeoutSecs * 0.1;
-    var log = common_1.conditionalLog(opts);
+    var log = common_1.conditionalLog(opts, { prefix: 'LEASING: ' });
     log('Start');
     // const leaseCh = chan();
-    var releaseCh = js_csp_1.chan();
+    var releaseCh = js_csp_1.promiseChan();
     var pingCh = js_csp_1.chan();
     var startedProm = js_csp_1.promiseChan();
     var timeoutSecs = leaseTimeoutSecs - leaseMarginSecs;
@@ -512,7 +520,7 @@ exports.startLeasing = function (leaseFn, releaseFn, options) {
                     firstTime = true;
                     _a.label = 1;
                 case 1:
-                    if (!true) return [3 /*break*/, 11];
+                    if (!true) return [3 /*break*/, 12];
                     return [4 /*yield*/, exports.toYielder(leaseFn(leaseTimeoutSecs))];
                 case 2:
                     leaseGranted = _a.sent();
@@ -523,7 +531,7 @@ exports.startLeasing = function (leaseFn, releaseFn, options) {
                 case 3:
                     _a.sent();
                     _a.label = 4;
-                case 4: return [3 /*break*/, 11];
+                case 4: return [3 /*break*/, 12];
                 case 5:
                     if (!firstTime) return [3 /*break*/, 7];
                     log('lease was granted');
@@ -533,19 +541,22 @@ exports.startLeasing = function (leaseFn, releaseFn, options) {
                     _a.label = 7;
                 case 7:
                     firstTime = false;
-                    return [4 /*yield*/, exports.toYielder(onePing())];
+                    return [4 /*yield*/, onePing()];
                 case 8:
                     continueLeasing = _a.sent();
-                    if (!!continueLeasing) return [3 /*break*/, 10];
+                    if (!!continueLeasing) return [3 /*break*/, 11];
                     log('releasing lease');
-                    return [4 /*yield*/, js_csp_1.put(releaseFn(), true)];
+                    return [4 /*yield*/, js_csp_1.put(releaseCh, true)];
                 case 9:
                     _a.sent();
-                    return [3 /*break*/, 11];
+                    return [4 /*yield*/, exports.toYielder(releaseFn())];
                 case 10:
+                    _a.sent();
+                    return [3 /*break*/, 12];
+                case 11:
                     log('continue lease');
                     return [3 /*break*/, 1];
-                case 11:
+                case 12:
                     releaseCh.close();
                     pingCh.close();
                     startedProm.close();
@@ -566,7 +577,7 @@ exports.startLeasing = function (leaseFn, releaseFn, options) {
             });
         });
     };
-    return { release: release, pingCh: pingCh, startedProm: startedProm, finishedProm: finishedProm };
+    return { release: release, pingCh: pingCh, startedProm: startedProm, finishedProm: finishedProm, log: log };
 };
 exports.runPipelineNode = function (opts) {
     var log = common_1.conditionalLog(opts);
@@ -650,7 +661,7 @@ exports.runPipelineNode = function (opts) {
     };
     var release = function () { return js_csp_1.put(inputCh, RELEASE); };
     var cancel = function () { return cancelProm.close(); };
-    return { startedProm: startedProm, finishedProm: finishedProm, input: input, release: release, cancel: cancel };
+    return { startedProm: startedProm, finishedProm: finishedProm, input: input, release: release, cancel: cancel, log: log };
 };
 var PipelineSequenceTarget = (function () {
     function PipelineSequenceTarget(value, options) {
@@ -885,6 +896,6 @@ exports.runPipelineSequence = function (opts) {
             pipeArr[i].cancel();
         }
     };
-    return { startedProm: startedProm, finishedProm: finishedProm, input: input, release: release, cancel: cancel };
+    return { startedProm: startedProm, finishedProm: finishedProm, input: input, release: release, cancel: cancel, log: log };
 };
 //# sourceMappingURL=csp.js.map

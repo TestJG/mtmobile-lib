@@ -1,7 +1,8 @@
 import { Observable, Observer } from 'rxjs';
-import { LogOpts } from './common';
+import { LogOpts, Logger } from './common';
 export declare const isChan: (value: any) => boolean;
 export declare const isInstruction: (value: any) => any;
+export declare const promiseOf: (value: any) => any;
 export declare type ToChanOptions = {
     bufferOrN;
     transducer;
@@ -11,7 +12,7 @@ export declare type ToChanOptions = {
 } & LogOpts;
 export declare const bufferedObserver: (options?: Partial<ToChanOptions>) => Observer<any> & {
     channel: any;
-};
+} & Logger;
 export declare const generatorToChan: (gen: any, options?: Partial<ToChanOptions>) => any;
 export declare const iterableToChan: (iterable: any, options?: Partial<ToChanOptions>) => any;
 export declare const promiseToChan: (promise: Promise<any>, options?: Partial<ToChanOptions>) => any;
@@ -19,9 +20,7 @@ export declare const firstToChan: (obs: Observable<any>, options?: Partial<ToCha
 export declare const observableToChan: (obs: Observable<any>, options?: Partial<ToChanOptions>) => any;
 export declare const toChan: (source: any, options?: Partial<ToChanOptions>) => any;
 export declare const toYielder: (source: any) => any;
-export declare const chanToObservable: <T>(ch: any, options?: {
-    logs?: string | boolean | ((...args: any[]) => string);
-}) => Observable<T>;
+export declare const chanToObservable: <T>(ch: any, options?: Partial<LogOpts>) => Observable<T> & Logger;
 export interface PingHandler {
     release: () => any;
     finishedProm: any;
@@ -29,7 +28,7 @@ export interface PingHandler {
 export declare const startPinging: (pingCh: any, pingTimeMilliseconds: number, options?: Partial<{
     pingAsync: boolean;
     autoClose: boolean;
-} & LogOpts>) => PingHandler;
+} & LogOpts>) => PingHandler & Logger;
 export interface LeaseHandler {
     release: () => any;
     pingCh: any;
@@ -64,7 +63,7 @@ export interface LeaseHandler {
 export declare const startLeasing: (leaseFn: (leaseTimeSecs: number) => any, releaseFn: () => any, options?: Partial<{
     leaseTimeoutSecs: number;
     leaseMarginSecs: number;
-} & LogOpts>) => LeaseHandler;
+} & LogOpts>) => LeaseHandler & Logger;
 export interface PipelineNodeHandler {
     startedProm: any;
     finishedProm: any;
@@ -77,7 +76,7 @@ export declare const runPipelineNode: (opts: {
 } & Partial<{
     inputCh?: any;
     initialValues?: any;
-} & LogOpts>) => PipelineNodeHandler;
+} & LogOpts>) => PipelineNodeHandler & Logger;
 export declare class PipelineSequenceTarget {
     value: any;
     name?: string;
@@ -118,4 +117,4 @@ export interface PipelineSequenceHandler {
 export declare const runPipelineSequence: (opts: {
     nodes: PipelineSequenceNodeInit[];
     processLast: (value: any) => any;
-} & Partial<LogOpts>) => PipelineSequenceHandler;
+} & Partial<LogOpts>) => PipelineSequenceHandler & Logger;

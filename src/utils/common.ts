@@ -251,6 +251,9 @@ export function capString(
 export interface LogOpts {
     logs?: boolean | ValueOrFunc<string>;
 }
+export interface Logger {
+    log: typeof console.log;
+}
 
 const getLogToConsole = (
     logOpts: boolean | ValueOrFunc<string> | LogOpts | null | undefined,
@@ -259,7 +262,7 @@ const getLogToConsole = (
     if (isNothing(logOpts) || logOpts === false) {
         return null;
     } else if (logOpts === true) {
-        return defaultPrefix;
+        return defaultPrefix || 'LOG: ';
     } else if (typeof logOpts === 'object') {
         return getLogToConsole(logOpts.logs, defaultPrefix);
     } else {

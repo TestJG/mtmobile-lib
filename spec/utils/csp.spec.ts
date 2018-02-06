@@ -14,6 +14,7 @@ import {
 } from 'js-csp';
 import { testObs } from './rxtest';
 import {
+    promiseOf,
     chanToObservable,
     observableToChan,
     firstToChan,
@@ -37,12 +38,6 @@ import {
     iterableToChan
 } from '../../src/utils/csp';
 import { conditionalLog } from '../../src/utils/common';
-
-const chanWithOne = (value: any) => {
-    const ch = promiseChan();
-    putAsync(ch, value);
-    return ch;
-};
 
 describe('Utils', () => {
     describe('CSP Tests', () => {
@@ -461,11 +456,15 @@ describe('Utils', () => {
             it('with a lease that returns false it should produce a lost lease', done => {
                 const leaseFn = jasmine
                     .createSpy('leaseFn')
-                    .and.callFake(t => chanWithOne(false));
+                    .and.callFake(t => promiseOf(false));
                 const releaseFn = jasmine
                     .createSpy('releaseFn')
-                    .and.callFake(() => chanWithOne(true));
-                const res = startLeasing(leaseFn, releaseFn);
+                    .and.callFake(() => promiseOf(true));
+                const res = startLeasing(leaseFn, releaseFn, {
+                    leaseTimeoutSecs: 60,
+                    leaseMarginSecs: 10,
+                    logs: false && `LEASE-TEST: [${new Date().toISOString()}]`
+                });
                 go(function*() {
                     const started = yield res.startedProm;
                     expect(started).toEqual(false);
@@ -478,10 +477,10 @@ describe('Utils', () => {
             it('with a lease that succeed and no ping it should produce a valid lease that times out', done => {
                 const leaseFn = jasmine
                     .createSpy('leaseFn')
-                    .and.callFake(t => chanWithOne(true));
+                    .and.callFake(t => promiseOf(true));
                 const releaseFn = jasmine
                     .createSpy('releaseFn')
-                    .and.callFake(() => chanWithOne(true));
+                    .and.callFake(() => promiseOf(true));
                 const res = startLeasing(leaseFn, releaseFn, {
                     leaseTimeoutSecs: 0.05,
                     leaseMarginSecs: 0.01,
@@ -490,7 +489,7 @@ describe('Utils', () => {
                 go(function*() {
                     const started = yield res.startedProm;
                     expect(started).toEqual(true);
-                    yield timeout(0.1 * 1000);
+                    yield timeout(1000);
                     expect(leaseFn).toHaveBeenCalledWith(0.05);
                     expect(leaseFn).toHaveBeenCalledTimes(1);
                     expect(releaseFn).toHaveBeenCalled();
@@ -501,10 +500,10 @@ describe('Utils', () => {
             it('with a lease that succeed and various pings it should produce a valid lease that times out', done => {
                 const leaseFn = jasmine
                     .createSpy('leaseFn')
-                    .and.callFake(t => chanWithOne(true));
+                    .and.callFake(t => promiseOf(true));
                 const releaseFn = jasmine
                     .createSpy('releaseFn')
-                    .and.callFake(() => chanWithOne(true));
+                    .and.callFake(() => promiseOf(true));
                 const lease = startLeasing(leaseFn, releaseFn, {
                     leaseTimeoutSecs: 0.05,
                     leaseMarginSecs: 0.01,

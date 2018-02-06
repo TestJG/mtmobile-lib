@@ -36,6 +36,9 @@ export declare function capString(str: string, maxLength: number, ellipsis?: str
 export interface LogOpts {
     logs?: boolean | ValueOrFunc<string>;
 }
+export interface Logger {
+    log: typeof console.log;
+}
 export declare const conditionalLog: (logOpts?: string | boolean | LogOpts | ((...args: any[]) => string), options?: Partial<{
     prefix: ValueOrFunc<string>;
     logger: {
