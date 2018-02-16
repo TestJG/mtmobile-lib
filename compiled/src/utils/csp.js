@@ -42,6 +42,65 @@ exports.promiseOf = function (value) {
     js_csp_1.putAsync(ch, value);
     return ch;
 };
+exports.protectChan = function (name) { return function (ch) {
+    if (Object.getOwnPropertyDescriptor(ch, 'name')) {
+        return ch;
+    }
+    var oldPut = ch.put;
+    var oldTake = ch.take;
+    var oldClose = ch.close;
+    Object.defineProperties(ch, {
+        name: { writable: false, value: name },
+        put: {
+            writable: false,
+            value: function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i] = arguments[_i];
+                }
+                try {
+                    return oldPut.apply(ch, args);
+                }
+                catch (error) {
+                    var value = common_1.capString(JSON.stringify(args[0]), 40);
+                    throw new Error("Error putting into channel " + this
+                        .name + " value " + value + ": " + error);
+                }
+            }
+        },
+        take: {
+            writable: false,
+            value: function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i] = arguments[_i];
+                }
+                try {
+                    return oldTake.apply(ch, args);
+                }
+                catch (error) {
+                    throw new Error("Error taking from channel " + this.name + ": " + error);
+                }
+            }
+        },
+        close: {
+            writable: false,
+            value: function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i] = arguments[_i];
+                }
+                try {
+                    return oldClose.apply(ch, args);
+                }
+                catch (error) {
+                    throw new Error("Error closing channel " + this.name + ": " + error);
+                }
+            }
+        }
+    });
+    return ch;
+}; };
 exports.bufferedObserver = function (options) {
     var opts = Object.assign({
         keepOpen: false,
@@ -66,10 +125,15 @@ exports.bufferedObserver = function (options) {
         }
     };
     var push = function (value) {
-        data.buffer.push(value);
-        log('PUSH', value, data.buffer);
-        if (data.buffer.length === 1 && data.waiter) {
-            js_csp_1.putAsync(data.waiter, true);
+        if (value === null && opts.nullReplacement) {
+            value = opts.nullReplacement;
+        }
+        if (value !== null) {
+            data.buffer.push(value);
+            log('PUSH', value, data.buffer);
+            if (data.buffer.length === 1 && data.waiter) {
+                js_csp_1.putAsync(data.waiter, true);
+            }
         }
     };
     var next = function (value) {

@@ -41,12 +41,66 @@ export const promiseOf = (value: any) => {
     return ch;
 };
 
+export const protectChan = (name: string) => (ch: any) => {
+    if (Object.getOwnPropertyDescriptor(ch, 'name')) {
+        return ch;
+    }
+
+    const oldPut: Function = ch.put;
+    const oldTake: Function = ch.take;
+    const oldClose: Function = ch.close;
+    Object.defineProperties(ch, {
+        name: { writable: false, value: name },
+        put: {
+            writable: false,
+            value: function(...args: any[]) {
+                try {
+                    return oldPut.apply(ch, args);
+                } catch (error) {
+                    const value = capString(JSON.stringify(args[0]), 40);
+                    throw new Error(
+                        `Error putting into channel ${this
+                            .name} value ${value}: ${error}`
+                    );
+                }
+            }
+        },
+        take: {
+            writable: false,
+            value: function(...args: any[]) {
+                try {
+                    return oldTake.apply(ch, args);
+                } catch (error) {
+                    throw new Error(
+                        `Error taking from channel ${this.name}: ${error}`
+                    );
+                }
+            }
+        },
+        close: {
+            writable: false,
+            value: function(...args: any[]) {
+                try {
+                    return oldClose.apply(ch, args);
+                } catch (error) {
+                    throw new Error(
+                        `Error closing channel ${this.name}: ${error}`
+                    );
+                }
+            }
+        }
+    });
+
+    return ch;
+};
+
 export type ToChanOptions = {
     bufferOrN;
     transducer;
     exHandler;
     keepOpen: boolean;
     includeErrors: boolean;
+    nullReplacement: any;
 } & LogOpts;
 
 export const bufferedObserver = (
@@ -78,10 +132,15 @@ export const bufferedObserver = (
         }
     };
     const push = (value: any) => {
-        data.buffer.push(value);
-        log('PUSH', value, data.buffer);
-        if (data.buffer.length === 1 && data.waiter) {
-            putAsync(data.waiter, true);
+        if (value === null && opts.nullReplacement) {
+            value = opts.nullReplacement;
+        }
+        if (value !== null) {
+            data.buffer.push(value);
+            log('PUSH', value, data.buffer);
+            if (data.buffer.length === 1 && data.waiter) {
+                putAsync(data.waiter, true);
+            }
         }
     };
     const next = (value: any) => {

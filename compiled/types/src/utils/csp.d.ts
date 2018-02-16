@@ -3,12 +3,14 @@ import { LogOpts, Logger } from './common';
 export declare const isChan: (value: any) => boolean;
 export declare const isInstruction: (value: any) => any;
 export declare const promiseOf: (value: any) => any;
+export declare const protectChan: (name: string) => (ch: any) => any;
 export declare type ToChanOptions = {
     bufferOrN;
     transducer;
     exHandler;
     keepOpen: boolean;
     includeErrors: boolean;
+    nullReplacement: any;
 } & LogOpts;
 export declare const bufferedObserver: (options?: Partial<ToChanOptions>) => Observer<any> & {
     channel: any;
