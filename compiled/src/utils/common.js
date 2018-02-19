@@ -311,4 +311,23 @@ exports.logTee = function (caption, thunk) {
         throw error;
     }
 };
+exports.stopWatch = function () {
+    var startTime = new Date().getTime();
+    var elapsedMs = function () { return new Date().getTime() - startTime; };
+    var elapsedStr = function () {
+        var elapsed = elapsedMs();
+        if (elapsed <= 1000) {
+            return elapsed + " ms";
+        }
+        else if (elapsed <= 60 * 1000) {
+            return elapsed / 1000.0 + " s";
+        }
+        else {
+            var minutes = Math.floor(elapsed / (60 * 1000.0));
+            var seconds = (elapsed - minutes * (60 * 1000.0)) / 1000;
+            return minutes + " m " + seconds + " s";
+        }
+    };
+    return { elapsedMs: elapsedMs, elapsedStr: elapsedStr };
+};
 //# sourceMappingURL=common.js.map

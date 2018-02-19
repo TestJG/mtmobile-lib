@@ -72,3 +72,7 @@ export declare const subLog: (parentLog: any, enabled: string | boolean | ((...a
     };
 };
 export declare const logTee: <T>(caption: string, thunk: () => T) => T;
+export declare const stopWatch: () => {
+    elapsedMs: () => number;
+    elapsedStr: () => string;
+};

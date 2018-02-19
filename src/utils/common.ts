@@ -339,3 +339,22 @@ export const logTee = <T>(caption: string, thunk: () => T) => {
         throw error;
     }
 };
+
+export const stopWatch = () => {
+    const startTime = new Date().getTime();
+    const elapsedMs = () => new Date().getTime() - startTime;
+    const elapsedStr = () => {
+        const elapsed = elapsedMs();
+        if (elapsed <= 1000) {
+            return `${elapsed} ms`;
+        } else if (elapsed <= 60 * 1000) {
+            return `${elapsed / 1000.0} s`;
+        } else {
+            const minutes = Math.floor(elapsed / (60 * 1000.0));
+            const seconds = (elapsed - minutes * (60 * 1000.0)) / 1000;
+            return `${minutes} m ${seconds} s`;
+        }
+    };
+
+    return { elapsedMs, elapsedStr };
+};
