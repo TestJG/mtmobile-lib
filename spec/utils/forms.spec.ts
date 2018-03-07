@@ -231,8 +231,8 @@ const expectConfig = <T>(
                     if (expectedValue === undefined) {
                         it(`it's parser(${JSON.stringify(
                             input
-                        )}) should fail`, () =>
-                            expect(() => item.parser(input)).toThrowError());
+                        )}) should return NaN`, () =>
+                            expect(item.parser(input)).toEqual(NaN));
                     } else {
                         it(`it's parser(${JSON.stringify(
                             input
@@ -1813,7 +1813,13 @@ describe('Utils', () => {
             describe('When a field is created with input, its value is changed and then new incorrect input is set', () => {
                 const ageField = field(0, {
                     initInput: '30',
-                    parser: decimalParser,
+                    parser: (t: string) => {
+                        const result = decimalParser(t);
+                        if (!isFinite(result)) {
+                            throw new Error('Is not finite number');
+                        }
+                        return result;
+                    },
                     formatter: decimalFormatter,
                     parserErrorText: 'Not a number',
                 });

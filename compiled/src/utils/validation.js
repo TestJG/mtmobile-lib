@@ -201,7 +201,7 @@ exports.shouldBeANumber = function (message) {
     for (var _i = 1; _i < arguments.length; _i++) {
         args[_i - 1] = arguments[_i];
     }
-    return exports.checkCondition(function (v) { return typeof v === 'number'; }, 'Should be a number', message, args);
+    return exports.checkCondition(function (v) { return typeof v === 'number' && isFinite(v); }, 'Should be a number', message, args);
 };
 exports.shouldBeGreaterThan = function (value, message) {
     var args = [];

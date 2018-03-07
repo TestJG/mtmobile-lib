@@ -268,7 +268,7 @@ export const shouldBeLongerThan = (
 
 export const shouldBeANumber = (message?: MessageSource, ...args: any[]) =>
     checkCondition(
-        (v: number) => typeof v === 'number',
+        (v: number) => typeof v === 'number' && isFinite(v),
         'Should be a number',
         message,
         args

@@ -1,4 +1,4 @@
-import { id } from './common';
+import { id, isNothing } from './common';
 
 export type Parser<T = any, U = string> = (text: U) => T;
 export type Formatter<T = any, U = string> = (source: T) => U;
@@ -9,9 +9,9 @@ export type Formatter<T = any, U = string> = (source: T) => U;
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-export const stringParser: Parser<string> = source => source;
+export const stringParser: Parser<string> = source => source || '';
 
-export const stringFormatter: Formatter<string> = source => source;
+export const stringFormatter: Formatter<string> = source => source || '';
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -20,44 +20,48 @@ export const stringFormatter: Formatter<string> = source => source;
 ////////////////////////////////////////////////////////////////
 
 export const numberParser: Parser<number> = source => {
-    const result = parseFloat(source);
-    if (isFinite(result)) {
-        return result;
+    if (isNothing(source) || source === '') {
+        return null;
     }
-    throw new Error('Expected a number but got: ' + JSON.stringify(result));
+    return parseFloat(source);
 };
 
 export const integerParser = (radix: number): Parser<number> => text => {
-    const result = parseInt(text, radix);
-    if (isFinite(result)) {
-        return result;
+    if (isNothing(text) || text === '') {
+        return null;
     }
-    throw new Error('Expected a number but got: ' + JSON.stringify(result));
+    return parseInt(text, radix);
 };
 
 export const decimalParser = integerParser(10);
 
-export const numberRadixFormatter = (radix?: number): Formatter<number> => value =>
-    value.toString(radix);
+export const numberRadixFormatter = (
+    radix?: number
+): Formatter<number> => value =>
+    typeof value === 'number' ? value.toString(radix) : '';
 
 export const numberFormatter = numberRadixFormatter(10);
 
 export const numberPrecisionFormatter = (
     precision?: number
-): Formatter<number> => value => value.toPrecision(precision);
+): Formatter<number> => value =>
+    typeof value === 'number' ? value.toPrecision(precision) : '';
 
 export const numberFixedFormatter = (
     digits?: number
-): Formatter<number> => value => value.toFixed(digits);
+): Formatter<number> => value =>
+    typeof value === 'number' ? value.toFixed(digits) : '';
 
 export const numberExponentialFormatter = (
     fractionDigits?: number
-): Formatter<number> => value => value.toExponential(fractionDigits);
+): Formatter<number> => value =>
+    typeof value === 'number' ? value.toExponential(fractionDigits) : '';
 
 export const numberLocaleFormatter = (
     locales?: string | string[],
     options?: Intl.NumberFormatOptions
-): Formatter<number> => value => value.toLocaleString(locales, options);
+): Formatter<number> => value =>
+    typeof value === 'number' ? value.toLocaleString(locales, options) : '';
 
 export const decimalFormatter = numberFixedFormatter(0);
 
