@@ -254,7 +254,6 @@ const updateListingFields = (
         )
     ]);
 
-
 const setFieldFromNewValue = (
     item: FormField,
     // newValue: any,
@@ -275,10 +274,14 @@ const setFieldFromNewValue = (
         isDirty,
         isTouched,
         isValid,
-        showErrors,
+        showErrors
     });
 
     return newItem;
+};
+
+const sameOrNaNs = (x, y) => {
+    return x === y || (isNaN(x) && isNaN(y));
 };
 
 const setFieldInputInternal = (
@@ -289,14 +292,19 @@ const setFieldInputInternal = (
 ): FormField => {
     const theInput =
         inputFunc === undefined
-            ? (item.initInput === null ? item.formatter(item.initValue) : item.initInput)
+            ? item.initInput === null
+              ? item.formatter(item.initValue)
+              : item.initInput
             : getAsValue(inputFunc, item.value, data);
     try {
         const theValue = item.parser(theInput);
         const newValue = item.coerce(theValue);
         const initValue = opts.initialization ? newValue : item.initValue;
-        const sameValue = opts.compareValues && item.value === newValue && theInput === item.input;
-        if (sameValue && theValue === item.value) {
+        const sameValue =
+            opts.compareValues &&
+            sameOrNaNs(item.value, newValue) &&
+            sameOrNaNs(theInput, item.input);
+        if (sameValue && sameOrNaNs(theValue, item.value)) {
             return item;
         }
         const initInput = opts.initialization ? theInput : item.initInput;
@@ -305,29 +313,37 @@ const setFieldInputInternal = (
         const isValidInput = true;
         const errors = item.validator(newValue);
 
-        return setFieldFromNewValue(assignOrSame(item, {
-            value: newValue,
-            initValue,
-            initInput,
-            input,
-            validInput,
-            isValidInput,
-            errors,
-        }), opts, sameValue);
+        return setFieldFromNewValue(
+            assignOrSame(item, {
+                value: newValue,
+                initValue,
+                initInput,
+                input,
+                validInput,
+                isValidInput,
+                errors
+            }),
+            opts,
+            sameValue
+        );
     } catch (error) {
         // const newValue = item.value;
         const initInput = opts.initialization ? theInput : item.initInput;
         const input = theInput;
         const isValidInput = false;
-        const errors = [ item.parserErrorText || errorToString(error) ];
+        const errors = [item.parserErrorText || errorToString(error)];
 
-        return setFieldFromNewValue(assignOrSame(item, {
-            errors,
-            initInput,
-            input,
-            isValidInput,
-            // isTouched: true,
-        }), opts, false);
+        return setFieldFromNewValue(
+            assignOrSame(item, {
+                errors,
+                initInput,
+                input,
+                isValidInput
+                // isTouched: true,
+            }),
+            opts,
+            false
+        );
     }
 };
 
@@ -353,14 +369,18 @@ const setFieldValueInternal = (
     const isValidInput = true;
     const errors = item.validator(newValue);
 
-    return setFieldFromNewValue(assignOrSame(item, {
-        value: newValue,
-        initValue,
-        input,
-        validInput,
-        isValidInput,
-        errors,
-    }), opts, sameValue);
+    return setFieldFromNewValue(
+        assignOrSame(item, {
+            value: newValue,
+            initValue,
+            input,
+            validInput,
+            isValidInput,
+            errors
+        }),
+        opts,
+        sameValue
+    );
 };
 
 const createNewGroupFieldsFromDirectValue = (
@@ -659,48 +679,45 @@ const updateFormItemInternalRec = (
 
                     const restOfPath = path.slice(1);
 
-                    const newFields = indices.reduce(
-                        (prevFields, index) => {
-                            const child = prevFields[index];
-                            if (!child) {
-                                throw new Error(
-                                    `Unexpected field index accessing this listing: ` +
-                                        JSON.stringify(index)
-                                );
-                            }
-
-                            const newField = updateFormItemInternalRec(
-                                child,
-                                restOfPath,
-                                updater,
-                                opts,
-                                assign(data, {
-                                    relativePath: appendListingPath(
-                                        data.relativePath,
-                                        index
-                                    )
-                                })
+                    const newFields = indices.reduce((prevFields, index) => {
+                        const child = prevFields[index];
+                        if (!child) {
+                            throw new Error(
+                                `Unexpected field index accessing this listing: ` +
+                                    JSON.stringify(index)
                             );
+                        }
 
-                            if (newField) {
-                                // If newField is not null and not the same as previous
-                                // child, then set [name] to newField
-                                return assignArrayOrSame(prevFields, [
-                                    index,
-                                    [newField]
-                                ]);
-                            } else if (!newField) {
-                                // If newField is null and there was a previous child,
-                                // then remove child from fields
-                                return prevFields
-                                    .slice(0, index)
-                                    .concat(prevFields.slice(index + 1));
-                            } else {
-                                return prevFields;
-                            }
-                        },
-                        <FormItem[]>item.fields
-                    );
+                        const newField = updateFormItemInternalRec(
+                            child,
+                            restOfPath,
+                            updater,
+                            opts,
+                            assign(data, {
+                                relativePath: appendListingPath(
+                                    data.relativePath,
+                                    index
+                                )
+                            })
+                        );
+
+                        if (newField) {
+                            // If newField is not null and not the same as previous
+                            // child, then set [name] to newField
+                            return assignArrayOrSame(prevFields, [
+                                index,
+                                [newField]
+                            ]);
+                        } else if (!newField) {
+                            // If newField is null and there was a previous child,
+                            // then remove child from fields
+                            return prevFields
+                                .slice(0, index)
+                                .concat(prevFields.slice(index + 1));
+                        } else {
+                            return prevFields;
+                        }
+                    }, <FormItem[]>item.fields);
 
                     return updateListingFieldsAux(item, newFields, opts);
                 }

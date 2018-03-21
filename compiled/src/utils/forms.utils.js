@@ -169,20 +169,27 @@ var setFieldFromNewValue = function (item,
         isDirty: isDirty,
         isTouched: isTouched,
         isValid: isValid,
-        showErrors: showErrors,
+        showErrors: showErrors
     });
     return newItem;
 };
+var sameOrNaNs = function (x, y) {
+    return x === y || (isNaN(x) && isNaN(y));
+};
 var setFieldInputInternal = function (item, inputFunc, opts, data) {
     var theInput = inputFunc === undefined
-        ? (item.initInput === null ? item.formatter(item.initValue) : item.initInput)
+        ? item.initInput === null
+            ? item.formatter(item.initValue)
+            : item.initInput
         : common_1.getAsValue(inputFunc, item.value, data);
     try {
         var theValue = item.parser(theInput);
         var newValue = item.coerce(theValue);
         var initValue = opts.initialization ? newValue : item.initValue;
-        var sameValue = opts.compareValues && item.value === newValue && theInput === item.input;
-        if (sameValue && theValue === item.value) {
+        var sameValue = opts.compareValues &&
+            sameOrNaNs(item.value, newValue) &&
+            sameOrNaNs(theInput, item.input);
+        if (sameValue && sameOrNaNs(theValue, item.value)) {
             return item;
         }
         var initInput = opts.initialization ? theInput : item.initInput;
@@ -197,7 +204,7 @@ var setFieldInputInternal = function (item, inputFunc, opts, data) {
             input: input,
             validInput: validInput,
             isValidInput: isValidInput,
-            errors: errors,
+            errors: errors
         }), opts, sameValue);
     }
     catch (error) {
@@ -210,7 +217,8 @@ var setFieldInputInternal = function (item, inputFunc, opts, data) {
             errors: errors,
             initInput: initInput,
             input: input,
-            isValidInput: isValidInput,
+            isValidInput: isValidInput
+            // isTouched: true,
         }), opts, false);
     }
 };
@@ -234,7 +242,7 @@ var setFieldValueInternal = function (item, value, opts, data) {
         input: input,
         validInput: validInput,
         isValidInput: isValidInput,
-        errors: errors,
+        errors: errors
     }), opts, sameValue);
 };
 var createNewGroupFieldsFromDirectValue = function (item, value, opts, data) {
