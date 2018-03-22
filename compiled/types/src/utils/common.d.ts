@@ -76,3 +76,29 @@ export declare const stopWatch: () => {
     elapsedMs: () => number;
     elapsedStr: () => string;
 };
+export declare function printStr(str: string, opts?: Partial<{
+    maxLength: number;
+    backChars: number;
+    ellipsis: string;
+}>): string;
+export declare function printData(value: any, opts?: Partial<{
+    maxLength: number;
+    backChars: number;
+    ellipsis: string;
+    showStacktrace: boolean;
+}>): string;
+export interface PrintObjOptions {
+    indent: number;
+    indented: boolean;
+    indentChars: string;
+    maxDepth: number;
+    maxLines: number;
+    maxValueLength: number;
+    backChars: number;
+    ellipsis: string;
+    maxValuesPerArray: number;
+    maxPropertiesPerObject: number;
+    showStacktrace: boolean;
+    onlyEnumerableProperties: boolean;
+}
+export declare const printObj: (obj: any, options?: Partial<PrintObjOptions>) => string;

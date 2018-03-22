@@ -84,6 +84,7 @@ describe('Utils', () => {
                 [false],
                 [true],
                 [0],
+                [NaN],
                 [''],
                 [1234],
                 ['abcd'],
@@ -110,6 +111,7 @@ describe('Utils', () => {
             testEquivalenceClasses(relaxedEqual, 'relaxedEqual', [
                 [undefined, null],
                 [false, 0, '', []],
+                [NaN],
                 [true, 1, '1'],
                 [1234, '1234'],
                 [() => 'ab' + 'cd'],

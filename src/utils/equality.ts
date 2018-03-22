@@ -3,9 +3,13 @@ export type EqualityComparerFactory<T = any> = (
     childComparer: EqualityComparer
 ) => EqualityComparer<T>;
 
-export const strictEqual = <T>(x: T, y: T) => x === y;
-// tslint:disable-next-line:triple-equals
-export const relaxedEqual = <T>(x: T, y: T) => x == y;
+export const strictEqual = <T>(x: T, y: T) =>
+    x === y ||
+    (typeof x === 'number' && typeof y === 'number' && isNaN(x) && isNaN(y));
+export const relaxedEqual = <T>(x: T, y: T) =>
+    // tslint:disable-next-line:triple-equals
+    x == y ||
+    (typeof x === 'number' && typeof y === 'number' && isNaN(x) && isNaN(y));
 
 export const errorEqualFact: EqualityComparerFactory = (
     childComparer: EqualityComparer
@@ -97,7 +101,7 @@ const recursiveEqualImplementation = <T>(
     y: T,
     fallback: EqualityComparer<any>
 ) => {
-    if (x === y) {
+    if (strictEqual(x, y)) {
         return true;
     }
     if (typeof x === 'object' && typeof y === 'object') {
@@ -158,7 +162,7 @@ const recursiveEqualImplementation = <T>(
 };
 
 const deepEqualImpl = (eq: EqualityComparer<any>) => <T>(x: T, y: T) => {
-    if (x === y) {
+    if (strictEqual(x, y)) {
         return true;
     }
     if (typeof x === 'object' && typeof y === 'object') {

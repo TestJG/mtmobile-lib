@@ -330,4 +330,171 @@ exports.stopWatch = function () {
     };
     return { elapsedMs: elapsedMs, elapsedStr: elapsedStr };
 };
+function printStr(str, opts) {
+    if (opts === void 0) { opts = {
+        maxLength: 1000,
+        backChars: 0,
+        ellipsis: '...',
+    }; }
+    var maxLength = opts.maxLength >= opts.ellipsis.length
+        ? opts.maxLength
+        : opts.ellipsis.length;
+    if (str.length > maxLength) {
+        if (opts.ellipsis.length + opts.backChars >= str.length) {
+            return opts.ellipsis + str.substr(0, str.length - opts.ellipsis.length);
+        }
+        else {
+            return str.substr(0, maxLength - opts.ellipsis.length - opts.backChars) +
+                opts.ellipsis +
+                str.substr(str.length - opts.backChars);
+        }
+    }
+    else {
+        return str;
+    }
+}
+exports.printStr = printStr;
+function printData(value, opts) {
+    if (opts === void 0) { opts = {
+        maxLength: 1000,
+        backChars: 0,
+        ellipsis: '...',
+        showStacktrace: true,
+    }; }
+    switch (typeof value) {
+        case 'boolean':
+        case 'number':
+        case 'undefined':
+            return String(value);
+        case 'string':
+            return "'" + printStr(value, opts) + "'";
+        case 'symbol':
+            return "'" + printStr(value, opts) + "'";
+        case 'function':
+            return "function " + value.name + " (... " + value.length + " args) { ... }";
+        default:
+            if (!value) {
+                return 'null';
+            }
+            else if (value instanceof Date) {
+                return value.toISOString();
+            }
+            else if (value instanceof Array) {
+                return "[ ... " + value.length + " items ]";
+            }
+            else if (value instanceof Error) {
+                return value.name + ": " + value.message +
+                    (value.stack ? "\n" + value.stack : '');
+            }
+            else if (!value.constructor || value.constructor === Object) {
+                return "{ ... }";
+            }
+            else {
+                return value.constructor.name + " { ... }";
+            }
+    }
+}
+exports.printData = printData;
+var defaultPrintObjOptions = {
+    indent: 0,
+    indented: true,
+    indentChars: '    ',
+    maxDepth: 5,
+    maxLines: 100,
+    maxValueLength: 100,
+    backChars: 0,
+    ellipsis: '...',
+    maxValuesPerArray: 20,
+    maxPropertiesPerObject: 40,
+    showStacktrace: true,
+    onlyEnumerableProperties: true,
+};
+exports.printObj = function (obj, options) {
+    if (options === void 0) { options = defaultPrintObjOptions; }
+    var opts = Object.assign({}, defaultPrintObjOptions, options);
+    var result = '';
+    var depth = 0;
+    // let lines = 0;
+    var indentation = '';
+    var skipIndent = false;
+    var past = new Set();
+    for (var i = 0; i < opts.indent; i++) {
+        indentation += opts.indentChars;
+    }
+    var append = function (line) {
+        if (opts.indented && !skipIndent) {
+            if (result.length > 0) {
+                result += '\n';
+            }
+            result += indentation;
+            result += line;
+        }
+        else {
+            result += line;
+        }
+        skipIndent = false;
+    };
+    var indent = function () {
+        depth++;
+        indentation += opts.indentChars;
+    };
+    var unIndent = function () {
+        depth--;
+        indentation = indentation.substr(0, indentation.length - opts.indentChars.length);
+    };
+    var loop = function (value, ender) {
+        if (depth < opts.maxDepth &&
+            (value instanceof Array)) {
+            if (past.has(value)) {
+                append("[ cyclic reference ... ]" + ender);
+            }
+            else {
+                append('[ ');
+                indent();
+                for (var index = 0; index < value.length; index++) {
+                    if (index >= opts.maxValuesPerArray) {
+                        append("... " + (value.length - index) + " more elements");
+                        break;
+                    }
+                    loop(value[index], ', ');
+                }
+                unIndent();
+                append(']');
+            }
+        }
+        else if (depth < opts.maxDepth && value && value.constructor === Object) {
+            if (past.has(value)) {
+                append("{ cyclic reference ... }");
+            }
+            else {
+                append('{ ');
+                indent();
+                var props = opts.onlyEnumerableProperties
+                    ? Object.keys(value).sort()
+                    : Object.getOwnPropertyNames(value).sort();
+                for (var index = 0; index < props.length; index++) {
+                    if (index >= opts.maxPropertiesPerObject) {
+                        append("... " + (props.length - index) + " more properties");
+                        break;
+                    }
+                    append(props[index] + ": ");
+                    skipIndent = true;
+                    loop(value[props[index]], ', ');
+                }
+                unIndent();
+                append('}');
+            }
+        }
+        else {
+            append(printData(value, {
+                maxLength: opts.maxValueLength,
+                ellipsis: opts.ellipsis,
+                backChars: opts.backChars,
+                showStacktrace: opts.showStacktrace
+            }) + ender);
+        }
+    };
+    loop(obj, '');
+    return result;
+};
 //# sourceMappingURL=common.js.map

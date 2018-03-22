@@ -3,6 +3,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var _ = require("lodash");
 var equality_1 = require("./equality");
 var common_1 = require("./common");
+var log = common_1.noop; // console.log; // noop; // require('debug')('mtmobile-lib:utils:forms');
+var logIf = function (cond) {
+    var args = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        args[_i - 1] = arguments[_i];
+    }
+    if (cond) {
+        log.apply(void 0, args);
+    }
+};
 exports.matchGroupPath = function (path, allowPatterns) {
     if (allowPatterns === void 0) { allowPatterns = false; }
     var match = !allowPatterns
@@ -173,23 +183,21 @@ var setFieldFromNewValue = function (item,
     });
     return newItem;
 };
-var sameOrNaNs = function (x, y) {
-    return x === y || (isNaN(x) && isNaN(y));
-};
 var setFieldInputInternal = function (item, inputFunc, opts, data) {
     var theInput = inputFunc === undefined
         ? item.initInput === null
             ? item.formatter(item.initValue)
             : item.initInput
         : common_1.getAsValue(inputFunc, item.value, data);
+    logIf(theInput === '.', 'HEREEEEE!!');
     try {
         var theValue = item.parser(theInput);
         var newValue = item.coerce(theValue);
         var initValue = opts.initialization ? newValue : item.initValue;
         var sameValue = opts.compareValues &&
-            sameOrNaNs(item.value, newValue) &&
-            sameOrNaNs(theInput, item.input);
-        if (sameValue && sameOrNaNs(theValue, item.value)) {
+            equality_1.strictEqual(item.value, newValue) &&
+            equality_1.strictEqual(theInput, item.input);
+        if (sameValue && equality_1.strictEqual(theValue, item.value)) {
             return item;
         }
         var initInput = opts.initialization ? theInput : item.initInput;
@@ -197,6 +205,7 @@ var setFieldInputInternal = function (item, inputFunc, opts, data) {
         var validInput = input;
         var isValidInput = true;
         var errors = item.validator(newValue);
+        logIf(theInput === '.', 'OKKKKKKKKK!!', newValue);
         return setFieldFromNewValue(common_1.assignOrSame(item, {
             value: newValue,
             initValue: initValue,
@@ -213,6 +222,7 @@ var setFieldInputInternal = function (item, inputFunc, opts, data) {
         var input = theInput;
         var isValidInput = false;
         var errors = [item.parserErrorText || common_1.errorToString(error)];
+        logIf(theInput === '.', 'ERROOOOOORR!!', common_1.printObj(error));
         return setFieldFromNewValue(common_1.assignOrSame(item, {
             errors: errors,
             initInput: initInput,
@@ -342,7 +352,7 @@ var updateGroupFieldsAux = function (item, newFields, opts) {
     // state. Much care must be taken to avoid a stack overflow.
     // Later some protection must be added to prevent an infinite
     // loop.
-    if (newFields === item.fields) {
+    if (equality_1.deepEqual(newFields, item.fields)) {
         return updateFinalGroupFields(item);
     }
     else {
@@ -364,7 +374,7 @@ var updateListingFieldsAux = function (item, newFields, opts) {
     // state. Much care must be taken to avoid a stack overflow.
     // Later some protection must be added to prevent an infinite
     // loop.
-    if (newFields === item.fields) {
+    if (equality_1.deepEqual(newFields, item.fields)) {
         return updateFinalListingFields(item);
     }
     else {
@@ -378,112 +388,116 @@ var updateListingFieldsAux = function (item, newFields, opts) {
     }
 };
 var updateFormItemInternalRec = function (item, path, updater, opts, data) {
-    try {
-        if (path.length === 0) {
-            var newItem = common_1.getAsValue(updater, item, data);
-            if (!newItem || equality_1.shallowEqualStrict(newItem, item)) {
-                return item;
-            }
-            return newItem;
+    // try {
+    if (path.length === 0) {
+        var newItem = common_1.getAsValue(updater, item, data);
+        // debug(`updateRec = ${newItem}`);
+        if (!newItem || equality_1.shallowEqualStrict(newItem, item)) {
+            return item;
         }
-        else {
-            switch (item.type) {
-                case 'field': {
-                    throw new Error('Unexpected path accessing this field: ' +
+        return newItem;
+    }
+    else {
+        switch (item.type) {
+            case 'field': {
+                // debug(`updateRec: field '${path}'`);
+                throw new Error('Unexpected path accessing this field: ' +
+                    JSON.stringify(exports.createPath(path)));
+            }
+            case 'group': {
+                // debug(`updateRec: group '${path}'`);
+                var nameOrWildcard = path[0];
+                if (typeof nameOrWildcard !== 'string') {
+                    throw new Error('Unexpected path accessing this group: ' +
                         JSON.stringify(exports.createPath(path)));
                 }
-                case 'group': {
-                    var nameOrWildcard = path[0];
-                    if (typeof nameOrWildcard !== 'string') {
-                        throw new Error('Unexpected path accessing this group: ' +
-                            JSON.stringify(exports.createPath(path)));
+                var names = nameOrWildcard === '*'
+                    ? Object.keys(item.fields)
+                    : [nameOrWildcard];
+                var restOfPath_1 = path.slice(1);
+                var newFields = names.reduce(function (prevFields, name) {
+                    var child = prevFields[name];
+                    if (!child) {
+                        throw new Error("Unexpected field name accessing this group: " +
+                            JSON.stringify(name));
                     }
-                    var names = nameOrWildcard === '*'
-                        ? Object.keys(item.fields)
-                        : [nameOrWildcard];
-                    var restOfPath_1 = path.slice(1);
-                    var newFields = names.reduce(function (prevFields, name) {
-                        var child = prevFields[name];
-                        if (!child) {
-                            throw new Error("Unexpected field name accessing this group: " +
-                                JSON.stringify(name));
-                        }
-                        var newField = updateFormItemInternalRec(child, restOfPath_1, updater, opts, common_1.assign(data, {
-                            relativePath: exports.appendGroupPath(data.relativePath, name)
-                        }));
-                        if (newField && newField !== child) {
-                            // If newField is not null and not the same as previous
-                            // child, then set [name] to newField
-                            return common_1.assignOrSame(prevFields, (_a = {},
-                                _a[name] = newField,
-                                _a));
-                        }
-                        else if (!newField && child) {
-                            // If newField is null and there was a previous child,
-                            // then remove child from fields
-                            return Object.keys(prevFields)
-                                .filter(function (key) { return key !== name; })
-                                .reduce(function (fs, key) {
-                                return Object.assign(fs, (_a = {}, _a[key] = newField, _a));
-                                var _a;
-                            }, {});
-                        }
-                        else {
-                            return prevFields;
-                        }
-                        var _a;
-                    }, item.fields);
-                    return updateGroupFieldsAux(item, newFields, opts);
-                }
-                case 'listing': {
-                    var indexOrWildcard = path[0];
-                    if (typeof indexOrWildcard !== 'number') {
-                        throw new Error('Unexpected path accessing this listing: ' +
-                            JSON.stringify(exports.createPath(path)));
+                    var newField = updateFormItemInternalRec(child, restOfPath_1, updater, opts, common_1.assign(data, {
+                        relativePath: exports.appendGroupPath(data.relativePath, name)
+                    }));
+                    if (newField && newField !== child) {
+                        // If newField is not null and not the same as previous
+                        // child, then set [name] to newField
+                        return common_1.assignOrSame(prevFields, (_a = {},
+                            _a[name] = newField,
+                            _a));
                     }
-                    var indices = isNaN(indexOrWildcard)
-                        ? _.range(item.fields.length)
-                        : [indexOrWildcard];
-                    var restOfPath_2 = path.slice(1);
-                    var newFields = indices.reduce(function (prevFields, index) {
-                        var child = prevFields[index];
-                        if (!child) {
-                            throw new Error("Unexpected field index accessing this listing: " +
-                                JSON.stringify(index));
-                        }
-                        var newField = updateFormItemInternalRec(child, restOfPath_2, updater, opts, common_1.assign(data, {
-                            relativePath: exports.appendListingPath(data.relativePath, index)
-                        }));
-                        if (newField) {
-                            // If newField is not null and not the same as previous
-                            // child, then set [name] to newField
-                            return common_1.assignArrayOrSame(prevFields, [
-                                index,
-                                [newField]
-                            ]);
-                        }
-                        else if (!newField) {
-                            // If newField is null and there was a previous child,
-                            // then remove child from fields
-                            return prevFields
-                                .slice(0, index)
-                                .concat(prevFields.slice(index + 1));
-                        }
-                        else {
-                            return prevFields;
-                        }
-                    }, item.fields);
-                    return updateListingFieldsAux(item, newFields, opts);
-                }
-                default:
-                    break;
+                    else if (!newField && child) {
+                        // If newField is null and there was a previous child,
+                        // then remove child from fields
+                        return Object.keys(prevFields)
+                            .filter(function (key) { return key !== name; })
+                            .reduce(function (fs, key) {
+                            return Object.assign(fs, (_a = {}, _a[key] = newField, _a));
+                            var _a;
+                        }, {});
+                    }
+                    else {
+                        return prevFields;
+                    }
+                    var _a;
+                }, item.fields);
+                return updateGroupFieldsAux(item, newFields, opts);
             }
+            case 'listing': {
+                logIf(true, "updateRec: listing '" + path + "'");
+                var indexOrWildcard = path[0];
+                if (typeof indexOrWildcard !== 'number') {
+                    throw new Error('Unexpected path accessing this listing: ' +
+                        JSON.stringify(exports.createPath(path)));
+                }
+                var indices = isNaN(indexOrWildcard)
+                    ? _.range(item.fields.length)
+                    : [indexOrWildcard];
+                var restOfPath_2 = path.slice(1);
+                var newFields = indices.reduce(function (prevFields, index) {
+                    var child = prevFields[index];
+                    if (!child) {
+                        throw new Error("Unexpected field index accessing this listing: " +
+                            JSON.stringify(index));
+                    }
+                    var newField = updateFormItemInternalRec(child, restOfPath_2, updater, opts, common_1.assign(data, {
+                        relativePath: exports.appendListingPath(data.relativePath, index)
+                    }));
+                    if (newField) {
+                        // If newField is not null and not the same as previous
+                        // child, then set [name] to newField
+                        return common_1.assignArrayOrSame(prevFields, [
+                            index,
+                            [newField]
+                        ]);
+                    }
+                    else if (!newField) {
+                        // If newField is null and there was a previous child,
+                        // then remove child from fields
+                        return prevFields
+                            .slice(0, index)
+                            .concat(prevFields.slice(index + 1));
+                    }
+                    else {
+                        return prevFields;
+                    }
+                }, item.fields);
+                return updateListingFieldsAux(item, newFields, opts);
+            }
+            default:
+                break;
         }
     }
-    catch (error) {
-        var msg = common_1.errorToString(error) + " ON " + data.relativePath;
-        throw new Error(msg);
-    }
+    // } catch (error) {
+    //     const msg = `${errorToString(error)} ON ${data.relativePath}`;
+    //     log(error.stack);
+    //     throw new Error(msg);
+    // }
 };
 var setValueUpdater = function (value, opts) { return function (item, data) {
     switch (item.type) {
@@ -528,7 +542,14 @@ function setInputInternal(item, input, path, options) {
         compareValues: true,
         initialization: false
     }, options);
+    // try {
     return updateFormItemInternalRec(item, exports.extractPath(path, true), setInputUpdater(input, opts), opts, { relativePath: '' });
+    // } catch (error) {
+    //     console.log('Item: \n', printObj(item));
+    //     console.log('Input: \n', printObj(input));
+    //     console.log('path: \n', printObj(path));
+    //     console.log('options: \n', printObj(opts));
+    // }
 }
 exports.setInputInternal = setInputInternal;
 var setInfoUpdater = function (infoFunc, opts) { return function (item, data) {
@@ -646,7 +667,11 @@ exports.updateFormInfoInternal = function (item, pathToFormItem, updater) {
             newInfo.description !== undefined,
             { description: newInfo.description }
         ], [newInfo.info !== undefined, { info: newInfo.info }]);
-    }, { affectDirty: false, initialization: false, compareValues: false }, { relativePath: '' });
+    }, {
+        affectDirty: false,
+        initialization: false,
+        compareValues: false
+    }, { relativePath: '' });
 };
 exports.getAllErrorsInternal = function (item) {
     return exports.getAllErrorsInternalRec(item, '');

@@ -358,3 +358,198 @@ export const stopWatch = () => {
 
     return { elapsedMs, elapsedStr };
 };
+
+
+export function printStr(
+    str: string,
+    opts: Partial<{
+        maxLength: number;
+        backChars: number;
+        ellipsis: string;
+    }> = {
+        maxLength: 1000,
+        backChars: 0,
+        ellipsis: '...',
+    }
+) {
+    const maxLength = opts.maxLength >= opts.ellipsis.length
+        ? opts.maxLength
+        : opts.ellipsis.length;
+
+    if (str.length > maxLength) {
+        if (opts.ellipsis.length + opts.backChars >= str.length) {
+            return opts.ellipsis + str.substr(0, str.length - opts.ellipsis.length);
+        } else {
+            return str.substr(0, maxLength - opts.ellipsis.length - opts.backChars) +
+                opts.ellipsis +
+                str.substr(str.length - opts.backChars);
+        }
+    } else {
+        return str;
+    }
+}
+
+export function printData(
+    value: any,
+    opts: Partial<{
+        maxLength: number;
+        backChars: number;
+        ellipsis: string;
+        showStacktrace: boolean;
+    }> = {
+        maxLength: 1000,
+        backChars: 0,
+        ellipsis: '...',
+        showStacktrace: true,
+    }
+): string {
+    switch (typeof value) {
+        case 'boolean':
+        case 'number':
+        case 'undefined':
+            return String(value);
+        case 'string':
+            return `'${printStr(value, opts)}'`;
+        case 'symbol':
+            return `'${printStr(value, opts)}'`;
+        case 'function':
+            return `function ${value.name} (... ${value.length} args) { ... }`;
+        default:
+            if (!value) {
+                return 'null';
+            } else if (value instanceof Date) {
+                return value.toISOString();
+            } else if (value instanceof Array) {
+                return `[ ... ${value.length} items ]`;
+            } else if (value instanceof Error) {
+                return `${value.name}: ${value.message}` +
+                    (value.stack ? `\n${value.stack}` : '');
+            } else if (!value.constructor || value.constructor === Object) {
+                return `{ ... }`;
+            } else {
+                return `${value.constructor.name} { ... }`;
+            }
+    }
+}
+
+export interface PrintObjOptions {
+    indent: number;
+    indented: boolean;
+    indentChars: string;
+    maxDepth: number;
+    maxLines: number;
+    maxValueLength: number;
+    backChars: number;
+    ellipsis: string;
+    maxValuesPerArray: number;
+    maxPropertiesPerObject: number;
+    showStacktrace: boolean;
+    onlyEnumerableProperties: boolean;
+}
+
+const defaultPrintObjOptions: PrintObjOptions = {
+    indent: 0,
+    indented: true,
+    indentChars: '    ',
+    maxDepth: 5,
+    maxLines: 100,
+    maxValueLength: 100,
+    backChars: 0,
+    ellipsis: '...',
+    maxValuesPerArray: 20,
+    maxPropertiesPerObject: 40,
+    showStacktrace: true,
+    onlyEnumerableProperties: true,
+};
+
+export const printObj = (
+    obj: any,
+    options: Partial<PrintObjOptions> = defaultPrintObjOptions
+) => {
+    const opts = Object.assign({}, defaultPrintObjOptions, options);
+    let result = '';
+    let depth = 0;
+    // let lines = 0;
+    let indentation = '';
+    let skipIndent = false;
+    const past = new Set<any>();
+    for (let i = 0; i < opts.indent; i++) {
+        indentation += opts.indentChars;
+    }
+
+    const append = (line: string) => {
+        if (opts.indented && !skipIndent) {
+            if (result.length > 0) { result += '\n'; }
+            result += indentation;
+            result += line;
+        } else {
+            result += line;
+        }
+        skipIndent = false;
+    };
+
+    const indent = () => {
+        depth++;
+        indentation += opts.indentChars;
+    };
+
+    const unIndent = () => {
+        depth--;
+        indentation = indentation.substr(0, indentation.length - opts.indentChars.length);
+    };
+
+    const loop = (value: any, ender: string) => {
+        if (depth < opts.maxDepth &&
+            (value instanceof Array)) {
+
+            if (past.has(value)) {
+                append(`[ cyclic reference ... ]${ender}`);
+            } else {
+                append('[ ');
+                indent();
+                for (let index = 0; index < value.length; index++) {
+                    if (index >= opts.maxValuesPerArray) {
+                        append(`... ${value.length - index} more elements`);
+                        break;
+                    }
+                    loop(value[index], ', ');
+                }
+                unIndent();
+                append(']');
+            }
+        } else if (depth < opts.maxDepth && value && value.constructor === Object) {
+
+            if (past.has(value)) {
+                append(`{ cyclic reference ... }`);
+            } else {
+                append('{ ');
+                indent();
+                const props = opts.onlyEnumerableProperties
+                    ? Object.keys(value).sort()
+                    : Object.getOwnPropertyNames(value).sort();
+                for (let index = 0; index < props.length; index++) {
+                    if (index >= opts.maxPropertiesPerObject) {
+                        append(`... ${props.length - index} more properties`);
+                        break;
+                    }
+                    append(`${props[index]}: `);
+                    skipIndent = true;
+                    loop(value[props[index]], ', ');
+                }
+                unIndent();
+                append('}');
+            }
+        } else {
+            append(printData(value, {
+                maxLength: opts.maxValueLength,
+                ellipsis: opts.ellipsis,
+                backChars: opts.backChars,
+                showStacktrace: opts.showStacktrace
+            }) + ender);
+        }
+    };
+
+    loop(obj, '');
+
+    return result;
+};

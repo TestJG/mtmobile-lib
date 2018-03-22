@@ -1,5 +1,10 @@
 import * as _ from 'lodash';
-import { deepEqual, shallowEqual, shallowEqualStrict } from './equality';
+import {
+    deepEqual,
+    shallowEqual,
+    shallowEqualStrict,
+    strictEqual
+} from './equality';
 import {
     assign,
     assignOrSame,
@@ -14,7 +19,9 @@ import {
     joinStr,
     getAsValue,
     ValueOrFunc,
-    errorToString
+    errorToString,
+    printObj,
+    noop
 } from './common';
 import { Coerce, coerceAll } from './coercion';
 import { Validator, EasyValidator, mergeValidators } from './validation';
@@ -35,6 +42,11 @@ import {
     ExtraFormInfo,
     UpdateFormItemData
 } from './forms.interfaces';
+
+const log = noop; // console.log; // noop; // require('debug')('mtmobile-lib:utils:forms');
+const logIf = (cond: boolean, ...args: any[]) => {
+    if (cond) { log(...args); }
+};
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -280,10 +292,6 @@ const setFieldFromNewValue = (
     return newItem;
 };
 
-const sameOrNaNs = (x, y) => {
-    return x === y || (isNaN(x) && isNaN(y));
-};
-
 const setFieldInputInternal = (
     item: FormField,
     inputFunc: ValueOrFunc,
@@ -296,15 +304,16 @@ const setFieldInputInternal = (
               ? item.formatter(item.initValue)
               : item.initInput
             : getAsValue(inputFunc, item.value, data);
+    logIf(theInput === '.', 'HEREEEEE!!');
     try {
         const theValue = item.parser(theInput);
         const newValue = item.coerce(theValue);
         const initValue = opts.initialization ? newValue : item.initValue;
         const sameValue =
             opts.compareValues &&
-            sameOrNaNs(item.value, newValue) &&
-            sameOrNaNs(theInput, item.input);
-        if (sameValue && sameOrNaNs(theValue, item.value)) {
+            strictEqual(item.value, newValue) &&
+            strictEqual(theInput, item.input);
+        if (sameValue && strictEqual(theValue, item.value)) {
             return item;
         }
         const initInput = opts.initialization ? theInput : item.initInput;
@@ -312,6 +321,7 @@ const setFieldInputInternal = (
         const validInput = input;
         const isValidInput = true;
         const errors = item.validator(newValue);
+        logIf(theInput === '.', 'OKKKKKKKKK!!', newValue);
 
         return setFieldFromNewValue(
             assignOrSame(item, {
@@ -332,6 +342,7 @@ const setFieldInputInternal = (
         const input = theInput;
         const isValidInput = false;
         const errors = [item.parserErrorText || errorToString(error)];
+        logIf(theInput === '.', 'ERROOOOOORR!!', printObj(error));
 
         return setFieldFromNewValue(
             assignOrSame(item, {
@@ -530,7 +541,7 @@ const updateGroupFieldsAux = (
     // state. Much care must be taken to avoid a stack overflow.
     // Later some protection must be added to prevent an infinite
     // loop.
-    if (newFields === item.fields) {
+    if (deepEqual(newFields, item.fields)) {
         return updateFinalGroupFields(item);
     } else {
         const computedValue = createGroupValue(newFields);
@@ -562,7 +573,7 @@ const updateListingFieldsAux = (
     // state. Much care must be taken to avoid a stack overflow.
     // Later some protection must be added to prevent an infinite
     // loop.
-    if (newFields === item.fields) {
+    if (deepEqual(newFields, item.fields)) {
         return updateFinalListingFields(item);
     } else {
         const computedValue = createListingValue(newFields);
@@ -587,9 +598,10 @@ const updateFormItemInternalRec = (
     opts: SetValueOptions,
     data: UpdateFormItemData
 ): FormItem => {
-    try {
+    // try {
         if (path.length === 0) {
             const newItem = getAsValue(updater, item, data);
+            // debug(`updateRec = ${newItem}`);
             if (!newItem || shallowEqualStrict(newItem, item)) {
                 return item;
             }
@@ -597,6 +609,7 @@ const updateFormItemInternalRec = (
         } else {
             switch (item.type) {
                 case 'field': {
+                    // debug(`updateRec: field '${path}'`);
                     throw new Error(
                         'Unexpected path accessing this field: ' +
                             JSON.stringify(createPath(path))
@@ -604,6 +617,7 @@ const updateFormItemInternalRec = (
                 }
 
                 case 'group': {
+                    // debug(`updateRec: group '${path}'`);
                     const nameOrWildcard = path[0];
                     if (typeof nameOrWildcard !== 'string') {
                         throw new Error(
@@ -666,6 +680,7 @@ const updateFormItemInternalRec = (
                 }
 
                 case 'listing': {
+                    logIf(true, `updateRec: listing '${path}'`);
                     const indexOrWildcard = path[0];
                     if (typeof indexOrWildcard !== 'number') {
                         throw new Error(
@@ -726,10 +741,11 @@ const updateFormItemInternalRec = (
                     break;
             }
         }
-    } catch (error) {
-        const msg = `${errorToString(error)} ON ${data.relativePath}`;
-        throw new Error(msg);
-    }
+    // } catch (error) {
+    //     const msg = `${errorToString(error)} ON ${data.relativePath}`;
+    //     log(error.stack);
+    //     throw new Error(msg);
+    // }
 };
 
 const setValueUpdater = (value: ValueOrFunc, opts: SetValueOptions) => (
@@ -825,6 +841,7 @@ export function setInputInternal(
         options
     );
 
+    // try {
     return updateFormItemInternalRec(
         item,
         extractPath(path, true),
@@ -832,6 +849,12 @@ export function setInputInternal(
         opts,
         { relativePath: '' }
     );
+    // } catch (error) {
+    //     console.log('Item: \n', printObj(item));
+    //     console.log('Input: \n', printObj(input));
+    //     console.log('path: \n', printObj(path));
+    //     console.log('options: \n', printObj(opts));
+    // }
 }
 
 const setInfoUpdater = (infoFunc: ValueOrFunc, opts: SetValueOptions) => (
@@ -1045,7 +1068,11 @@ export const updateFormInfoInternal = <I extends FormItem = FormItem>(
                 [newInfo.info !== undefined, { info: newInfo.info }]
             );
         },
-        { affectDirty: false, initialization: false, compareValues: false },
+        {
+            affectDirty: false,
+            initialization: false,
+            compareValues: false
+        },
         { relativePath: '' }
     );
 };

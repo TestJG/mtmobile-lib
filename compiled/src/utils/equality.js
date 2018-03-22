@@ -1,8 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.strictEqual = function (x, y) { return x === y; };
-// tslint:disable-next-line:triple-equals
-exports.relaxedEqual = function (x, y) { return x == y; };
+exports.strictEqual = function (x, y) {
+    return x === y ||
+        (typeof x === 'number' && typeof y === 'number' && isNaN(x) && isNaN(y));
+};
+exports.relaxedEqual = function (x, y) {
+    // tslint:disable-next-line:triple-equals
+    return x == y ||
+        (typeof x === 'number' && typeof y === 'number' && isNaN(x) && isNaN(y));
+};
 exports.errorEqualFact = function (childComparer) { return function (x, y) {
     return childComparer(x.name, y.name) && childComparer(x.message, y.message);
 }; };
@@ -63,7 +69,7 @@ exports.createEqualityComparer = function (childComparer, fallbackComparer, fact
     };
 };
 var recursiveEqualImplementation = function (x, y, fallback) {
-    if (x === y) {
+    if (exports.strictEqual(x, y)) {
         return true;
     }
     if (typeof x === 'object' && typeof y === 'object') {
@@ -126,7 +132,7 @@ var recursiveEqualImplementation = function (x, y, fallback) {
     }
 };
 var deepEqualImpl = function (eq) { return function (x, y) {
-    if (x === y) {
+    if (exports.strictEqual(x, y)) {
         return true;
     }
     if (typeof x === 'object' && typeof y === 'object') {
