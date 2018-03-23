@@ -43,9 +43,11 @@ import {
     UpdateFormItemData
 } from './forms.interfaces';
 
-const log = noop; // console.log; // noop; // require('debug')('mtmobile-lib:utils:forms');
+const log = console.log; // noop; // require('debug')('mtmobile-lib:utils:forms');
 const logIf = (cond: boolean, ...args: any[]) => {
-    if (cond) { log(...args); }
+    if (cond) {
+        log(...args);
+    }
 };
 
 ////////////////////////////////////////////////////////////////
@@ -304,7 +306,6 @@ const setFieldInputInternal = (
               ? item.formatter(item.initValue)
               : item.initInput
             : getAsValue(inputFunc, item.value, data);
-    logIf(theInput === '.', 'HEREEEEE!!');
     try {
         const theValue = item.parser(theInput);
         const newValue = item.coerce(theValue);
@@ -321,9 +322,8 @@ const setFieldInputInternal = (
         const validInput = input;
         const isValidInput = true;
         const errors = item.validator(newValue);
-        logIf(theInput === '.', 'OKKKKKKKKK!!', newValue);
 
-        return setFieldFromNewValue(
+        const result = setFieldFromNewValue(
             assignOrSame(item, {
                 value: newValue,
                 initValue,
@@ -336,25 +336,32 @@ const setFieldInputInternal = (
             opts,
             sameValue
         );
+
+        log('RESULT AFTER SUCCESS', printObj(result));
+
+        return result;
     } catch (error) {
         // const newValue = item.value;
         const initInput = opts.initialization ? theInput : item.initInput;
         const input = theInput;
         const isValidInput = false;
         const errors = [item.parserErrorText || errorToString(error)];
-        logIf(theInput === '.', 'ERROOOOOORR!!', printObj(error));
 
-        return setFieldFromNewValue(
+        const result = setFieldFromNewValue(
             assignOrSame(item, {
                 errors,
                 initInput,
                 input,
-                isValidInput
-                // isTouched: true,
+                isValidInput,
+                isTouched: true,
             }),
-            opts,
+            opts, // assign(opts, { compareValues: false }),
             false
         );
+
+        log('RESULT AFTER ERROR', printObj(result));
+
+        return result;
     }
 };
 
@@ -477,6 +484,8 @@ const updateFinalGroupFields = (item: FormGroup) => {
         k => item.fields[k].isTouched
     );
 
+    log(`isDirty: ${isDirty} and isTouched: ${isTouched} \n${printObj(item.fields)}`);
+
     // Derived
     const isValid =
         errors.length === 0 &&
@@ -533,18 +542,19 @@ const updateGroupFieldsAux = (
     opts: SetValueOptions
 ) => {
     if (newFields === null) {
+        log('    New group fields is null. No changes.');
         return item;
     }
 
     // If none of the group's children changed after the assignment,
     // then, and only then can the group evaluate the rest of it's
     // state. Much care must be taken to avoid a stack overflow.
-    // Later some protection must be added to prevent an infinite
-    // loop.
-    if (shallowEqual(newFields, item.fields)) {
+    if (deepEqual(newFields, item.fields)) {
+        log('    Group fields are deep equal. No changes.');
         return updateFinalGroupFields(item);
     } else {
         const computedValue = createGroupValue(newFields);
+        log('    Computing from new group fields.');
         return setValueInternal(
             assignOrSame(item, {
                 fields: newFields
@@ -571,16 +581,12 @@ const updateListingFieldsAux = (
     // If none of the listings' children changed after the assignment,
     // then, and only then can the listing evaluate the rest of it's
     // state. Much care must be taken to avoid a stack overflow.
-    // Later some protection must be added to prevent an infinite
-    // loop.
-    if (shallowEqual(newFields, item.fields)) {
+    if (deepEqual(newFields, item.fields)) {
         return updateFinalListingFields(item);
     } else {
         const computedValue = createListingValue(newFields);
         return setValueInternal(
-            assignOrSame(item, {
-                fields: newFields
-            }),
+            assignOrSame(item, { fields: newFields }),
             computedValue,
             '',
             assign(opts, {
@@ -599,148 +605,156 @@ const updateFormItemInternalRec = (
     data: UpdateFormItemData
 ): FormItem => {
     // try {
-        if (path.length === 0) {
-            const newItem = getAsValue(updater, item, data);
-            // debug(`updateRec = ${newItem}`);
-            if (!newItem || shallowEqualStrict(newItem, item)) {
-                return item;
+    log(`updateRec ${JSON.stringify(path)} on ${item.type}`);
+    if (path.length === 0) {
+        const newItem = getAsValue(updater, item, data);
+        if (!newItem || shallowEqualStrict(newItem, item)) {
+            return item;
+        }
+        return newItem;
+    } else {
+        switch (item.type) {
+            case 'field': {
+                // debug(`updateRec: field '${path}'`);
+                throw new Error(
+                    'Unexpected path accessing this field: ' +
+                        JSON.stringify(createPath(path))
+                );
             }
-            return newItem;
-        } else {
-            switch (item.type) {
-                case 'field': {
-                    // debug(`updateRec: field '${path}'`);
+
+            case 'group': {
+                // debug(`updateRec: group '${path}'`);
+                const nameOrWildcard = path[0];
+                if (typeof nameOrWildcard !== 'string') {
                     throw new Error(
-                        'Unexpected path accessing this field: ' +
+                        'Unexpected path accessing this group: ' +
                             JSON.stringify(createPath(path))
                     );
                 }
 
-                case 'group': {
-                    // debug(`updateRec: group '${path}'`);
-                    const nameOrWildcard = path[0];
-                    if (typeof nameOrWildcard !== 'string') {
+                const names =
+                    nameOrWildcard === '*'
+                        ? Object.keys(item.fields)
+                        : [nameOrWildcard];
+
+                const restOfPath = path.slice(1);
+
+                const newFields = names.reduce((prevFields, name) => {
+                    const child = prevFields[name];
+                    if (!child) {
                         throw new Error(
-                            'Unexpected path accessing this group: ' +
-                                JSON.stringify(createPath(path))
+                            `Unexpected field name accessing this group: ` +
+                                JSON.stringify(name)
                         );
                     }
 
-                    const names =
-                        nameOrWildcard === '*'
-                            ? Object.keys(item.fields)
-                            : [nameOrWildcard];
+                    log(`    Down to ${name}`);
+                    const newField = updateFormItemInternalRec(
+                        child,
+                        restOfPath,
+                        updater,
+                        opts,
+                        assign(data, {
+                            relativePath: appendGroupPath(
+                                data.relativePath,
+                                name
+                            )
+                        })
+                    );
 
-                    const restOfPath = path.slice(1);
-
-                    const newFields = names.reduce((prevFields, name) => {
-                        const child = prevFields[name];
-                        if (!child) {
-                            throw new Error(
-                                `Unexpected field name accessing this group: ` +
-                                    JSON.stringify(name)
+                    if (newField && newField !== child) {
+                        // If newField is not null and not the same as previous
+                        // child, then set [name] to newField
+                        return assignOrSame(prevFields, {
+                            [name]: newField
+                        });
+                    } else if (!newField && child) {
+                        // If newField is null and there was a previous child,
+                        // then remove child from fields
+                        return Object.keys(prevFields)
+                            .filter(key => key !== name)
+                            .reduce(
+                                (fs, key) =>
+                                    Object.assign(fs, { [key]: newField }),
+                                {}
                             );
-                        }
-
-                        const newField = updateFormItemInternalRec(
-                            child,
-                            restOfPath,
-                            updater,
-                            opts,
-                            assign(data, {
-                                relativePath: appendGroupPath(
-                                    data.relativePath,
-                                    name
-                                )
-                            })
-                        );
-
-                        if (newField && newField !== child) {
-                            // If newField is not null and not the same as previous
-                            // child, then set [name] to newField
-                            return assignOrSame(prevFields, {
-                                [name]: newField
-                            });
-                        } else if (!newField && child) {
-                            // If newField is null and there was a previous child,
-                            // then remove child from fields
-                            return Object.keys(prevFields)
-                                .filter(key => key !== name)
-                                .reduce(
-                                    (fs, key) =>
-                                        Object.assign(fs, { [key]: newField }),
-                                    {}
-                                );
-                        } else {
-                            return prevFields;
-                        }
-                    }, item.fields);
-
-                    return updateGroupFieldsAux(item, newFields, opts);
-                }
-
-                case 'listing': {
-                    logIf(true, `updateRec: listing '${path}'`);
-                    const indexOrWildcard = path[0];
-                    if (typeof indexOrWildcard !== 'number') {
-                        throw new Error(
-                            'Unexpected path accessing this listing: ' +
-                                JSON.stringify(createPath(path))
-                        );
+                    } else {
+                        return prevFields;
                     }
-                    const indices = isNaN(indexOrWildcard)
-                        ? _.range((<any[]>item.fields).length)
-                        : [indexOrWildcard];
+                }, item.fields);
 
-                    const restOfPath = path.slice(1);
-
-                    const newFields = indices.reduce((prevFields, index) => {
-                        const child = prevFields[index];
-                        if (!child) {
-                            throw new Error(
-                                `Unexpected field index accessing this listing: ` +
-                                    JSON.stringify(index)
-                            );
-                        }
-
-                        const newField = updateFormItemInternalRec(
-                            child,
-                            restOfPath,
-                            updater,
-                            opts,
-                            assign(data, {
-                                relativePath: appendListingPath(
-                                    data.relativePath,
-                                    index
-                                )
-                            })
-                        );
-
-                        if (newField) {
-                            // If newField is not null and not the same as previous
-                            // child, then set [name] to newField
-                            return assignArrayOrSame(prevFields, [
-                                index,
-                                [newField]
-                            ]);
-                        } else if (!newField) {
-                            // If newField is null and there was a previous child,
-                            // then remove child from fields
-                            return prevFields
-                                .slice(0, index)
-                                .concat(prevFields.slice(index + 1));
-                        } else {
-                            return prevFields;
-                        }
-                    }, <FormItem[]>item.fields);
-
-                    return updateListingFieldsAux(item, newFields, opts);
-                }
-
-                default:
-                    break;
+                const result = updateGroupFieldsAux(item, newFields, opts);
+                log(`    UP FROM ${nameOrWildcard}:  ${printObj(result)}`);
+                return result;
             }
+
+            case 'listing': {
+                const indexOrWildcard = path[0];
+                if (typeof indexOrWildcard !== 'number') {
+                    throw new Error(
+                        'Unexpected path accessing this listing: ' +
+                            JSON.stringify(createPath(path))
+                    );
+                }
+                const indices = isNaN(indexOrWildcard)
+                    ? _.range((<any[]>item.fields).length)
+                    : [indexOrWildcard];
+
+                const restOfPath = path.slice(1);
+
+                log(`    Down to ${indexOrWildcard}`);
+                const newFields = indices.reduce((prevFields, index) => {
+                    const child = prevFields[index];
+                    if (!child) {
+                        throw new Error(
+                            `Unexpected field index accessing this listing: ` +
+                                JSON.stringify(index)
+                        );
+                    }
+
+                    const newField = updateFormItemInternalRec(
+                        child,
+                        restOfPath,
+                        updater,
+                        opts,
+                        assign(data, {
+                            relativePath: appendListingPath(
+                                data.relativePath,
+                                index
+                            )
+                        })
+                    );
+
+                    if (newField) {
+                        // If newField is not null and not the same as previous
+                        // child, then set [name] to newField
+                        return assignArrayOrSame(prevFields, [
+                            index,
+                            [newField]
+                        ]);
+                    } else if (!newField) {
+                        // If newField is null and there was a previous child,
+                        // then remove child from fields
+                        return prevFields
+                            .slice(0, index)
+                            .concat(prevFields.slice(index + 1));
+                    } else {
+                        return prevFields;
+                    }
+                }, <FormItem[]>item.fields);
+
+                const result = updateListingFieldsAux(item, newFields, opts);
+                log(
+                    !!path.length,
+                    `    UP FROM ${indexOrWildcard}:  ${printObj(result)}`
+                );
+                return result;
+            }
+
+            default:
+                break;
         }
+    }
     // } catch (error) {
     //     const msg = `${errorToString(error)} ON ${data.relativePath}`;
     //     log(error.stack);
@@ -841,7 +855,6 @@ export function setInputInternal(
         options
     );
 
-    // try {
     return updateFormItemInternalRec(
         item,
         extractPath(path, true),
@@ -849,12 +862,6 @@ export function setInputInternal(
         opts,
         { relativePath: '' }
     );
-    // } catch (error) {
-    //     console.log('Item: \n', printObj(item));
-    //     console.log('Input: \n', printObj(input));
-    //     console.log('path: \n', printObj(path));
-    //     console.log('options: \n', printObj(opts));
-    // }
 }
 
 const setInfoUpdater = (infoFunc: ValueOrFunc, opts: SetValueOptions) => (
