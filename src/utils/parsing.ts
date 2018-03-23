@@ -23,14 +23,22 @@ export const numberParser: Parser<number> = source => {
     if (isNothing(source) || source === '') {
         return null;
     }
-    return parseFloat(source);
+    const result = parseFloat(source);
+    if (isNaN(result) || !isFinite(result)) {
+        throw new Error('Should be a number');
+    }
+    return result;
 };
 
 export const integerParser = (radix: number): Parser<number> => text => {
     if (isNothing(text) || text === '') {
         return null;
     }
-    return parseInt(text, radix);
+    const result = parseInt(text, radix);
+    if (isNaN(result) || !isFinite(result)) {
+        throw new Error('Should be a number');
+    }
+    return result;
 };
 
 export const decimalParser = integerParser(10);

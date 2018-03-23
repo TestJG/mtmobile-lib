@@ -17,13 +17,21 @@ exports.numberParser = function (source) {
     if (common_1.isNothing(source) || source === '') {
         return null;
     }
-    return parseFloat(source);
+    var result = parseFloat(source);
+    if (isNaN(result) || !isFinite(result)) {
+        throw new Error('Should be a number');
+    }
+    return result;
 };
 exports.integerParser = function (radix) { return function (text) {
     if (common_1.isNothing(text) || text === '') {
         return null;
     }
-    return parseInt(text, radix);
+    var result = parseInt(text, radix);
+    if (isNaN(result) || !isFinite(result)) {
+        throw new Error('Should be a number');
+    }
+    return result;
 }; };
 exports.decimalParser = exports.integerParser(10);
 exports.numberRadixFormatter = function (radix) { return function (value) {

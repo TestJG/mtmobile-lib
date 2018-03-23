@@ -21,7 +21,7 @@ describe('Utils', () => {
                 expect(numberParser('12.34e18')).toBe(12.34e18));
 
             it('should parse a bad number as NaN', () =>
-                expect(numberParser('abcd')).toEqual(NaN));
+                expect(() => numberParser('abcd')).toThrow());
         });
 
         describe('decimalParser', () => {
@@ -38,7 +38,7 @@ describe('Utils', () => {
                 expect(decimalParser('12.34e18')).toBe(12));
 
             it('should parse a bad number as NaN', () =>
-                expect(decimalParser('xdfgj')).toEqual(NaN));
+                expect(() => decimalParser('xdfgj')).toThrow());
         });
 
         describe('integerParser', () => {
@@ -55,7 +55,7 @@ describe('Utils', () => {
                 expect(integerParser(16)('123.34e18')).toBe(0x123));
 
             it('should parse a bad number as NaN', () =>
-                expect(integerParser(16)('xyz')).toEqual(NaN));
+                expect(() => integerParser(16)('xyz')).toThrow());
         });
     });
 });

@@ -352,7 +352,7 @@ var updateGroupFieldsAux = function (item, newFields, opts) {
     // state. Much care must be taken to avoid a stack overflow.
     // Later some protection must be added to prevent an infinite
     // loop.
-    if (equality_1.deepEqual(newFields, item.fields)) {
+    if (equality_1.shallowEqual(newFields, item.fields)) {
         return updateFinalGroupFields(item);
     }
     else {
@@ -374,7 +374,7 @@ var updateListingFieldsAux = function (item, newFields, opts) {
     // state. Much care must be taken to avoid a stack overflow.
     // Later some protection must be added to prevent an infinite
     // loop.
-    if (equality_1.deepEqual(newFields, item.fields)) {
+    if (equality_1.shallowEqual(newFields, item.fields)) {
         return updateFinalListingFields(item);
     }
     else {

@@ -242,7 +242,7 @@ const expectConfig = <T>(
                         it(`it's parser(${JSON.stringify(
                             input
                         )}) should return NaN`, () =>
-                            expect(item.parser(input)).toEqual(NaN));
+                            expect(() => item.parser(input)).toThrow());
                     } else {
                         it(`it's parser(${JSON.stringify(
                             input
@@ -1865,14 +1865,14 @@ describe('Utils', () => {
                     initValue: 10,
                     initInput: null,
                     input: '-',
-                    validInput: '-',
-                    isValidInput: true,
-                    value: NaN,
+                    validInput: '10',
+                    isValidInput: false,
+                    value: 10,
                     isDirty: true,
                     isTouched: true,
-                    isValid: true,
-                    errors: [],
-                    showErrors: false
+                    isValid: false,
+                    errors: ['Should be a number'],
+                    showErrors: true
                 });
             });
 
@@ -1944,11 +1944,11 @@ describe('Utils', () => {
 
                     expectConfig(newGroup, {
                         initValue: <any>newPersPets('', '', 20, [
-                            newAgedPet('fido', 'dog', NaN),
+                            newAgedPet('fido', 'dog', 5),
                             newAgedPet('garfield', 'cat', 8)
                         ]),
                         value: <any>newPersPets('', '', 20, [
-                            newAgedPet('fido', 'dog', NaN),
+                            newAgedPet('fido', 'dog', 5),
                             newAgedPet('garfield', 'cat', 8)
                         ]),
                         isDirty: false,

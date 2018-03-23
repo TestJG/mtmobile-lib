@@ -541,7 +541,7 @@ const updateGroupFieldsAux = (
     // state. Much care must be taken to avoid a stack overflow.
     // Later some protection must be added to prevent an infinite
     // loop.
-    if (deepEqual(newFields, item.fields)) {
+    if (shallowEqual(newFields, item.fields)) {
         return updateFinalGroupFields(item);
     } else {
         const computedValue = createGroupValue(newFields);
@@ -573,7 +573,7 @@ const updateListingFieldsAux = (
     // state. Much care must be taken to avoid a stack overflow.
     // Later some protection must be added to prevent an infinite
     // loop.
-    if (deepEqual(newFields, item.fields)) {
+    if (shallowEqual(newFields, item.fields)) {
         return updateFinalListingFields(item);
     } else {
         const computedValue = createListingValue(newFields);
