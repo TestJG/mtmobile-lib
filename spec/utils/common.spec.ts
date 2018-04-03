@@ -17,15 +17,27 @@ import {
     toKVArray,
     toKVMap,
     uuid,
-    ValueOrFunc
+    ValueOrFunc,
+    printStr,
+    compareTypes,
+    compareSameType,
+    compareNumber,
+    compareFunction,
+    compareArray,
+    compareObject,
+    compareBy,
+    compareDataByType,
+    printData,
+    hasNewLine,
+    printObj,
+    printObj
 } from '../../src/utils/common';
 
 describe('Utils', () => {
     describe('Common Tests', () => {
         describe('id', () => {
-            it('should be a function', () => {
-                expect(id).toBeInstanceOf(Function);
-            });
+            it('should be a function', () =>
+                expect(id).toBeInstanceOf(Function));
             [1, 'hello', Date(), true, 3.14159].forEach(element => {
                 it(
                     'should return the same input value: ' +
@@ -617,6 +629,648 @@ describe('Utils', () => {
             it('on an unknown object should return error.unknown', () => {
                 expect(errorToString(new Date())).toEqual('error.unknown');
             });
+        });
+
+        describe('printStr', () => {
+            it('should be a function', () =>
+                expect(printStr).toBeInstanceOf(Function));
+
+            it('should be a function', () =>
+                expect(printStr('1234567890qwertyuiop', {
+                    maxLength: 10,
+                    ellipsis: '...',
+                    backChars: 3
+                })).toEqual('1234...iop');
+
+            it('should be a function', () =>
+                expect(printStr('1234567890', {
+                    maxLength: 10,
+                    ellipsis: '...',
+                    backChars: 3
+                })).toEqual('1234567890');
+
+            it('should be a function', () =>
+                expect(printStr('1234', {
+                    maxLength: 10,
+                    ellipsis: '...',
+                    backChars: 3
+                })).toEqual('1234');
+
+            it('should be a function', () =>
+                expect(printStr('1234567890qwertyuiop', {
+                    maxLength: 10,
+                    ellipsis: '...',
+                    backChars: 0
+                })).toEqual('1234567...');
+
+            it('should be a function', () =>
+                expect(printStr('1234567890', {
+                    maxLength: 10,
+                    ellipsis: '...',
+                    backChars: 0
+                })).toEqual('1234567890');
+
+            it('should be a function', () =>
+                expect(printStr('1234', {
+                    maxLength: 10,
+                    ellipsis: '...',
+                    backChars: 0
+                })).toEqual('1234');
+
+
+        });
+
+        describe('compareTypes', () => {
+            it('should be a function', () =>
+                expect(compareTypes).toBeInstanceOf(Function));
+
+            const orderedTypes = [
+                'string',
+                'boolean',
+                'number',
+                'symbol',
+                'undefined',
+                'function',
+                'object'
+            ];
+
+            for (let first = 0; first < orderedTypes.length; first++) {
+                const f = orderedTypes[first];
+                for (let second = 0; second < orderedTypes.length; second++) {
+                    const s = orderedTypes[second];
+                    const comp = first === second ? 0 : first < second ? -1 : 1;
+                    it(`compareTypes('${f}', '${s}') = ${comp}`, () =>
+                        expect(compareTypes(f, s)).toEqual(comp);
+                }
+            }
+        });
+
+        describe('compareSameType', () => {
+            it('should be a function', () =>
+                expect(compareSameType).toBeInstanceOf(Function));
+
+            it('should compare strings', () => {
+                expect(compareSameType('a', 'a')).toEqual(0);
+                expect(compareSameType('A', 'a')).toEqual(-1);
+                expect(compareSameType('a', 'A')).toEqual(1);
+            });
+
+            it('should compare booleans', () => {
+                expect(compareSameType(false, false)).toEqual(0);
+                expect(compareSameType(true, true)).toEqual(0);
+                expect(compareSameType(false, true)).toEqual(-1);
+                expect(compareSameType(true, false)).toEqual(1);
+            });
+        });
+
+        describe('compareNumber', () => {
+            it('should be a function', () =>
+                expect(compareNumber).toBeInstanceOf(Function));
+
+            it('should compare finite numbers', () => {
+                expect(compareNumber(5, 5)).toEqual(0);
+                expect(compareNumber(5, 15)).toEqual(-1);
+                expect(compareNumber(15, 5)).toEqual(1);
+            });
+
+            it('should compare infinite numbers', () => {
+                expect(compareNumber(Infinity, Infinity)).toEqual(0);
+                expect(compareNumber(5, Infinity)).toEqual(-1);
+                expect(compareNumber(Infinity, 5)).toEqual(1);
+                expect(compareNumber(5, NaN)).toEqual(-1);
+                expect(compareNumber(NaN, 5)).toEqual(1);
+            });
+        });
+
+        describe('compareFunction', () => {
+            it('should be a function', () =>
+                expect(compareFunction).toBeInstanceOf(Function));
+
+            const fa_1_1 = function a(p1: string) { return; };
+            const fa_1_2 = function a(p2: number) { return; };
+            const fa_2_1 = function a(p1: number, p2: string) { return; };
+            const fb_1_1 = function b(p1: any) { return; };
+
+            it('should compare functions', () => {
+                expect(compareFunction(fa_1_1, fa_1_1)).toEqual(0);
+                expect(compareFunction(fa_1_1, fa_1_2)).toEqual(0);
+                expect(compareFunction(fa_1_1, fa_2_1)).toEqual(-1);
+                expect(compareFunction(fa_1_1, fb_1_1)).toEqual(-1);
+                expect(compareFunction(fa_2_1, fa_1_1)).toEqual(1);
+                expect(compareFunction(fb_1_1, fa_1_1)).toEqual(1);
+            });
+        });
+
+        describe('compareArray', () => {
+            it('should be a function', () =>
+                expect(compareArray).toBeInstanceOf(Function));
+
+            const arr0 = [];
+            const arr1_1 = ['a'];
+            const arr1_2 = ['b'];
+            const arr2_1 = ['a', 123];
+            const arr2_2 = ['b', 123];
+            const arr2_3 = ['a', 124];
+            const arr3_1 = ['a', 123, true];
+
+            it('should compare arrays', () => {
+                expect(compareArray(arr0, [])).toEqual(0);
+                expect(compareArray(arr0, arr1_1)).toEqual(-1);
+                expect(compareArray(arr1_1, ['a'])).toEqual(0);
+                expect(compareArray(arr1_1, arr1_2)).toEqual(-1);
+                expect(compareArray(arr1_2, arr2_1)).toEqual(1);
+                expect(compareArray(arr1_2, arr2_2)).toEqual(-1);
+                expect(compareArray(arr2_1, arr2_2)).toEqual(-1);
+                expect(compareArray(arr2_1, arr2_3)).toEqual(-1);
+                expect(compareArray(arr2_2, arr2_3)).toEqual(1);
+                expect(compareArray(arr3_1, arr1_1)).toEqual(1);
+                expect(compareArray(arr3_1, arr1_2)).toEqual(-1);
+                expect(compareArray(arr3_1, arr2_1)).toEqual(1);
+                expect(compareArray(arr3_1, arr2_2)).toEqual(-1);
+                expect(compareArray(arr3_1, arr2_3)).toEqual(-1);
+            });
+        });
+
+        describe('compareObject', () => {
+            it('should be a function', () =>
+                expect(compareObject).toBeInstanceOf(Function));
+
+            const obj0 = {};
+            const obj1_1 = { name: 'john' };
+            const obj1_2 = { name: 'jenna' };
+            const obj2_1 = { age: 40, name: 'john' };
+            const obj2_2 = { age: 28, name: 'jenna' };
+
+            it('should compare objects', () => {
+                expect(compareObject(obj0, {})).toEqual(0);
+                expect(compareObject(obj0, obj1_1)).toEqual(-1);
+                expect(compareObject(obj1_1, { name: 'john' })).toEqual(0);
+                expect(compareObject(obj1_1, obj1_2)).toEqual(0);
+                expect(compareObject(obj1_2, obj2_1)).toEqual(1);
+                expect(compareObject(obj2_1, obj2_2)).toEqual(0);
+                expect(compareObject(obj2_1, obj1_2)).toEqual(-1);
+            });
+        });
+
+        describe('compareDataByType', () => {
+            it('should be a function', () =>
+                expect(compareDataByType).toBeInstanceOf(Function));
+
+            const objs: any[] = [
+                '',
+                'abc',
+                false,
+                true,
+                0,
+                3.14,
+                Symbol(''),
+                Symbol('abc'),
+                undefined,
+                function a () {},
+                function a (p: any) {},
+                function b () {},
+                null,
+                [],
+                ['a', false],
+                [false],
+                { age: 40, name: 'john' },
+                { name: 'john' },
+            ];
+
+            for (let first = 0; first < objs.length; first++) {
+                const f = objs[first];
+                for (let second = 0; second < objs.length; second++) {
+                    const s = objs[second];
+                    const comp = first === second ? 0 : first < second ? -1 : 1;
+                    it(`compareDataByType(${JSON.stringify(f)}, ${JSON.stringify(s)}) = ${comp}`, () =>
+                        expect(compareDataByType(f, s)).toEqual(comp);
+                }
+            }
+        });
+
+        describe('printData', () => {
+            it('should be a function', () =>
+                expect(printData).toBeInstanceOf(Function));
+
+            const objs: [any, string][] = [
+                [ '', "''" ],
+                [ 'abc', "'abc'" ],
+                [ false, 'false' ],
+                [ true, 'true' ],
+                [ 0, '0' ],
+                [ 3.14, '3.14' ],
+                [ Symbol(''), 'Symbol()' ],
+                [ Symbol('abc'), 'Symbol(abc)' ],
+                [ undefined, 'undefined' ],
+                [ function a () {}, 'a(... 0 args) => { ... }' ],
+                [ function a (p: any) {}, 'a(... 1 args) => { ... }' ],
+                [ function b () {}, 'b(... 0 args) => { ... }' ],
+                [ null, 'null' ],
+                [ [], '[]' ],
+                [ ['a'], "[ 1 item ]" ],
+                [ ['a', false], "[ ... 2 items ]" ],
+                [ [false], '[ 1 item ]' ],
+                [ new ArrayBuffer(10), "ArrayBuffer {}" ],
+                [ { age: 40, name: 'john' }, "{ ... 2 properties }" ],
+                [ { name: 'john' }, "{ 1 property }" ],
+            ];
+
+            for (let i = 0; i < objs.length; i++) {
+                const [value, expected] = objs[i];
+                it(`printData(${JSON.stringify(value)}) = '${expected}'`, () =>
+                    expect(printData(value)).toEqual(expected);
+            }
+        });
+
+        describe('hasNewLine', () => {
+            it('should be a function', () =>
+                expect(hasNewLine).toBeInstanceOf(Function));
+
+            it('should detect no new line', () =>
+                expect(hasNewLine('Has no line breaks')).toBeFalsy());
+
+            it('should detect linux new line', () =>
+                expect(hasNewLine('Has one \nline breaks')).toBeTruthy());
+
+            it('should detect windows new line', () =>
+                expect(hasNewLine('Has one \r\nline breaks')).toBeTruthy());
+
+            it('should detect new line at line end', () =>
+                expect(hasNewLine('Has one line break at the end\r\n')).toBeTruthy());
+
+            it('should detect new line at line end', () =>
+                expect(hasNewLine('\nHas one line break at the beginning')).toBeTruthy());
+        });
+
+        describe('prettyPrint', () => {
+            it('should be a function', () =>
+                expect(printObj).toBeInstanceOf(Function));
+
+            const john = { age: 40, name: 'john' };
+            const aFalse = ['a', false];
+            const objs: [any, string][] = [
+                [ '', "''" ],
+                [ 'abc', "'abc'" ],
+                [ false, 'false' ],
+                [ true, 'true' ],
+                [ 0, '0' ],
+                [ 3.14, '3.14' ],
+                [ Symbol(''), 'Symbol()' ],
+                [ Symbol('abc'), 'Symbol(abc)' ],
+                [ undefined, 'undefined' ],
+                [ function a () {}, 'a(... 0 args) => { ... }' ],
+                [ function a (p: any) {}, 'a(... 1 args) => { ... }' ],
+                [ function b () {}, 'b(... 0 args) => { ... }' ],
+                [ null, 'null' ],
+                [ [], '[]' ],
+                [ ['a'], "[ 'a' ]" ],
+                [ aFalse, "[ 'a', false ]" ],
+                [ [false], '[ false ]' ],
+                [ new ArrayBuffer(10), "ArrayBuffer {}" ],
+                [ john, "{ name: 'john', age: 40 }" ],
+                [ { name: 'john' }, "{ name: 'john' }" ],
+            ];
+
+            for (let i = 0; i < objs.length; i++) {
+                const [value, expected] = objs[i];
+                it(`prettyPrint(${JSON.stringify(value)}) = '${expected}'`, () =>
+                    expect(printObj(value)).toEqual(expected);
+            }
+
+            {
+                const bigObject = {};
+                for (let i = 1; i <= 3; i++) {
+                    bigObject['str' + i] = 'string ' + i;
+                }
+
+                it(`prettyPrint(complex object with string properties) should work`, () =>
+                    expect(printObj(bigObject)).toEqual("{ str1: 'string 1', str2: 'string 2', str3: 'string 3' }");
+            }
+
+            {
+                const bigObject = {};
+                for (let i = 1; i <= 3; i++) {
+                    bigObject['bool' + i] = i === 2;
+                }
+
+                it(`prettyPrint(complex object with boolean properties) should work`, () =>
+                    expect(printObj(bigObject)).toEqual("{ bool1: false, bool2: true, bool3: false }");
+            }
+
+            {
+                const bigObject = {};
+                for (let i = 1; i <= 3; i++) {
+                    bigObject['num' + i] = i;
+                }
+
+                it(`prettyPrint(complex object with number properties) should work`, () =>
+                    expect(printObj(bigObject)).toEqual("{ num1: 1, num2: 2, num3: 3 }");
+            }
+
+            {
+                const bigObject = {};
+                for (let i = 1; i <= 3; i++) {
+                    bigObject['sym' + i] = Symbol('s' + i);
+                }
+
+                it(`prettyPrint(complex object with symbol properties) should work`, () =>
+                    expect(printObj(bigObject)).toEqual("{ sym1: Symbol(s1), sym2: Symbol(s2), sym3: Symbol(s3) }");
+            }
+
+            {
+                const bigObject = {};
+                for (let i = 1; i <= 3; i++) {
+                    bigObject['und' + i] = undefined;
+                }
+
+                it(`prettyPrint(complex object with undefined properties) should work`, () =>
+                    expect(printObj(bigObject)).toEqual("{ und1: undefined, und2: undefined, und3: undefined }");
+            }
+
+            {
+                const bigObject = {};
+                for (let i = 1; i <= 3; i++) {
+                    bigObject['obj' + i] = { ['prop' + i]: 'value' + i };
+                }
+
+                it(`prettyPrint(complex object with object properties) should work`, () =>
+                    expect(printObj(bigObject)).toEqual(
+                        "{ obj1: { prop1: 'value1' }, obj2: { prop2: 'value2' }, obj3: { prop3: 'value3' } }");
+
+                it(`prettyPrint(complex object with object properties and short space) should work`, () =>
+                    expect(printObj(bigObject, {
+                        maxValueLength: 20
+                    })).toEqual(`{
+    obj1: { prop1: 'value1' },
+    obj2: { prop2: 'value2' },
+    obj3: { prop3: 'value3' }
+}`);
+
+                it(`prettyPrint(complex object with object properties and short space) should work`, () =>
+                    expect(printObj(bigObject, {
+                        maxValueLength: 10
+                    })).toEqual(`{
+    obj1: {
+        prop1: 'value1'
+    },
+    obj2: {
+        prop2: 'value2'
+    },
+    obj3: {
+        prop3: 'value3'
+    }
+}`);
+            }
+
+            {
+                const bigArray = [];
+                for (let i = 1; i <= 10; i++) {
+                    bigArray.push({ ['prop' + i]: 'value' + i });
+                }
+
+                it(`prettyPrint(complex array with object properties and short space) should work`, () =>
+                    expect(printObj(bigArray, {
+                        maxValueLength: 20
+                    })).toEqual(`[
+    { prop1: 'value1' },
+    { prop2: 'value2' },
+    { prop3: 'value3' },
+    { prop4: 'value4' },
+    { prop5: 'value5' },
+    { prop6: 'value6' },
+    { prop7: 'value7' },
+    { prop8: 'value8' },
+    { prop9: 'value9' },
+    { prop10: 'value10' }
+]`);
+
+                it(`prettyPrint(complex array with object properties and short space) should work`, () =>
+                    expect(printObj(bigArray, {
+                        maxValueLength: 10
+                    })).toEqual(`[
+    {
+        prop1: 'value1'
+    },
+    {
+        prop2: 'value2'
+    },
+    {
+        prop3: 'value3'
+    },
+    {
+        prop4: 'value4'
+    },
+    {
+        prop5: 'value5'
+    },
+    {
+        prop6: 'value6'
+    },
+    {
+        prop7: 'value7'
+    },
+    {
+        prop8: 'value8'
+    },
+    {
+        prop9: 'value9'
+    },
+    {
+        prop10: 'value10'
+    }
+]`);
+            }
+
+            {
+                const bigArray = [];
+                for (let i = 1; i <= 9; i++) {
+                    bigArray.push([i % 2 === 1, 'value' + i, i]);
+                }
+
+                it(`prettyPrint(complex array with object properties and short space) should work`, () =>
+                    expect(printObj(bigArray, {
+                        maxValueLength: 20
+                    })).toEqual(`[
+    [ true, 'value1', 1 ],
+    [ false, 'value2', 2 ],
+    [ true, 'value3', 3 ],
+    [ false, 'value4', 4 ],
+    [ true, 'value5', 5 ],
+    [ false, 'value6', 6 ],
+    [ true, 'value7', 7 ],
+    [ false, 'value8', 8 ],
+    [ true, 'value9', 9 ]
+]`);
+
+                it(`prettyPrint(complex array with object properties and short space) should work`, () =>
+                    expect(printObj(bigArray, {
+                        maxValueLength: 10
+                    })).toEqual(`[
+    [
+        true,
+        'value1',
+        1
+    ],
+    [
+        false,
+        'value2',
+        2
+    ],
+    [
+        true,
+        'value3',
+        3
+    ],
+    [
+        false,
+        'value4',
+        4
+    ],
+    [
+        true,
+        'value5',
+        5
+    ],
+    [
+        false,
+        'value6',
+        6
+    ],
+    [
+        true,
+        'value7',
+        7
+    ],
+    [
+        false,
+        'value8',
+        8
+    ],
+    [
+        true,
+        'value9',
+        9
+    ]
+]`);
+            }
+
+            {
+                const cyclicObject = {
+                    a: {},
+                    b: {},
+                    c: {}
+                };
+                cyclicObject.c.next = cyclicObject;
+
+                it(`prettyPrint(complex object cycles) should work`, () =>
+                    expect(printObj(cyclicObject)).toEqual("{ a: {}, b: {}, c: { next: { cyclic reference ... } } }");
+            }
+
+            {
+                const cyclicArray = [
+                    {},
+                    {},
+                    {}
+                ];
+                cyclicArray[2].next = cyclicArray;
+
+                it(`prettyPrint(complex array cycles) should work`, () =>
+                    expect(printObj(cyclicArray)).toEqual("[ {}, {}, { next: [ cyclic reference ... ] } ]");
+            }
+
+            {
+                const messyObject = {
+                    a_object1: { name: 'john' },
+                    a_object2: { age: 40, name: 'john' },
+                    a_object3: new ArrayBuffer(10),
+                    b_array1: [false],
+                    b_array2: ['a', false],
+                    b_array3: ['a'],
+                    b_array4: [],
+                    c_null: null,
+                    d_func1: function b () {},
+                    d_func2: function a (p: any) {},
+                    d_func3: function a () {},
+                    e_sym1: Symbol('abc'),
+                    e_sym2: Symbol(),
+                    f_num1: 3.14,
+                    f_num2: 0,
+                    g_bool1: true,
+                    g_bool2: false,
+                    h_string1: 'abc',
+                    h_string2: '',
+                    i_undefined1: undefined,
+                };
+
+                it(`prettyPrint(object with messy properties) should work`, () =>
+                    expect(printObj(messyObject)).toEqual(`{
+    h_string1: 'abc',
+    h_string2: '',
+    g_bool1: true,
+    g_bool2: false,
+    f_num1: 3.14,
+    f_num2: 0,
+    e_sym1: Symbol(abc),
+    e_sym2: Symbol(),
+    i_undefined1: undefined,
+    a_object1: { name: 'john' },
+    a_object2: { name: 'john', age: 40 },
+    a_object3: ArrayBuffer {},
+    b_array1: [ false ],
+    b_array2: [ 'a', false ],
+    b_array3: [ 'a' ],
+    b_array4: [],
+    c_null: null
+}`);
+
+                it(`prettyPrint(object with messy properties including functions) should work`, () =>
+                    expect(printObj(messyObject, { excludeTypes: [] })).toEqual(`{
+    h_string1: 'abc',
+    h_string2: '',
+    g_bool1: true,
+    g_bool2: false,
+    f_num1: 3.14,
+    f_num2: 0,
+    e_sym1: Symbol(abc),
+    e_sym2: Symbol(),
+    i_undefined1: undefined,
+    d_func1: b(... 0 args) => { ... },
+    d_func2: a(... 1 args) => { ... },
+    d_func3: a(... 0 args) => { ... },
+    a_object1: { name: 'john' },
+    a_object2: { name: 'john', age: 40 },
+    a_object3: ArrayBuffer {},
+    b_array1: [ false ],
+    b_array2: [ 'a', false ],
+    b_array3: [ 'a' ],
+    b_array4: [],
+    c_null: null
+}`);
+
+                it(`prettyPrint(object with messy properties sorted by name) should work`, () =>
+                    expect(printObj(messyObject, { excludeTypes: [], propertyOrder: 'byName' })).toEqual(`{
+    a_object1: { name: 'john' },
+    a_object2: { age: 40, name: 'john' },
+    a_object3: ArrayBuffer {},
+    b_array1: [ false ],
+    b_array2: [ 'a', false ],
+    b_array3: [ 'a' ],
+    b_array4: [],
+    c_null: null,
+    d_func1: b(... 0 args) => { ... },
+    d_func2: a(... 1 args) => { ... },
+    d_func3: a(... 0 args) => { ... },
+    e_sym1: Symbol(abc),
+    e_sym2: Symbol(),
+    f_num1: 3.14,
+    f_num2: 0,
+    g_bool1: true,
+    g_bool2: false,
+    h_string1: 'abc',
+    h_string2: '',
+    i_undefined1: undefined
+}`);
+            }
         });
     });
 });

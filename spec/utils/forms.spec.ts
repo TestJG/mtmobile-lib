@@ -1877,7 +1877,7 @@ describe('Utils', () => {
 //                 });
 //             });
 
-                fdescribe(
+                describe(
                     'When a group is created and an input value is assigned to one of its fields',
                     () => {
                         const aForm =
@@ -1897,37 +1897,41 @@ describe('Utils', () => {
                                     )
                                 }
                             );
+                        const fidosAge = aForm.fields.age;
                         const aGroupCopy = Object.assign({}, aForm);
                         const newGroup = setInput(
                             aForm,
                             '.',
                             'age'
                         );
+                        const dirtyFidosAge = newGroup.fields.age;
 
                         it('the new form should be distinct from the original one', () =>
                             expect(newGroup).not.toBe(aForm));
 
+                        it('the new form fields should be distinct from the original one', () =>
+                            expect(dirtyFidosAge).not.toBe(fidosAge));
+
                         it('the original form should no be changed in place', () =>
                             expect(aForm).toEqual(aGroupCopy));
 
-                        const fidosAge = newGroup.fields.age;
 
                         // console.log('FIDO\'S AGE: ', printObj(fidosAge));
                         // console.log('FORM: ', printObj(newGroup));
 
-                        // expectConfig(fidosAge, {
-                        //     initValue: 5,
-                        //     initInput: null,
-                        //     input: '.',
-                        //     validInput: '5',
-                        //     isValidInput: false,
-                        //     value: 5,
-                        //     isDirty: true,
-                        //     isTouched: true,
-                        //     isValid: false,
-                        //     errors: ['Should be a number'],
-                        //     showErrors: true
-                        // });
+                        expectConfig(dirtyFidosAge, {
+                            initValue: 5,
+                            initInput: null,
+                            input: '.',
+                            validInput: '5',
+                            isValidInput: false,
+                            value: 5,
+                            isDirty: true,
+                            isTouched: true,
+                            isValid: false,
+                            errors: ['Should be a number'],
+                            showErrors: true
+                        });
 
                         expectConfig(newGroup, {
                             initValue: newAgedPet('fido', 'dog', 5),

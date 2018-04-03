@@ -21,7 +21,8 @@ import {
     ValueOrFunc,
     errorToString,
     printObj,
-    noop
+    noop,
+    printObj
 } from './common';
 import { Coerce, coerceAll } from './coercion';
 import { Validator, EasyValidator, mergeValidators } from './validation';

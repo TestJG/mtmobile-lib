@@ -359,7 +359,6 @@ export const stopWatch = () => {
     return { elapsedMs, elapsedStr };
 };
 
-
 export function printStr(
     str: string,
     opts: Partial<{
@@ -369,25 +368,177 @@ export function printStr(
     }> = {
         maxLength: 1000,
         backChars: 0,
-        ellipsis: '...',
+        ellipsis: '...'
     }
 ) {
-    const maxLength = opts.maxLength >= opts.ellipsis.length
-        ? opts.maxLength
-        : opts.ellipsis.length;
+    const maxLength =
+        opts.maxLength >= opts.ellipsis.length
+            ? opts.maxLength
+            : opts.ellipsis.length;
 
     if (str.length > maxLength) {
         if (opts.ellipsis.length + opts.backChars >= str.length) {
-            return opts.ellipsis + str.substr(0, str.length - opts.ellipsis.length);
+            return (
+                opts.ellipsis + str.substr(0, str.length - opts.ellipsis.length)
+            );
         } else {
-            return str.substr(0, maxLength - opts.ellipsis.length - opts.backChars) +
+            return (
+                str.substr(
+                    0,
+                    maxLength - opts.ellipsis.length - opts.backChars
+                ) +
                 opts.ellipsis +
-                str.substr(str.length - opts.backChars);
+                str.substr(str.length - opts.backChars)
+            );
         }
     } else {
         return str;
     }
 }
+
+export type Predicate<T = any> = (x: T) => boolean;
+export type Comparer<T = any> = (x: T, y: T) => number;
+
+const orderedTypes = [
+    'string',
+    'boolean',
+    'number',
+    'symbol',
+    'undefined',
+    'function',
+    'object'
+];
+export const compareTypes: Comparer = (x, y): number => {
+    if (x === y) {
+        return 0;
+    }
+    const a = orderedTypes.indexOf(x);
+    const b = orderedTypes.indexOf(y);
+    if (a < 0 || a > b) {
+        return 1;
+    }
+    if (b < 0 || b > a) {
+        return -1;
+    }
+    return 0;
+};
+
+export const compareSameType: Comparer = (x, y) =>
+    typeof x === typeof y ? (x === y ? 0 : x < y ? -1 : 1) : 0;
+
+export const compareNumber: Comparer<number> = (x, y) => {
+    if (typeof x !== 'number' || typeof y !== 'number') {
+        return 0;
+    }
+    if (isNaN(x)) {
+        if (isNaN(y)) {
+            return 0;
+        } else {
+            return 1;
+        }
+    } else if (isNaN(y)) {
+        return -1;
+    } else {
+        return x === y ? 0 : x < y ? -1 : 1;
+    }
+};
+
+export const compareFunction: Comparer<Function> = (x, y) => {
+    if (typeof x !== 'function' || typeof y !== 'function') {
+        return 0;
+    }
+    if (x === y) {
+        return 0;
+    }
+    return compareBy<Function>(
+        (a, b) => compareSameType(a.name, b.name),
+        (a, b) => compareNumber(a.length, b.length),
+    )(x, y);
+};
+
+export const compareArray: Comparer<Array<any>> = (x, y) => {
+    if (!(x instanceof Array) || !(y instanceof Array)) {
+        return 0;
+    }
+    if (x === y) {
+        return 0;
+    }
+    const minLen = Math.min(x.length, y.length);
+    for (let i = 0; i < minLen; i++) {
+        const a = x[i];
+        const b = y[i];
+        const comp = compareDataByType(a, b);
+        if (comp !== 0) {
+            return comp;
+        }
+    }
+    return compareNumber(x.length, y.length);
+};
+
+export const compareObject: Comparer<Object> = (x, y) => {
+    if (typeof x !== 'object' || typeof y !== 'object') {
+        return 0;
+    }
+    if (x === y) {
+        return 0;
+    }
+    if (!x) {
+        return -1;
+    }
+    if (!y) {
+        return 1;
+    }
+    // array < object
+    if (x instanceof Array) {
+        if (y instanceof Array) {
+            return compareArray(x, y);
+        }
+        return -1;
+    } else if (y instanceof Array) {
+        return 1;
+    }
+    const compFunc = compareFunction(x.constructor, y.constructor);
+    if (compFunc !== 0) {
+        return compFunc;
+    }
+    const xProps = Object.getOwnPropertyNames(x).sort();
+    const yProps = Object.getOwnPropertyNames(y).sort();
+    return compareArray(xProps, yProps);
+};
+
+export const compareBy = <T = any>(...comparers: Comparer<T>[]): Comparer<T> => (x, y) => {
+    for (let i = 0; i < comparers.length; i++) {
+        const comp = comparers[i](x, y);
+        if (comp !== 0) {
+            return comp;
+        }
+    }
+    return 0;
+};
+
+export const compareDataByType = (x: any, y: any) => {
+    const comp = compareTypes(typeof x, typeof y);
+    if (comp !== 0) {
+        return comp;
+    }
+    switch (typeof x) {
+        case 'boolean':
+        case 'string':
+            return compareSameType(x, y);
+        case 'symbol':
+            return compareSameType(x.toString(), y.toString());
+        case 'number':
+            return compareNumber(x, y);
+        case 'function':
+            return compareFunction(x, y);
+        case 'object':
+            return compareObject(x, y);
+        case 'undefined':
+            return 0;
+        default:
+            return 0;
+    }
+};
 
 export function printData(
     value: any,
@@ -400,7 +551,7 @@ export function printData(
         maxLength: 1000,
         backChars: 0,
         ellipsis: '...',
-        showStacktrace: true,
+        showStacktrace: true
     }
 ): string {
     switch (typeof value) {
@@ -411,23 +562,35 @@ export function printData(
         case 'string':
             return `'${printStr(value, opts)}'`;
         case 'symbol':
-            return `'${printStr(value, opts)}'`;
+            return value.toString();
         case 'function':
-            return `function ${value.name} (... ${value.length} args) { ... }`;
+            return `${value.name}(... ${value.length} args) => { ... }`;
         default:
             if (!value) {
                 return 'null';
             } else if (value instanceof Date) {
                 return value.toISOString();
             } else if (value instanceof Array) {
+                if (value.length === 0) {
+                    return '[]';
+                } else if (value.length === 1) {
+                    return `[ 1 item ]`;
+                }
                 return `[ ... ${value.length} items ]`;
             } else if (value instanceof Error) {
-                return `${value.name}: ${value.message}` +
-                    (value.stack ? `\n${value.stack}` : '');
-            } else if (!value.constructor || value.constructor === Object) {
-                return `{ ... }`;
+                return (
+                    `${value.name}: ${value.message}` +
+                    (value.stack ? `\n${value.stack}` : '')
+                );
             } else {
-                return `${value.constructor.name} { ... }`;
+                const name = !value.constructor || value.constructor === Object ? '' : value.constructor.name + ' ';
+                const keys = Object.keys(value);
+                if (keys.length === 0) {
+                    return `${name}{}`;
+                } else if (keys.length === 1) {
+                    return `${name}{ 1 property }`;
+                }
+                return `${name}{ ... ${Object.keys(value).length} properties }`;
             }
     }
 }
@@ -444,6 +607,9 @@ export interface PrintObjOptions {
     maxValuesPerArray: number;
     maxPropertiesPerObject: number;
     showStacktrace: boolean;
+    excludeTypes: Predicate<string> | string[];
+    excludeConstructors: Predicate<Function> | Function[];
+    propertyOrder: 'byName' | 'byTypeAndName';
     onlyEnumerableProperties: boolean;
 }
 
@@ -459,10 +625,13 @@ const defaultPrintObjOptions: PrintObjOptions = {
     maxValuesPerArray: 20,
     maxPropertiesPerObject: 40,
     showStacktrace: true,
-    onlyEnumerableProperties: true,
+    excludeTypes: ['function'],
+    excludeConstructors: [],
+    propertyOrder: 'byTypeAndName',
+    onlyEnumerableProperties: true
 };
 
-export const printObj = (
+export const oldPrintObj = (
     obj: any,
     options: Partial<PrintObjOptions> = defaultPrintObjOptions
 ) => {
@@ -470,16 +639,18 @@ export const printObj = (
     let result = '';
     let depth = 0;
     // let lines = 0;
-    let indentation = '';
-    let skipIndent = false;
     const past = new Set<any>();
+    let skipIndent = false;
+    let indentation = '';
     for (let i = 0; i < opts.indent; i++) {
         indentation += opts.indentChars;
     }
 
     const append = (line: string) => {
         if (opts.indented && !skipIndent) {
-            if (result.length > 0) { result += '\n'; }
+            if (result.length > 0) {
+                result += '\n';
+            }
             result += indentation;
             result += line;
         } else {
@@ -495,13 +666,14 @@ export const printObj = (
 
     const unIndent = () => {
         depth--;
-        indentation = indentation.substr(0, indentation.length - opts.indentChars.length);
+        indentation = indentation.substr(
+            0,
+            indentation.length - opts.indentChars.length
+        );
     };
 
     const loop = (value: any, ender: string) => {
-        if (depth < opts.maxDepth &&
-            (value instanceof Array)) {
-
+        if (depth < opts.maxDepth && value instanceof Array) {
             if (past.has(value)) {
                 append(`[ cyclic reference ... ]${ender}`);
             } else {
@@ -517,8 +689,11 @@ export const printObj = (
                 unIndent();
                 append(']');
             }
-        } else if (depth < opts.maxDepth && value && value.constructor === Object) {
-
+        } else if (
+            depth < opts.maxDepth &&
+            value &&
+            value.constructor === Object
+        ) {
             if (past.has(value)) {
                 append(`{ cyclic reference ... }`);
             } else {
@@ -540,16 +715,131 @@ export const printObj = (
                 append('}');
             }
         } else {
-            append(printData(value, {
-                maxLength: opts.maxValueLength,
-                ellipsis: opts.ellipsis,
-                backChars: opts.backChars,
-                showStacktrace: opts.showStacktrace
-            }) + ender);
+            append(
+                printData(
+                    value,
+                    {
+                        maxLength: opts.maxValueLength,
+                        ellipsis: opts.ellipsis,
+                        backChars: opts.backChars,
+                        showStacktrace: opts.showStacktrace
+                    }
+                ) + ender
+            );
         }
     };
 
     loop(obj, '');
 
     return result;
+};
+
+export const hasNewLine = (s: string) => !!s.match(/\n/);
+
+export const printObj = (
+    obj: any,
+    options: Partial<PrintObjOptions> = defaultPrintObjOptions
+) => {
+    const opts = Object.assign({}, defaultPrintObjOptions, options);
+    const excludeTypes = typeof opts.excludeTypes === 'function'
+        ? opts.excludeTypes
+        : ((x: string) => (<string[]>opts.excludeTypes).indexOf(x) >= 0);
+    const excludeConstructors = typeof opts.excludeConstructors === 'function'
+        ? opts.excludeConstructors
+        : ((x: Function) => (<Function[]>opts.excludeConstructors).indexOf(x) >= 0);
+    const past = new Set<any>();
+    const indentations = ['', opts.indentChars];
+    const ind = (depth: number) => {
+        while (depth >= indentations.length) {
+            indentations.push(indentations[indentations.length - 1] + opts.indentChars);
+        }
+        return indentations[depth];
+    };
+    const isExcluded = v => excludeTypes(typeof v) || (!!v && excludeConstructors(v.constructor));
+    const propertyComparer = opts.propertyOrder === 'byTypeAndName'
+        ? compareBy<[string, string, any]>(
+            (a, b) => compareTypes(typeof a[2], typeof b[2]),
+            (a, b) => compareSameType(a[0], b[0]))
+        : (a, b) => compareSameType(a[0], b[0]);
+
+    const loop = (value: any, depth: number): string => {
+        if (depth < opts.maxDepth && value instanceof Array) {
+            if (past.has(value)) {
+                return `[ cyclic reference ... ]`;
+            } else if (value.length === 0) {
+                return '[]';
+            } else {
+                past.add(value);
+                const values = value
+                    .filter(v => !isExcluded(v))
+                    .map(v => loop(v, depth + 1));
+                const totalLength =
+                    values.reduce((x, s) => x + s.length + 2, 0);
+                if (totalLength > opts.maxValueLength || values.some(s => hasNewLine(s))) {
+                    const valuesShort = values.length <= opts.maxValuesPerArray
+                        ? values : values.slice(0, opts.maxValuesPerArray);
+                    const str = valuesShort
+                        .map(v => v.replace(/^|(\r?\n)/g, `$&${ind(1)}`))
+                        .join(',\n');
+                    if (value.length > opts.maxValuesPerArray) {
+                        return `[\n${str}\n${ind(1)}// ... ${value.length -
+                            opts.maxValuesPerArray} more elements\n]`;
+                    }
+                    return `[\n${str}\n]`;
+                } else {
+                    const str = joinStr(', ', values);
+                    return `[ ${str} ]`;
+                }
+            }
+        } else if (
+            depth < opts.maxDepth &&
+            value &&
+            value.constructor === Object
+        ) {
+            if (past.has(value)) {
+                return `{ cyclic reference ... }`;
+            } else {
+                past.add(value);
+                const propNames = opts.onlyEnumerableProperties
+                    ? Object.keys(value)
+                    : Object.getOwnPropertyNames(value);
+                if (propNames.length === 0) {
+                    return '{}';
+                }
+                const props = propNames
+                    .map(n => <[string, string, any]>[n, loop(value[n], depth + 1), value[n]])
+                    .filter(p => !isExcluded(p[2]));
+                props.sort(propertyComparer);
+                const totalLength =
+                    props.reduce((x, p) => x + p[0].length + p[1].length + 4, 0);
+
+                if (totalLength > opts.maxValueLength || props.some(p => hasNewLine(p[1]))) {
+                    const propsShort = props.length <= opts.maxPropertiesPerObject
+                        ? props
+                        : props.slice(0, opts.maxPropertiesPerObject);
+                    const str = propsShort
+                        .map(p => `${ind(1)}${p[0]}: ${p[1].replace(/(\r?\n)/g, `$&${ind(1)}`)}`)
+                        .join(',\n');
+                    if (propNames.length > opts.maxPropertiesPerObject) {
+                        return `{\n${str}\n${ind(1)}// ... ${propNames.length -
+                            opts.maxPropertiesPerObject} more properties\n]`;
+                    }
+                    return `{\n${str}\n}`;
+                } else {
+                    const str =  props.map(p => `${p[0]}: ${p[1]}`).join(', ');
+                    return `{ ${str} }`;
+                }
+            }
+        } else {
+            const str = printData(value, {
+                maxLength: opts.maxValueLength,
+                ellipsis: opts.ellipsis,
+                backChars: opts.backChars,
+                showStacktrace: opts.showStacktrace
+            });
+            return str;
+        }
+    };
+
+    return loop(obj, 0);
 };
