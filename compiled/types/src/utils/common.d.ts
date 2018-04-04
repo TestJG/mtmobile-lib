@@ -81,6 +81,16 @@ export declare function printStr(str: string, opts?: Partial<{
     backChars: number;
     ellipsis: string;
 }>): string;
+export declare type Predicate<T = any> = (x: T) => boolean;
+export declare type Comparer<T = any> = (x: T, y: T) => number;
+export declare const compareTypes: Comparer;
+export declare const compareSameType: Comparer;
+export declare const compareNumber: Comparer<number>;
+export declare const compareFunction: Comparer<Function>;
+export declare const compareArray: Comparer<Array<any>>;
+export declare const compareObject: Comparer<Object>;
+export declare const compareBy: <T = any>(...comparers: Comparer<T>[]) => Comparer<T>;
+export declare const compareDataByType: (x: any, y: any) => number;
 export declare function printData(value: any, opts?: Partial<{
     maxLength: number;
     backChars: number;
@@ -99,6 +109,11 @@ export interface PrintObjOptions {
     maxValuesPerArray: number;
     maxPropertiesPerObject: number;
     showStacktrace: boolean;
+    excludeTypes: Predicate<string> | string[];
+    excludeConstructors: Predicate<Function> | Function[];
+    propertyOrder: 'byName' | 'byTypeAndName';
     onlyEnumerableProperties: boolean;
 }
+export declare const oldPrintObj: (obj: any, options?: Partial<PrintObjOptions>) => string;
+export declare const hasNewLine: (s: string) => boolean;
 export declare const printObj: (obj: any, options?: Partial<PrintObjOptions>) => string;

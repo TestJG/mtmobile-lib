@@ -334,19 +334,19 @@ function printStr(str, opts) {
     if (opts === void 0) { opts = {
         maxLength: 1000,
         backChars: 0,
-        ellipsis: '...',
+        ellipsis: '...'
     }; }
     var maxLength = opts.maxLength >= opts.ellipsis.length
         ? opts.maxLength
         : opts.ellipsis.length;
     if (str.length > maxLength) {
         if (opts.ellipsis.length + opts.backChars >= str.length) {
-            return opts.ellipsis + str.substr(0, str.length - opts.ellipsis.length);
+            return (opts.ellipsis + str.substr(0, str.length - opts.ellipsis.length));
         }
         else {
-            return str.substr(0, maxLength - opts.ellipsis.length - opts.backChars) +
+            return (str.substr(0, maxLength - opts.ellipsis.length - opts.backChars) +
                 opts.ellipsis +
-                str.substr(str.length - opts.backChars);
+                str.substr(str.length - opts.backChars));
         }
     }
     else {
@@ -354,12 +354,153 @@ function printStr(str, opts) {
     }
 }
 exports.printStr = printStr;
+var orderedTypes = [
+    'string',
+    'boolean',
+    'number',
+    'symbol',
+    'undefined',
+    'function',
+    'object'
+];
+exports.compareTypes = function (x, y) {
+    if (x === y) {
+        return 0;
+    }
+    var a = orderedTypes.indexOf(x);
+    var b = orderedTypes.indexOf(y);
+    if (a < 0 || a > b) {
+        return 1;
+    }
+    if (b < 0 || b > a) {
+        return -1;
+    }
+    return 0;
+};
+exports.compareSameType = function (x, y) {
+    return typeof x === typeof y ? (x === y ? 0 : x < y ? -1 : 1) : 0;
+};
+exports.compareNumber = function (x, y) {
+    if (typeof x !== 'number' || typeof y !== 'number') {
+        return 0;
+    }
+    if (isNaN(x)) {
+        if (isNaN(y)) {
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    }
+    else if (isNaN(y)) {
+        return -1;
+    }
+    else {
+        return x === y ? 0 : x < y ? -1 : 1;
+    }
+};
+exports.compareFunction = function (x, y) {
+    if (typeof x !== 'function' || typeof y !== 'function') {
+        return 0;
+    }
+    if (x === y) {
+        return 0;
+    }
+    return exports.compareBy(function (a, b) { return exports.compareSameType(a.name, b.name); }, function (a, b) { return exports.compareNumber(a.length, b.length); })(x, y);
+};
+exports.compareArray = function (x, y) {
+    if (!(x instanceof Array) || !(y instanceof Array)) {
+        return 0;
+    }
+    if (x === y) {
+        return 0;
+    }
+    var minLen = Math.min(x.length, y.length);
+    for (var i = 0; i < minLen; i++) {
+        var a = x[i];
+        var b = y[i];
+        var comp = exports.compareDataByType(a, b);
+        if (comp !== 0) {
+            return comp;
+        }
+    }
+    return exports.compareNumber(x.length, y.length);
+};
+exports.compareObject = function (x, y) {
+    if (typeof x !== 'object' || typeof y !== 'object') {
+        return 0;
+    }
+    if (x === y) {
+        return 0;
+    }
+    if (!x) {
+        return -1;
+    }
+    if (!y) {
+        return 1;
+    }
+    // array < object
+    if (x instanceof Array) {
+        if (y instanceof Array) {
+            return exports.compareArray(x, y);
+        }
+        return -1;
+    }
+    else if (y instanceof Array) {
+        return 1;
+    }
+    var compFunc = exports.compareFunction(x.constructor, y.constructor);
+    if (compFunc !== 0) {
+        return compFunc;
+    }
+    var xProps = Object.getOwnPropertyNames(x).sort();
+    var yProps = Object.getOwnPropertyNames(y).sort();
+    return exports.compareArray(xProps, yProps);
+};
+exports.compareBy = function () {
+    var comparers = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        comparers[_i] = arguments[_i];
+    }
+    return function (x, y) {
+        for (var i = 0; i < comparers.length; i++) {
+            var comp = comparers[i](x, y);
+            if (comp !== 0) {
+                return comp;
+            }
+        }
+        return 0;
+    };
+};
+exports.compareDataByType = function (x, y) {
+    var comp = exports.compareTypes(typeof x, typeof y);
+    if (comp !== 0) {
+        return comp;
+    }
+    switch (typeof x) {
+        case 'boolean':
+        case 'string':
+            return exports.compareSameType(x, y);
+        case 'symbol':
+            return exports.compareSameType(x.toString(), y.toString());
+        case 'number':
+            return exports.compareNumber(x, y);
+        case 'function':
+            return exports.compareFunction(x, y);
+        case 'object':
+            return exports.compareObject(x, y);
+        case 'undefined':
+            return 0;
+        default:
+            return 0;
+    }
+};
 function printData(value, opts) {
     if (opts === void 0) { opts = {
         maxLength: 1000,
         backChars: 0,
         ellipsis: '...',
-        showStacktrace: true,
+        showStacktrace: true
     }; }
     switch (typeof value) {
         case 'boolean':
@@ -369,9 +510,9 @@ function printData(value, opts) {
         case 'string':
             return "'" + printStr(value, opts) + "'";
         case 'symbol':
-            return "'" + printStr(value, opts) + "'";
+            return value.toString();
         case 'function':
-            return "function " + value.name + " (... " + value.length + " args) { ... }";
+            return value.name + "(... " + value.length + " args) => { ... }";
         default:
             if (!value) {
                 return 'null';
@@ -380,17 +521,28 @@ function printData(value, opts) {
                 return value.toISOString();
             }
             else if (value instanceof Array) {
+                if (value.length === 0) {
+                    return '[]';
+                }
+                else if (value.length === 1) {
+                    return "[ 1 item ]";
+                }
                 return "[ ... " + value.length + " items ]";
             }
             else if (value instanceof Error) {
-                return value.name + ": " + value.message +
-                    (value.stack ? "\n" + value.stack : '');
-            }
-            else if (!value.constructor || value.constructor === Object) {
-                return "{ ... }";
+                return (value.name + ": " + value.message +
+                    (value.stack ? "\n" + value.stack : ''));
             }
             else {
-                return value.constructor.name + " { ... }";
+                var name_1 = !value.constructor || value.constructor === Object ? '' : value.constructor.name + ' ';
+                var keys = Object.keys(value);
+                if (keys.length === 0) {
+                    return name_1 + "{}";
+                }
+                else if (keys.length === 1) {
+                    return name_1 + "{ 1 property }";
+                }
+                return name_1 + "{ ... " + Object.keys(value).length + " properties }";
             }
     }
 }
@@ -407,17 +559,20 @@ var defaultPrintObjOptions = {
     maxValuesPerArray: 20,
     maxPropertiesPerObject: 40,
     showStacktrace: true,
-    onlyEnumerableProperties: true,
+    excludeTypes: ['function'],
+    excludeConstructors: [],
+    propertyOrder: 'byTypeAndName',
+    onlyEnumerableProperties: true
 };
-exports.printObj = function (obj, options) {
+exports.oldPrintObj = function (obj, options) {
     if (options === void 0) { options = defaultPrintObjOptions; }
     var opts = Object.assign({}, defaultPrintObjOptions, options);
     var result = '';
     var depth = 0;
     // let lines = 0;
-    var indentation = '';
-    var skipIndent = false;
     var past = new Set();
+    var skipIndent = false;
+    var indentation = '';
     for (var i = 0; i < opts.indent; i++) {
         indentation += opts.indentChars;
     }
@@ -443,8 +598,7 @@ exports.printObj = function (obj, options) {
         indentation = indentation.substr(0, indentation.length - opts.indentChars.length);
     };
     var loop = function (value, ender) {
-        if (depth < opts.maxDepth &&
-            (value instanceof Array)) {
+        if (depth < opts.maxDepth && value instanceof Array) {
             if (past.has(value)) {
                 append("[ cyclic reference ... ]" + ender);
             }
@@ -462,7 +616,9 @@ exports.printObj = function (obj, options) {
                 append(']');
             }
         }
-        else if (depth < opts.maxDepth && value && value.constructor === Object) {
+        else if (depth < opts.maxDepth &&
+            value &&
+            value.constructor === Object) {
             if (past.has(value)) {
                 append("{ cyclic reference ... }");
             }
@@ -496,5 +652,109 @@ exports.printObj = function (obj, options) {
     };
     loop(obj, '');
     return result;
+};
+exports.hasNewLine = function (s) { return !!s.match(/\n/); };
+exports.printObj = function (obj, options) {
+    if (options === void 0) { options = defaultPrintObjOptions; }
+    var opts = Object.assign({}, defaultPrintObjOptions, options);
+    var excludeTypes = typeof opts.excludeTypes === 'function'
+        ? opts.excludeTypes
+        : (function (x) { return opts.excludeTypes.indexOf(x) >= 0; });
+    var excludeConstructors = typeof opts.excludeConstructors === 'function'
+        ? opts.excludeConstructors
+        : (function (x) { return opts.excludeConstructors.indexOf(x) >= 0; });
+    var past = new Set();
+    var indentations = ['', opts.indentChars];
+    var ind = function (depth) {
+        while (depth >= indentations.length) {
+            indentations.push(indentations[indentations.length - 1] + opts.indentChars);
+        }
+        return indentations[depth];
+    };
+    var isExcluded = function (v) { return excludeTypes(typeof v) || (!!v && excludeConstructors(v.constructor)); };
+    var propertyComparer = opts.propertyOrder === 'byTypeAndName'
+        ? exports.compareBy(function (a, b) { return exports.compareTypes(typeof a[2], typeof b[2]); }, function (a, b) { return exports.compareSameType(a[0], b[0]); })
+        : function (a, b) { return exports.compareSameType(a[0], b[0]); };
+    var loop = function (value, depth) {
+        if (depth < opts.maxDepth && value instanceof Array) {
+            if (past.has(value)) {
+                return "[ cyclic reference ... ]";
+            }
+            else if (value.length === 0) {
+                return '[]';
+            }
+            else {
+                past.add(value);
+                var values = value
+                    .filter(function (v) { return !isExcluded(v); })
+                    .map(function (v) { return loop(v, depth + 1); });
+                var totalLength = values.reduce(function (x, s) { return x + s.length + 2; }, 0);
+                if (totalLength > opts.maxValueLength || values.some(function (s) { return exports.hasNewLine(s); })) {
+                    var valuesShort = values.length <= opts.maxValuesPerArray
+                        ? values : values.slice(0, opts.maxValuesPerArray);
+                    var str = valuesShort
+                        .map(function (v) { return v.replace(/^|(\r?\n)/g, "$&" + ind(1)); })
+                        .join(',\n');
+                    if (value.length > opts.maxValuesPerArray) {
+                        return "[\n" + str + "\n" + ind(1) + "// ... " + (value.length -
+                            opts.maxValuesPerArray) + " more elements\n]";
+                    }
+                    return "[\n" + str + "\n]";
+                }
+                else {
+                    var str = exports.joinStr(', ', values);
+                    return "[ " + str + " ]";
+                }
+            }
+        }
+        else if (depth < opts.maxDepth &&
+            value &&
+            value.constructor === Object) {
+            if (past.has(value)) {
+                return "{ cyclic reference ... }";
+            }
+            else {
+                past.add(value);
+                var propNames = opts.onlyEnumerableProperties
+                    ? Object.keys(value)
+                    : Object.getOwnPropertyNames(value);
+                if (propNames.length === 0) {
+                    return '{}';
+                }
+                var props = propNames
+                    .map(function (n) { return [n, loop(value[n], depth + 1), value[n]]; })
+                    .filter(function (p) { return !isExcluded(p[2]); });
+                props.sort(propertyComparer);
+                var totalLength = props.reduce(function (x, p) { return x + p[0].length + p[1].length + 4; }, 0);
+                if (totalLength > opts.maxValueLength || props.some(function (p) { return exports.hasNewLine(p[1]); })) {
+                    var propsShort = props.length <= opts.maxPropertiesPerObject
+                        ? props
+                        : props.slice(0, opts.maxPropertiesPerObject);
+                    var str = propsShort
+                        .map(function (p) { return "" + ind(1) + p[0] + ": " + p[1].replace(/(\r?\n)/g, "$&" + ind(1)); })
+                        .join(',\n');
+                    if (propNames.length > opts.maxPropertiesPerObject) {
+                        return "{\n" + str + "\n" + ind(1) + "// ... " + (propNames.length -
+                            opts.maxPropertiesPerObject) + " more properties\n]";
+                    }
+                    return "{\n" + str + "\n}";
+                }
+                else {
+                    var str = props.map(function (p) { return p[0] + ": " + p[1]; }).join(', ');
+                    return "{ " + str + " }";
+                }
+            }
+        }
+        else {
+            var str = printData(value, {
+                maxLength: opts.maxValueLength,
+                ellipsis: opts.ellipsis,
+                backChars: opts.backChars,
+                showStacktrace: opts.showStacktrace
+            });
+            return str;
+        }
+    };
+    return loop(obj, 0);
 };
 //# sourceMappingURL=common.js.map

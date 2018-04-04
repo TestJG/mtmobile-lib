@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var _ = require("lodash");
 var equality_1 = require("./equality");
 var common_1 = require("./common");
-var log = common_1.noop; // console.log; // noop; // require('debug')('mtmobile-lib:utils:forms');
+var log = console.log; // noop; // require('debug')('mtmobile-lib:utils:forms');
 var logIf = function (cond) {
     var args = [];
     for (var _i = 1; _i < arguments.length; _i++) {
@@ -189,7 +189,6 @@ var setFieldInputInternal = function (item, inputFunc, opts, data) {
             ? item.formatter(item.initValue)
             : item.initInput
         : common_1.getAsValue(inputFunc, item.value, data);
-    logIf(theInput === '.', 'HEREEEEE!!');
     try {
         var theValue = item.parser(theInput);
         var newValue = item.coerce(theValue);
@@ -205,8 +204,7 @@ var setFieldInputInternal = function (item, inputFunc, opts, data) {
         var validInput = input;
         var isValidInput = true;
         var errors = item.validator(newValue);
-        logIf(theInput === '.', 'OKKKKKKKKK!!', newValue);
-        return setFieldFromNewValue(common_1.assignOrSame(item, {
+        var result = setFieldFromNewValue(common_1.assignOrSame(item, {
             value: newValue,
             initValue: initValue,
             initInput: initInput,
@@ -215,6 +213,8 @@ var setFieldInputInternal = function (item, inputFunc, opts, data) {
             isValidInput: isValidInput,
             errors: errors
         }), opts, sameValue);
+        // log('RESULT AFTER SUCCESS', printObj(result));
+        return result;
     }
     catch (error) {
         // const newValue = item.value;
@@ -222,14 +222,16 @@ var setFieldInputInternal = function (item, inputFunc, opts, data) {
         var input = theInput;
         var isValidInput = false;
         var errors = [item.parserErrorText || common_1.errorToString(error)];
-        logIf(theInput === '.', 'ERROOOOOORR!!', common_1.printObj(error));
-        return setFieldFromNewValue(common_1.assignOrSame(item, {
+        var result = setFieldFromNewValue(common_1.assignOrSame(item, {
             errors: errors,
             initInput: initInput,
             input: input,
-            isValidInput: isValidInput
-            // isTouched: true,
-        }), opts, false);
+            isValidInput: isValidInput,
+            isTouched: true,
+        }), opts, // assign(opts, { compareValues: false }),
+        false);
+        // log('RESULT AFTER ERROR', printObj(result));
+        return result;
     }
 };
 var setFieldValueInternal = function (item, value, opts, data) {
@@ -304,6 +306,7 @@ var updateFinalGroupFields = function (item) {
     var errors = item.validator(computedValue);
     var isDirty = Object.keys(item.fields).some(function (k) { return item.fields[k].isDirty; });
     var isTouched = Object.keys(item.fields).some(function (k) { return item.fields[k].isTouched; });
+    // log(`isDirty: ${isDirty} and isTouched: ${isTouched} \n${printObj(item.fields)}`);
     // Derived
     var isValid = errors.length === 0 &&
         Object.keys(item.fields).every(function (k) { return item.fields[k].isValid; });
@@ -345,18 +348,19 @@ var updateFinalListingFields = function (item) {
 };
 var updateGroupFieldsAux = function (item, newFields, opts) {
     if (newFields === null) {
+        // log('    New group fields is null. No changes.');
         return item;
     }
     // If none of the group's children changed after the assignment,
     // then, and only then can the group evaluate the rest of it's
     // state. Much care must be taken to avoid a stack overflow.
-    // Later some protection must be added to prevent an infinite
-    // loop.
-    if (equality_1.shallowEqual(newFields, item.fields)) {
+    if (equality_1.deepEqual(newFields, item.fields)) {
+        // log('    Group fields are deep equal. No changes.');
         return updateFinalGroupFields(item);
     }
     else {
         var computedValue = exports.createGroupValue(newFields);
+        // log('    Computing from new group fields.');
         return setValueInternal(common_1.assignOrSame(item, {
             fields: newFields
         }), computedValue, '', common_1.assign(opts, {
@@ -372,16 +376,12 @@ var updateListingFieldsAux = function (item, newFields, opts) {
     // If none of the listings' children changed after the assignment,
     // then, and only then can the listing evaluate the rest of it's
     // state. Much care must be taken to avoid a stack overflow.
-    // Later some protection must be added to prevent an infinite
-    // loop.
-    if (equality_1.shallowEqual(newFields, item.fields)) {
+    if (equality_1.deepEqual(newFields, item.fields)) {
         return updateFinalListingFields(item);
     }
     else {
         var computedValue = exports.createListingValue(newFields);
-        return setValueInternal(common_1.assignOrSame(item, {
-            fields: newFields
-        }), computedValue, '', common_1.assign(opts, {
+        return setValueInternal(common_1.assignOrSame(item, { fields: newFields }), computedValue, '', common_1.assign(opts, {
             compareValues: true,
             initialization: true
         }));
@@ -389,9 +389,9 @@ var updateListingFieldsAux = function (item, newFields, opts) {
 };
 var updateFormItemInternalRec = function (item, path, updater, opts, data) {
     // try {
+    //     log(`updateRec ${JSON.stringify(path)} on ${item.type}`);
     if (path.length === 0) {
         var newItem = common_1.getAsValue(updater, item, data);
-        // debug(`updateRec = ${newItem}`);
         if (!newItem || equality_1.shallowEqualStrict(newItem, item)) {
             return item;
         }
@@ -421,6 +421,7 @@ var updateFormItemInternalRec = function (item, path, updater, opts, data) {
                         throw new Error("Unexpected field name accessing this group: " +
                             JSON.stringify(name));
                     }
+                    // log(`    Down to ${name}`);
                     var newField = updateFormItemInternalRec(child, restOfPath_1, updater, opts, common_1.assign(data, {
                         relativePath: exports.appendGroupPath(data.relativePath, name)
                     }));
@@ -446,10 +447,11 @@ var updateFormItemInternalRec = function (item, path, updater, opts, data) {
                     }
                     var _a;
                 }, item.fields);
-                return updateGroupFieldsAux(item, newFields, opts);
+                var result = updateGroupFieldsAux(item, newFields, opts);
+                // log(`    UP FROM ${nameOrWildcard}:  ${printObj(result)}`);
+                return result;
             }
             case 'listing': {
-                logIf(true, "updateRec: listing '" + path + "'");
                 var indexOrWildcard = path[0];
                 if (typeof indexOrWildcard !== 'number') {
                     throw new Error('Unexpected path accessing this listing: ' +
@@ -459,6 +461,7 @@ var updateFormItemInternalRec = function (item, path, updater, opts, data) {
                     ? _.range(item.fields.length)
                     : [indexOrWildcard];
                 var restOfPath_2 = path.slice(1);
+                // log(`    Down to ${indexOrWildcard}`);
                 var newFields = indices.reduce(function (prevFields, index) {
                     var child = prevFields[index];
                     if (!child) {
@@ -487,7 +490,12 @@ var updateFormItemInternalRec = function (item, path, updater, opts, data) {
                         return prevFields;
                     }
                 }, item.fields);
-                return updateListingFieldsAux(item, newFields, opts);
+                var result = updateListingFieldsAux(item, newFields, opts);
+                // log(
+                //     !!path.length,
+                //     `    UP FROM ${indexOrWildcard}:  ${printObj(result)}`
+                // );
+                return result;
             }
             default:
                 break;
@@ -542,14 +550,7 @@ function setInputInternal(item, input, path, options) {
         compareValues: true,
         initialization: false
     }, options);
-    // try {
     return updateFormItemInternalRec(item, exports.extractPath(path, true), setInputUpdater(input, opts), opts, { relativePath: '' });
-    // } catch (error) {
-    //     console.log('Item: \n', printObj(item));
-    //     console.log('Input: \n', printObj(input));
-    //     console.log('path: \n', printObj(path));
-    //     console.log('options: \n', printObj(opts));
-    // }
 }
 exports.setInputInternal = setInputInternal;
 var setInfoUpdater = function (infoFunc, opts) { return function (item, data) {
