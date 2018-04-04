@@ -21,8 +21,7 @@ import {
     ValueOrFunc,
     errorToString,
     printObj,
-    noop,
-    printObj
+    noop
 } from './common';
 import { Coerce, coerceAll } from './coercion';
 import { Validator, EasyValidator, mergeValidators } from './validation';
@@ -338,7 +337,7 @@ const setFieldInputInternal = (
             sameValue
         );
 
-        log('RESULT AFTER SUCCESS', printObj(result));
+        // log('RESULT AFTER SUCCESS', printObj(result));
 
         return result;
     } catch (error) {
@@ -360,7 +359,7 @@ const setFieldInputInternal = (
             false
         );
 
-        log('RESULT AFTER ERROR', printObj(result));
+        // log('RESULT AFTER ERROR', printObj(result));
 
         return result;
     }
@@ -485,7 +484,7 @@ const updateFinalGroupFields = (item: FormGroup) => {
         k => item.fields[k].isTouched
     );
 
-    log(`isDirty: ${isDirty} and isTouched: ${isTouched} \n${printObj(item.fields)}`);
+    // log(`isDirty: ${isDirty} and isTouched: ${isTouched} \n${printObj(item.fields)}`);
 
     // Derived
     const isValid =
@@ -543,7 +542,7 @@ const updateGroupFieldsAux = (
     opts: SetValueOptions
 ) => {
     if (newFields === null) {
-        log('    New group fields is null. No changes.');
+        // log('    New group fields is null. No changes.');
         return item;
     }
 
@@ -551,11 +550,11 @@ const updateGroupFieldsAux = (
     // then, and only then can the group evaluate the rest of it's
     // state. Much care must be taken to avoid a stack overflow.
     if (deepEqual(newFields, item.fields)) {
-        log('    Group fields are deep equal. No changes.');
+        // log('    Group fields are deep equal. No changes.');
         return updateFinalGroupFields(item);
     } else {
         const computedValue = createGroupValue(newFields);
-        log('    Computing from new group fields.');
+        // log('    Computing from new group fields.');
         return setValueInternal(
             assignOrSame(item, {
                 fields: newFields
@@ -606,7 +605,7 @@ const updateFormItemInternalRec = (
     data: UpdateFormItemData
 ): FormItem => {
     // try {
-    log(`updateRec ${JSON.stringify(path)} on ${item.type}`);
+//     log(`updateRec ${JSON.stringify(path)} on ${item.type}`);
     if (path.length === 0) {
         const newItem = getAsValue(updater, item, data);
         if (!newItem || shallowEqualStrict(newItem, item)) {
@@ -649,7 +648,7 @@ const updateFormItemInternalRec = (
                         );
                     }
 
-                    log(`    Down to ${name}`);
+                    // log(`    Down to ${name}`);
                     const newField = updateFormItemInternalRec(
                         child,
                         restOfPath,
@@ -685,7 +684,7 @@ const updateFormItemInternalRec = (
                 }, item.fields);
 
                 const result = updateGroupFieldsAux(item, newFields, opts);
-                log(`    UP FROM ${nameOrWildcard}:  ${printObj(result)}`);
+                // log(`    UP FROM ${nameOrWildcard}:  ${printObj(result)}`);
                 return result;
             }
 
@@ -703,7 +702,7 @@ const updateFormItemInternalRec = (
 
                 const restOfPath = path.slice(1);
 
-                log(`    Down to ${indexOrWildcard}`);
+                // log(`    Down to ${indexOrWildcard}`);
                 const newFields = indices.reduce((prevFields, index) => {
                     const child = prevFields[index];
                     if (!child) {
@@ -745,10 +744,10 @@ const updateFormItemInternalRec = (
                 }, <FormItem[]>item.fields);
 
                 const result = updateListingFieldsAux(item, newFields, opts);
-                log(
-                    !!path.length,
-                    `    UP FROM ${indexOrWildcard}:  ${printObj(result)}`
-                );
+                // log(
+                //     !!path.length,
+                //     `    UP FROM ${indexOrWildcard}:  ${printObj(result)}`
+                // );
                 return result;
             }
 
