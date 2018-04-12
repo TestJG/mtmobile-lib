@@ -3,6 +3,7 @@ import {
     assignOrSame,
     errorToString,
     ValueOrFunc,
+    getAsValue,
     getAsValueOrError
 } from './common';
 
@@ -19,6 +20,69 @@ export type Validator<T = any> = (value: T) => ValidationResult;
 export type MessageSource = ValueOrFunc<string | string[]> | undefined;
 
 export const emptyValidator = <T>(value: T) => [];
+
+const defaultMessages = {
+    validatorResultErrorMessage: <ValueOrFunc<string>>((result: any) =>
+        `Expected a validation result of type string[] or string. However a ${typeof result} was received.`),
+
+    shouldBeAString: <ValueOrFunc<string>>'Should be a string',
+    shouldNotBeEmpty: <ValueOrFunc<string>>'Should not be empty',
+    shouldNotBeBlank: <ValueOrFunc<string>>'Should not be blank',
+    shouldMatch: (pattern: RegExp) =>
+        <ValueOrFunc<string>>'Should match given pattern',
+    shouldNotMatch: (pattern: RegExp) =>
+        <ValueOrFunc<string>>'Should not match given pattern',
+    shouldNotBeShorterThan: (length: number) =>
+        <ValueOrFunc<string>>`Should not be shorter than ${length} characters`,
+    shouldBeShorterThan: (length: number) =>
+        <ValueOrFunc<string>>`Should be shorter than ${length} characters`,
+    shouldNotBeLongerThan: (length: number) =>
+        <ValueOrFunc<string>>`Should not be longer than ${length} characters`,
+    shouldBeLongerThan: (length: number) =>
+        <ValueOrFunc<string>>`Should be longer than ${length} characters`,
+
+    shouldBeANumber: <ValueOrFunc<string>>'Should be a number',
+    shouldBeGreaterThan: (value: number) =>
+        <ValueOrFunc<string>>`Should be greater than ${value}`,
+    shouldBeGreaterThanOrEqualTo: (value: number) =>
+        `Should be greater than or equal to ${value}`,
+    shouldBeLessThan: (value: number) =>
+        `Should be less than ${value}`,
+    shouldBeLessThanOrEqualTo: (value: number) =>
+        `Should be less than or equal to ${value}`,
+    shouldBeBetweenValues: (minValue: number, maxValue: number) =>
+        `Should be between ${minValue} and ${maxValue}`,
+    shouldNotBeGreaterThan: (value: number) =>
+        `Should not be greater than ${value}`,
+    shouldNotBeGreaterThanOrEqualTo: (value: number) =>
+        `Should not be greater than or equal to ${value}`,
+    shouldNotBeLessThan: (value: number) =>
+        `Should not be less than ${value}`,
+    shouldNotBeLessThanOrEqualTo: (value: number) =>
+        `Should not be less than or equal to ${value}`,
+    shouldNotBeBetweenValues: (minValue: number, maxValue: number) =>
+        `Should not be between ${minValue} and ${maxValue}`,
+
+    shouldBeAnArray: 'Should be an array',
+    shouldNotBeAnEmptyArray: 'Should not be an empty array',
+    shouldNotBeAnArrayShorterThan: (length: number) =>
+        `Should not be an array shorter than ${length} elements`,
+    shouldBeAnArrayShorterThan: (length: number) =>
+        `Should be an array shorter than ${length} elements`,
+    shouldNotBeAnArrayLongerThan: (length: number) =>
+        `Should not be an array longer than ${length} elements`,
+    shouldBeAnArrayLongerThan: (length: number) =>
+        `Should be an array longer than ${length} elements`,
+
+};
+
+let validationMessages = defaultMessages;
+
+export const setValidationMessages = (
+    messages: Partial<typeof defaultMessages>
+) => {
+    validationMessages = assignOrSame(validationMessages, messages);
+};
 
 export const makeValidator = <T>(
     val: undefined | EasyValidator<T>
@@ -42,7 +106,8 @@ export const makeValidator = <T>(
                 return [];
             }
         } else {
-            throw new Error(`Expected a validation result of type string[] or string. However a ${typeof result} was received.`);
+            const msg = getAsValue(validationMessages.validatorResultErrorMessage, result);
+            throw new Error(msg);
         }
     };
 };
@@ -143,7 +208,7 @@ export const shouldNotBe = <T>(
 export const shouldBeAString = (message?: MessageSource, ...args: any[]) =>
     checkCondition(
         (v: string) => typeof v === 'string',
-        'Should be a string',
+        validationMessages.shouldBeAString,
         message,
         args
     );
@@ -153,7 +218,7 @@ export const shouldNotBeEmpty = (message?: MessageSource, ...args: any[]) =>
         shouldBeAString(message, ...args),
         checkCondition(
             (v: string) => v !== '',
-            'Should not be empty',
+            validationMessages.shouldNotBeEmpty,
             message,
             args
         )
@@ -164,7 +229,7 @@ export const shouldNotBeBlank = (message?: MessageSource, ...args: any[]) =>
         shouldBeAString(message, ...args),
         checkCondition(
             (v: string) => v.trim() !== '',
-            'Should not be blank',
+            validationMessages.shouldNotBeBlank,
             message,
             args
         )
@@ -179,7 +244,7 @@ export const shouldMatch = (
         shouldBeAString(message, ...args),
         checkCondition(
             (v: string) => !!v.match(pattern),
-            'Should match given pattern',
+            validationMessages.shouldMatch(pattern),
             message,
             args
         )
@@ -194,7 +259,7 @@ export const shouldNotMatch = (
         shouldBeAString(message, ...args),
         checkCondition(
             (v: string) => !v.match(pattern),
-            'Should not match given pattern',
+            validationMessages.shouldNotMatch(pattern),
             message,
             args
         )
@@ -209,7 +274,7 @@ export const shouldNotBeShorterThan = (
         shouldBeAString(message, ...args),
         checkCondition(
             (v: string) => v.length >= length,
-            () => `Should not be shorter than ${length} characters`,
+            validationMessages.shouldNotBeShorterThan(length),
             message,
             [...args, length]
         )
@@ -224,7 +289,7 @@ export const shouldBeShorterThan = (
         shouldBeAString(message, ...args),
         checkCondition(
             (v: string) => v.length < length,
-            () => `Should be shorter than ${length} characters`,
+            validationMessages.shouldBeShorterThan(length),
             message,
             [...args, length]
         )
@@ -239,7 +304,7 @@ export const shouldNotBeLongerThan = (
         shouldBeAString(message, ...args),
         checkCondition(
             (v: string) => v.length <= length,
-            () => `Should not be longer than ${length} characters`,
+            validationMessages.shouldNotBeLongerThan(length),
             message,
             [...args, length]
         )
@@ -254,7 +319,7 @@ export const shouldBeLongerThan = (
         shouldBeAString(message, ...args),
         checkCondition(
             (v: string) => v.length > length,
-            () => `Should be longer than ${length} characters`,
+            validationMessages.shouldBeLongerThan(length),
             message,
             [...args, length]
         )
@@ -269,7 +334,7 @@ export const shouldBeLongerThan = (
 export const shouldBeANumber = (message?: MessageSource, ...args: any[]) =>
     checkCondition(
         (v: number) => typeof v === 'number' && isFinite(v),
-        'Should be a number',
+        validationMessages.shouldBeANumber,
         message,
         args
     );
@@ -283,7 +348,7 @@ export const shouldBeGreaterThan = (
         shouldBeANumber(message, ...args),
         checkCondition(
             (v: number) => v > value,
-            () => `Should be greater than ${value}`,
+            validationMessages.shouldBeGreaterThan(value),
             message,
             [...args, value]
         )
@@ -298,7 +363,7 @@ export const shouldBeGreaterThanOrEqualTo = (
         shouldBeANumber(message, ...args),
         checkCondition(
             (v: number) => v >= value,
-            () => `Should be greater than or equal to ${value}`,
+            validationMessages.shouldBeGreaterThanOrEqualTo(value),
             message,
             [...args, value]
         )
@@ -313,7 +378,7 @@ export const shouldBeLessThan = (
         shouldBeANumber(message, ...args),
         checkCondition(
             (v: number) => v < value,
-            () => `Should be less than ${value}`,
+            validationMessages.shouldBeLessThan(value),
             message,
             [...args, value]
         )
@@ -328,7 +393,7 @@ export const shouldBeLessThanOrEqualTo = (
         shouldBeANumber(message, ...args),
         checkCondition(
             (v: number) => v <= value,
-            () => `Should be less than or equal to ${value}`,
+            validationMessages.shouldBeLessThanOrEqualTo(value),
             message,
             [...args, value]
         )
@@ -344,7 +409,7 @@ export const shouldBeBetweenValues = (
         shouldBeANumber(message, ...args),
         checkCondition(
             (v: number) => minValue <= v && v <= maxValue,
-            () => `Should be between ${minValue} and ${maxValue}`,
+            validationMessages.shouldBeBetweenValues(minValue, maxValue),
             message,
             [...args, minValue, maxValue]
         )
@@ -359,7 +424,7 @@ export const shouldNotBeGreaterThan = (
         shouldBeANumber(message, ...args),
         checkCondition(
             (v: number) => v <= value,
-            () => `Should not be greater than ${value}`,
+            validationMessages.shouldNotBeGreaterThan(value),
             message,
             [...args, value]
         )
@@ -374,7 +439,7 @@ export const shouldNotBeGreaterThanOrEqualTo = (
         shouldBeANumber(message, ...args),
         checkCondition(
             (v: number) => v < value,
-            () => `Should not be greater than or equal to ${value}`,
+            validationMessages.shouldNotBeGreaterThanOrEqualTo(value),
             message,
             [...args, value]
         )
@@ -389,7 +454,7 @@ export const shouldNotBeLessThan = (
         shouldBeANumber(message, ...args),
         checkCondition(
             (v: number) => v >= value,
-            () => `Should not be less than ${value}`,
+            validationMessages.shouldNotBeLessThan(value),
             message,
             [...args, value]
         )
@@ -404,7 +469,7 @@ export const shouldNotBeLessThanOrEqualTo = (
         shouldBeANumber(message, ...args),
         checkCondition(
             (v: number) => v > value,
-            () => `Should not be less than or equal to ${value}`,
+            validationMessages.shouldNotBeLessThanOrEqualTo(value),
             message,
             [...args, value]
         )
@@ -420,7 +485,7 @@ export const shouldNotBeBetweenValues = (
         shouldBeANumber(message, ...args),
         checkCondition(
             (v: number) => !(minValue <= v && v <= maxValue),
-            () => `Should not be between ${minValue} and ${maxValue}`,
+            validationMessages.shouldNotBeBetweenValues(minValue, maxValue),
             message,
             [...args, minValue, maxValue]
         )
@@ -432,21 +497,23 @@ export const shouldNotBeBetweenValues = (
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-
 export const shouldBeAnArray = (message?: MessageSource, ...args: any[]) =>
     checkCondition(
         (v: any[]) => v instanceof Array,
-        'Should be an array',
+        validationMessages.shouldBeAnArray,
         message,
         args
     );
 
-export const shouldNotBeAnEmptyArray = (message?: MessageSource, ...args: any[]) =>
+export const shouldNotBeAnEmptyArray = (
+    message?: MessageSource,
+    ...args: any[]
+) =>
     validateSome(
         shouldBeAnArray(message, ...args),
         checkCondition(
             (v: any[]) => v.length > 0,
-            'Should not be an empty array',
+            validationMessages.shouldNotBeAnEmptyArray,
             message,
             args
         )
@@ -461,7 +528,7 @@ export const shouldNotBeAnArrayShorterThan = (
         shouldBeAnArray(message, ...args),
         checkCondition(
             (v: any[]) => v.length >= length,
-            () => `Should not be an array shorter than ${length} elements`,
+            validationMessages.shouldNotBeAnArrayShorterThan(length),
             message,
             [...args, length]
         )
@@ -476,7 +543,7 @@ export const shouldBeAnArrayShorterThan = (
         shouldBeAnArray(message, ...args),
         checkCondition(
             (v: any[]) => v.length < length,
-            () => `Should be an array shorter than ${length} elements`,
+            validationMessages.shouldBeAnArrayShorterThan(length),
             message,
             [...args, length]
         )
@@ -491,7 +558,7 @@ export const shouldNotBeAnArrayLongerThan = (
         shouldBeAnArray(message, ...args),
         checkCondition(
             (v: any[]) => v.length <= length,
-            () => `Should not be an array longer than ${length} elements`,
+            validationMessages.shouldNotBeAnArrayLongerThan(length),
             message,
             [...args, length]
         )
@@ -506,13 +573,11 @@ export const shouldBeAnArrayLongerThan = (
         shouldBeAnArray(message, ...args),
         checkCondition(
             (v: any[]) => v.length > length,
-            () => `Should be an array longer than ${length} elements`,
+            validationMessages.shouldBeAnArrayLongerThan(length),
             message,
             [...args, length]
         )
     );
-
-
 
 ////////////////////////////////////////////////////////////////
 //                                                            //

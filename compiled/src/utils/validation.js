@@ -3,6 +3,81 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var _ = require("lodash");
 var common_1 = require("./common");
 exports.emptyValidator = function (value) { return []; };
+var defaultMessages = {
+    validatorResultErrorMessage: (function (result) {
+        return "Expected a validation result of type string[] or string. However a " + typeof result + " was received.";
+    }),
+    shouldBeAString: 'Should be a string',
+    shouldNotBeEmpty: 'Should not be empty',
+    shouldNotBeBlank: 'Should not be blank',
+    shouldMatch: function (pattern) {
+        return 'Should match given pattern';
+    },
+    shouldNotMatch: function (pattern) {
+        return 'Should not match given pattern';
+    },
+    shouldNotBeShorterThan: function (length) {
+        return "Should not be shorter than " + length + " characters";
+    },
+    shouldBeShorterThan: function (length) {
+        return "Should be shorter than " + length + " characters";
+    },
+    shouldNotBeLongerThan: function (length) {
+        return "Should not be longer than " + length + " characters";
+    },
+    shouldBeLongerThan: function (length) {
+        return "Should be longer than " + length + " characters";
+    },
+    shouldBeANumber: 'Should be a number',
+    shouldBeGreaterThan: function (value) {
+        return "Should be greater than " + value;
+    },
+    shouldBeGreaterThanOrEqualTo: function (value) {
+        return "Should be greater than or equal to " + value;
+    },
+    shouldBeLessThan: function (value) {
+        return "Should be less than " + value;
+    },
+    shouldBeLessThanOrEqualTo: function (value) {
+        return "Should be less than or equal to " + value;
+    },
+    shouldBeBetweenValues: function (minValue, maxValue) {
+        return "Should be between " + minValue + " and " + maxValue;
+    },
+    shouldNotBeGreaterThan: function (value) {
+        return "Should not be greater than " + value;
+    },
+    shouldNotBeGreaterThanOrEqualTo: function (value) {
+        return "Should not be greater than or equal to " + value;
+    },
+    shouldNotBeLessThan: function (value) {
+        return "Should not be less than " + value;
+    },
+    shouldNotBeLessThanOrEqualTo: function (value) {
+        return "Should not be less than or equal to " + value;
+    },
+    shouldNotBeBetweenValues: function (minValue, maxValue) {
+        return "Should not be between " + minValue + " and " + maxValue;
+    },
+    shouldBeAnArray: 'Should be an array',
+    shouldNotBeAnEmptyArray: 'Should not be an empty array',
+    shouldNotBeAnArrayShorterThan: function (length) {
+        return "Should not be an array shorter than " + length + " elements";
+    },
+    shouldBeAnArrayShorterThan: function (length) {
+        return "Should be an array shorter than " + length + " elements";
+    },
+    shouldNotBeAnArrayLongerThan: function (length) {
+        return "Should not be an array longer than " + length + " elements";
+    },
+    shouldBeAnArrayLongerThan: function (length) {
+        return "Should be an array longer than " + length + " elements";
+    },
+};
+var validationMessages = defaultMessages;
+exports.setValidationMessages = function (messages) {
+    validationMessages = common_1.assignOrSame(validationMessages, messages);
+};
 exports.makeValidator = function (val) {
     if (val === undefined) {
         val = exports.emptyValidator;
@@ -27,7 +102,8 @@ exports.makeValidator = function (val) {
             }
         }
         else {
-            throw new Error("Expected a validation result of type string[] or string. However a " + typeof result + " was received.");
+            var msg = common_1.getAsValue(validationMessages.validatorResultErrorMessage, result);
+            throw new Error(msg);
         }
     };
 };
@@ -133,63 +209,63 @@ exports.shouldBeAString = function (message) {
     for (var _i = 1; _i < arguments.length; _i++) {
         args[_i - 1] = arguments[_i];
     }
-    return exports.checkCondition(function (v) { return typeof v === 'string'; }, 'Should be a string', message, args);
+    return exports.checkCondition(function (v) { return typeof v === 'string'; }, validationMessages.shouldBeAString, message, args);
 };
 exports.shouldNotBeEmpty = function (message) {
     var args = [];
     for (var _i = 1; _i < arguments.length; _i++) {
         args[_i - 1] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v !== ''; }, 'Should not be empty', message, args));
+    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v !== ''; }, validationMessages.shouldNotBeEmpty, message, args));
 };
 exports.shouldNotBeBlank = function (message) {
     var args = [];
     for (var _i = 1; _i < arguments.length; _i++) {
         args[_i - 1] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.trim() !== ''; }, 'Should not be blank', message, args));
+    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.trim() !== ''; }, validationMessages.shouldNotBeBlank, message, args));
 };
 exports.shouldMatch = function (pattern, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return !!v.match(pattern); }, 'Should match given pattern', message, args));
+    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return !!v.match(pattern); }, validationMessages.shouldMatch(pattern), message, args));
 };
 exports.shouldNotMatch = function (pattern, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return !v.match(pattern); }, 'Should not match given pattern', message, args));
+    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return !v.match(pattern); }, validationMessages.shouldNotMatch(pattern), message, args));
 };
 exports.shouldNotBeShorterThan = function (length, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length >= length; }, function () { return "Should not be shorter than " + length + " characters"; }, message, args.concat([length])));
+    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length >= length; }, validationMessages.shouldNotBeShorterThan(length), message, args.concat([length])));
 };
 exports.shouldBeShorterThan = function (length, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length < length; }, function () { return "Should be shorter than " + length + " characters"; }, message, args.concat([length])));
+    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length < length; }, validationMessages.shouldBeShorterThan(length), message, args.concat([length])));
 };
 exports.shouldNotBeLongerThan = function (length, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length <= length; }, function () { return "Should not be longer than " + length + " characters"; }, message, args.concat([length])));
+    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length <= length; }, validationMessages.shouldNotBeLongerThan(length), message, args.concat([length])));
 };
 exports.shouldBeLongerThan = function (length, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length > length; }, function () { return "Should be longer than " + length + " characters"; }, message, args.concat([length])));
+    return exports.validateSome(exports.shouldBeAString.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length > length; }, validationMessages.shouldBeLongerThan(length), message, args.concat([length])));
 };
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -201,77 +277,77 @@ exports.shouldBeANumber = function (message) {
     for (var _i = 1; _i < arguments.length; _i++) {
         args[_i - 1] = arguments[_i];
     }
-    return exports.checkCondition(function (v) { return typeof v === 'number' && isFinite(v); }, 'Should be a number', message, args);
+    return exports.checkCondition(function (v) { return typeof v === 'number' && isFinite(v); }, validationMessages.shouldBeANumber, message, args);
 };
 exports.shouldBeGreaterThan = function (value, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v > value; }, function () { return "Should be greater than " + value; }, message, args.concat([value])));
+    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v > value; }, validationMessages.shouldBeGreaterThan(value), message, args.concat([value])));
 };
 exports.shouldBeGreaterThanOrEqualTo = function (value, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v >= value; }, function () { return "Should be greater than or equal to " + value; }, message, args.concat([value])));
+    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v >= value; }, validationMessages.shouldBeGreaterThanOrEqualTo(value), message, args.concat([value])));
 };
 exports.shouldBeLessThan = function (value, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v < value; }, function () { return "Should be less than " + value; }, message, args.concat([value])));
+    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v < value; }, validationMessages.shouldBeLessThan(value), message, args.concat([value])));
 };
 exports.shouldBeLessThanOrEqualTo = function (value, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v <= value; }, function () { return "Should be less than or equal to " + value; }, message, args.concat([value])));
+    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v <= value; }, validationMessages.shouldBeLessThanOrEqualTo(value), message, args.concat([value])));
 };
 exports.shouldBeBetweenValues = function (minValue, maxValue, message) {
     var args = [];
     for (var _i = 3; _i < arguments.length; _i++) {
         args[_i - 3] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return minValue <= v && v <= maxValue; }, function () { return "Should be between " + minValue + " and " + maxValue; }, message, args.concat([minValue, maxValue])));
+    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return minValue <= v && v <= maxValue; }, validationMessages.shouldBeBetweenValues(minValue, maxValue), message, args.concat([minValue, maxValue])));
 };
 exports.shouldNotBeGreaterThan = function (value, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v <= value; }, function () { return "Should not be greater than " + value; }, message, args.concat([value])));
+    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v <= value; }, validationMessages.shouldNotBeGreaterThan(value), message, args.concat([value])));
 };
 exports.shouldNotBeGreaterThanOrEqualTo = function (value, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v < value; }, function () { return "Should not be greater than or equal to " + value; }, message, args.concat([value])));
+    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v < value; }, validationMessages.shouldNotBeGreaterThanOrEqualTo(value), message, args.concat([value])));
 };
 exports.shouldNotBeLessThan = function (value, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v >= value; }, function () { return "Should not be less than " + value; }, message, args.concat([value])));
+    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v >= value; }, validationMessages.shouldNotBeLessThan(value), message, args.concat([value])));
 };
 exports.shouldNotBeLessThanOrEqualTo = function (value, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v > value; }, function () { return "Should not be less than or equal to " + value; }, message, args.concat([value])));
+    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v > value; }, validationMessages.shouldNotBeLessThanOrEqualTo(value), message, args.concat([value])));
 };
 exports.shouldNotBeBetweenValues = function (minValue, maxValue, message) {
     var args = [];
     for (var _i = 3; _i < arguments.length; _i++) {
         args[_i - 3] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return !(minValue <= v && v <= maxValue); }, function () { return "Should not be between " + minValue + " and " + maxValue; }, message, args.concat([minValue, maxValue])));
+    return exports.validateSome(exports.shouldBeANumber.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return !(minValue <= v && v <= maxValue); }, validationMessages.shouldNotBeBetweenValues(minValue, maxValue), message, args.concat([minValue, maxValue])));
 };
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -283,42 +359,42 @@ exports.shouldBeAnArray = function (message) {
     for (var _i = 1; _i < arguments.length; _i++) {
         args[_i - 1] = arguments[_i];
     }
-    return exports.checkCondition(function (v) { return v instanceof Array; }, 'Should be an array', message, args);
+    return exports.checkCondition(function (v) { return v instanceof Array; }, validationMessages.shouldBeAnArray, message, args);
 };
 exports.shouldNotBeAnEmptyArray = function (message) {
     var args = [];
     for (var _i = 1; _i < arguments.length; _i++) {
         args[_i - 1] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeAnArray.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length > 0; }, 'Should not be an empty array', message, args));
+    return exports.validateSome(exports.shouldBeAnArray.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length > 0; }, validationMessages.shouldNotBeAnEmptyArray, message, args));
 };
 exports.shouldNotBeAnArrayShorterThan = function (length, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeAnArray.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length >= length; }, function () { return "Should not be an array shorter than " + length + " elements"; }, message, args.concat([length])));
+    return exports.validateSome(exports.shouldBeAnArray.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length >= length; }, validationMessages.shouldNotBeAnArrayShorterThan(length), message, args.concat([length])));
 };
 exports.shouldBeAnArrayShorterThan = function (length, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeAnArray.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length < length; }, function () { return "Should be an array shorter than " + length + " elements"; }, message, args.concat([length])));
+    return exports.validateSome(exports.shouldBeAnArray.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length < length; }, validationMessages.shouldBeAnArrayShorterThan(length), message, args.concat([length])));
 };
 exports.shouldNotBeAnArrayLongerThan = function (length, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeAnArray.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length <= length; }, function () { return "Should not be an array longer than " + length + " elements"; }, message, args.concat([length])));
+    return exports.validateSome(exports.shouldBeAnArray.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length <= length; }, validationMessages.shouldNotBeAnArrayLongerThan(length), message, args.concat([length])));
 };
 exports.shouldBeAnArrayLongerThan = function (length, message) {
     var args = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         args[_i - 2] = arguments[_i];
     }
-    return exports.validateSome(exports.shouldBeAnArray.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length > length; }, function () { return "Should be an array longer than " + length + " elements"; }, message, args.concat([length])));
+    return exports.validateSome(exports.shouldBeAnArray.apply(void 0, [message].concat(args)), exports.checkCondition(function (v) { return v.length > length; }, validationMessages.shouldBeAnArrayLongerThan(length), message, args.concat([length])));
 };
 ////////////////////////////////////////////////////////////////
 //                                                            //

@@ -19,7 +19,8 @@ exports.numberParser = function (source) {
     }
     var result = parseFloat(source);
     if (isNaN(result) || !isFinite(result)) {
-        throw new Error('Should be a number');
+        // throw new Error('Should be a number');
+        return null;
     }
     return result;
 };
@@ -29,7 +30,8 @@ exports.integerParser = function (radix) { return function (text) {
     }
     var result = parseInt(text, radix);
     if (isNaN(result) || !isFinite(result)) {
-        throw new Error('Should be a number');
+        // throw new Error('Should be a number');
+        return null;
     }
     return result;
 }; };

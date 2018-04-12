@@ -25,7 +25,8 @@ export const numberParser: Parser<number> = source => {
     }
     const result = parseFloat(source);
     if (isNaN(result) || !isFinite(result)) {
-        throw new Error('Should be a number');
+        // throw new Error('Should be a number');
+        return null;
     }
     return result;
 };
@@ -36,7 +37,8 @@ export const integerParser = (radix: number): Parser<number> => text => {
     }
     const result = parseInt(text, radix);
     if (isNaN(result) || !isFinite(result)) {
-        throw new Error('Should be a number');
+        // throw new Error('Should be a number');
+        return null;
     }
     return result;
 };

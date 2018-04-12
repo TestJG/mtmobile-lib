@@ -243,7 +243,7 @@ const expectConfig = <T>(
                         it(`it's parser(${JSON.stringify(
                             input
                         )}) should return NaN`, () =>
-                            expect(() => item.parser(input)).toThrow());
+                            expect(item.parser(input)).toBeNull());
                     } else {
                         it(`it's parser(${JSON.stringify(
                             input
@@ -1844,14 +1844,14 @@ describe('Utils', () => {
                     initValue: 30,
                     initInput: '30',
                     input: 'xyz',
-                    validInput: '30',
-                    isValidInput: false,
-                    value: 30,
+                    validInput: 'xyz',
+                    isValidInput: true,
+                    value: null,
                     isDirty: true,
                     isTouched: true,
-                    isValid: false,
-                    errors: ['Not a number'],
-                    showErrors: true
+                    isValid: true,
+                    errors: [],
+                    showErrors: false
                 });
             });
 
@@ -1866,14 +1866,14 @@ describe('Utils', () => {
                     initValue: 10,
                     initInput: null,
                     input: '-',
-                    validInput: '10',
-                    isValidInput: false,
-                    value: 10,
+                    validInput: '-',
+                    isValidInput: true,
+                    value: null,
                     isDirty: true,
                     isTouched: true,
-                    isValid: false,
-                    errors: ['Should be a number'],
-                    showErrors: true
+                    isValid: true,
+                    errors: [],
+                    showErrors: false
                 });
             });
 
