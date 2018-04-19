@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
 import { IProcessor, IProcessorCore, TaskItem } from './processor.interfaces';
 import { assign } from '../utils/common';
 

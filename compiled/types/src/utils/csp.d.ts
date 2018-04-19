@@ -1,4 +1,5 @@
-import { Observable, Observer } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
+import { Observer } from 'rxjs/Observer';
 import { LogOpts, Logger } from './common';
 export declare const isChan: (value: any) => boolean;
 export declare const isInstruction: (value: any) => any;

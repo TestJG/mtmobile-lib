@@ -27,7 +27,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var rxjs_1 = require("rxjs");
+var Observable_1 = require("rxjs/Observable");
 var js_csp_1 = require("js-csp");
 var common_1 = require("./common");
 var index_1 = require("../../index");
@@ -250,7 +250,7 @@ exports.iterableToChan = function (iterable, options) {
         includeErrors: true
     }, options);
     try {
-        var generator = iterable[rxjs_1.Symbol.iterator]();
+        var generator = iterable[Symbol.iterator]();
         return exports.generatorToChan(generator, options);
     }
     catch (error) {
@@ -360,10 +360,10 @@ exports.toChan = function (source, options) {
         typeof source === 'number') {
         return exports.iterableToChan([source], options);
     }
-    else if (rxjs_1.Symbol.iterator in source) {
+    else if (Symbol.iterator in source) {
         return exports.iterableToChan(source, options);
     }
-    else if (rxjs_1.Symbol.observable in source) {
+    else if (source instanceof Observable_1.Observable) {
         return exports.observableToChan(source, options);
     }
     else if (source && typeof source.next === 'function') {
@@ -387,7 +387,7 @@ exports.toYielder = function (source) {
 exports.chanToObservable = function (ch, options) {
     var opts = Object.assign({}, options);
     var log = common_1.conditionalLog(opts, { prefix: 'OBS_CHAN: ' });
-    var obsResult = rxjs_1.Observable.create(function (o) {
+    var obsResult = Observable_1.Observable.create(function (o) {
         log('Start');
         var cancelCh = js_csp_1.promiseChan();
         js_csp_1.go(function () {

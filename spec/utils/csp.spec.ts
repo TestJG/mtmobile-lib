@@ -1,4 +1,5 @@
-import { Observable, Observer } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
+import { Observer } from 'rxjs/Observer';
 import {
     chan,
     promiseChan,
@@ -38,6 +39,9 @@ import {
     iterableToChan
 } from '../../src/utils/csp';
 import { conditionalLog } from '../../src/utils/common';
+import "rxjs/add/observable/empty";
+import "rxjs/add/observable/timer";
+import "rxjs/add/operator/toPromise";
 
 describe('Utils', () => {
     describe('CSP Tests', () => {
@@ -167,7 +171,7 @@ describe('Utils', () => {
                     chanToObservable(ch),
                     [
                         new TypeError(
-                            'iterable[_rxjs.Symbol.iterator] is not a function'
+                            'iterable[Symbol.iterator] is not a function'
                         )
                     ],
                     null,

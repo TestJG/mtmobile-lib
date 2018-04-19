@@ -1,7 +1,12 @@
-import { Observable, Notification } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
+import { Notification } from 'rxjs/Notification';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
 import { deepEqual } from '../../src/utils/equality';
 import { joinStr, conditionalLog, ValueOrFunc, LogOpts } from '../../src/utils';
+import "rxjs/add/observable/timer";
+import "rxjs/add/operator/concatMap";
+import "rxjs/add/operator/timeoutWith";
+import "rxjs/add/operator/toArray";
 
 export interface DoneCallback {
     (...args: any[]): any;

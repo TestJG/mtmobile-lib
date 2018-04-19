@@ -1,4 +1,5 @@
-import { Observable, Notification } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
+import { Notification } from 'rxjs/Notification';
 import { testObs } from './rxtest';
 import * as common from '../../src/utils/common';
 import * as rxutils from '../../src/utils/rxutils';

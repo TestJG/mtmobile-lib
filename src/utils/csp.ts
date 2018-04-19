@@ -1,4 +1,5 @@
-import { Observable, Observer, Subject, Symbol } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
+import { Observer } from 'rxjs/Observer';
 import {
     chan,
     promiseChan,
@@ -340,7 +341,7 @@ export const toChan = (source: any, options?: Partial<ToChanOptions>) => {
         return iterableToChan([source], options);
     } else if (Symbol.iterator in source) {
         return iterableToChan(source, options);
-    } else if (Symbol.observable in source) {
+    } else if (source instanceof Observable) {
         return observableToChan(source, options);
     } else if (source && typeof source.next === 'function') {
         return generatorToChan(source, options);

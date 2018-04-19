@@ -1,5 +1,5 @@
 import { IProcessor, IProcessorCore, TaskItem } from './processor.interfaces';
-import { Observable } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
 import { capString } from '../utils/common';
 
 export function logProcessor(processor: IProcessor) {

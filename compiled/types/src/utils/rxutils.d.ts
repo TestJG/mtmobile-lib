@@ -1,6 +1,7 @@
-import { Observable, Subscription, Observer } from 'rxjs';
-import { Subscribable } from 'rxjs/Observable';
+import { Observable, Subscribable } from 'rxjs/Observable';
+import { Observer } from 'rxjs/Observer';
 import { ValueOrFunc } from './common';
+import { Subscription } from 'rxjs/Subscription';
 export declare type ObsLike<T = any> = Subscribable<T> | PromiseLike<T> | T[] | T;
 export declare type ObsOrFunc<T = any> = ValueOrFunc<ObsLike<T>>;
 export declare const normalizeErrorOnCatch: <T>(err: any) => Observable<T>;

@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var rxjs_1 = require("rxjs");
+var Observable_1 = require("rxjs/Observable");
 var common_1 = require("./common");
 exports.normalizeErrorOnCatch = function (err) {
-    return rxjs_1.Observable.throw(common_1.normalizeError(err));
+    return Observable_1.Observable.throw(common_1.normalizeError(err));
 };
 exports.fromObsLike = function (source, treatArraysAsValues) {
     if (treatArraysAsValues === void 0) { treatArraysAsValues = true; }
@@ -11,10 +11,10 @@ exports.fromObsLike = function (source, treatArraysAsValues) {
         (Promise.resolve(source) === source ||
             typeof source['subscribe'] === 'function' ||
             (!treatArraysAsValues && source instanceof Array))) {
-        return rxjs_1.Observable.from(source);
+        return Observable_1.Observable.from(source);
     }
     else {
-        return rxjs_1.Observable.of(source);
+        return Observable_1.Observable.of(source);
     }
 };
 exports.tryTo = function (thunk, treatArraysAsValues) {
@@ -88,7 +88,7 @@ function makeState(init, updates$) {
 }
 exports.makeState = makeState;
 function mapUntilCancelled(observable, cancel) {
-    return rxjs_1.Observable.merge(observable.takeUntil(cancel), cancel.first().takeUntil(observable.ignoreElements().materialize()));
+    return Observable_1.Observable.merge(observable.takeUntil(cancel), cancel.first().takeUntil(observable.ignoreElements().materialize()));
 }
 exports.mapUntilCancelled = mapUntilCancelled;
 function logObserver(logger, maxLength, logNext, logErrors, logComplete) {

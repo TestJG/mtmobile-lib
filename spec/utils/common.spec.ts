@@ -30,7 +30,6 @@ import {
     printData,
     hasNewLine,
     printObj,
-    printObj
 } from '../../src/utils/common';
 
 describe('Utils', () => {

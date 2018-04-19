@@ -1,4 +1,5 @@
-import { Observable, Notification } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
+import { Notification } from 'rxjs/Notification';
 import { testObs } from './rxtest';
 import { id } from '../../src/utils/common';
 import {
@@ -10,6 +11,10 @@ import {
     firstSwitchMap,
     makeState
 } from '../../src/utils/rxutils';
+import "rxjs/add/observable/timer";
+import "rxjs/add/operator/concat";
+import "rxjs/add/operator/concatMap";
+import "rxjs/add/operator/delay";
 
 describe('Utils', () => {
     describe('Reactive Utils', () => {

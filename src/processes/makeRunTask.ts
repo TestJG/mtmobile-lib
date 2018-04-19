@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
 import { TaskItem } from './processor.interfaces';
 import { ObsLike, tryTo } from '../utils/rxutils';
 

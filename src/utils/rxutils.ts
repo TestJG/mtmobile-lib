@@ -1,5 +1,5 @@
-import { Observable, Subscription, ReplaySubject, Observer } from 'rxjs';
-import { Subscribable } from 'rxjs/Observable';
+import { Observable, Subscribable } from 'rxjs/Observable';
+import { Observer } from 'rxjs/Observer';
 import {
     isSomething,
     normalizeError,
@@ -10,6 +10,7 @@ import {
     noop
 } from './common';
 import { IScheduler } from 'rxjs/Scheduler';
+import { Subscription } from 'rxjs/Subscription';
 
 export type ObsLike<T = any> = Subscribable<T> | PromiseLike<T> | T[] | T;
 export type ObsOrFunc<T = any> = ValueOrFunc<ObsLike<T>>;

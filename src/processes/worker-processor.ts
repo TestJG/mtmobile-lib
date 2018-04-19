@@ -1,4 +1,7 @@
-import { Observable, Subject, Observer, Subscription } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
+import { Subject } from 'rxjs/Subject';
+import { Observer } from 'rxjs/Observer';
+import { Subscription } from 'rxjs/Subscription';
 import { IProcessor, IProcessorCore, TaskItem } from './processor.interfaces';
 import { uuid } from '../utils/common';
 

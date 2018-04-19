@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var rxjs_1 = require("rxjs");
+var Observable_1 = require("rxjs/Observable");
+var Subject_1 = require("rxjs/Subject");
 var common_1 = require("../utils/common");
 exports.createBackgroundWorker = function (opts) {
     opts.processor.onFinished$.subscribe({
@@ -63,7 +64,7 @@ exports.createForegroundWorker = function (opts) {
     var caption = opts.caption || 'worker';
     var status = 'open';
     var terminateUUID = common_1.uuid();
-    var terminateSub = new rxjs_1.Subject();
+    var terminateSub = new Subject_1.Subject();
     var terminate$ = terminateSub.asObservable();
     var terminateSubscription = terminateSub.subscribe({
         complete: function () {
@@ -85,9 +86,9 @@ exports.createForegroundWorker = function (opts) {
         return terminate$;
     };
     var process = function (task) {
-        var result = rxjs_1.Observable.create(function (o) {
+        var result = Observable_1.Observable.create(function (o) {
             var id = common_1.uuid();
-            var sub = new rxjs_1.Subject();
+            var sub = new Subject_1.Subject();
             var obs$ = sub.asObservable();
             observers.set(id, sub);
             worker.postMessage({ kind: 'process', uid: id, task: task });
