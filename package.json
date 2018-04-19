@@ -90,7 +90,7 @@
   "dependencies": {
     "@types/lodash": "^4.14.87",
     "debug": "^3.1.0",
-    "js-csp": "^1.0.1",
+    "js-csp": "TestJG/js-csp",
     "lodash": "^4.17.4"
   }
 }
