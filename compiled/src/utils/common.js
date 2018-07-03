@@ -663,7 +663,7 @@ exports.printObj = function (obj, options) {
     var excludeConstructors = typeof opts.excludeConstructors === 'function'
         ? opts.excludeConstructors
         : (function (x) { return opts.excludeConstructors.indexOf(x) >= 0; });
-    var past = new Set();
+    var past = new Map();
     var indentations = ['', opts.indentChars];
     var ind = function (depth) {
         while (depth >= indentations.length) {
@@ -675,19 +675,19 @@ exports.printObj = function (obj, options) {
     var propertyComparer = opts.propertyOrder === 'byTypeAndName'
         ? exports.compareBy(function (a, b) { return exports.compareTypes(typeof a[2], typeof b[2]); }, function (a, b) { return exports.compareSameType(a[0], b[0]); })
         : function (a, b) { return exports.compareSameType(a[0], b[0]); };
-    var loop = function (value, depth) {
+    var loop = function (value, depth, path) {
         if (depth < opts.maxDepth && value instanceof Array) {
             if (past.has(value)) {
-                return "[ cyclic reference ... ]";
+                return "[ cyclic reference ..." + past.get(value) + " ]";
             }
             else if (value.length === 0) {
                 return '[]';
             }
             else {
-                past.add(value);
+                past.set(value, path);
                 var values = value
                     .filter(function (v) { return !isExcluded(v); })
-                    .map(function (v) { return loop(v, depth + 1); });
+                    .map(function (v, i) { return loop(v, depth + 1, path + "[" + i + "]"); });
                 var totalLength = values.reduce(function (x, s) { return x + s.length + 2; }, 0);
                 if (totalLength > opts.maxValueLength || values.some(function (s) { return exports.hasNewLine(s); })) {
                     var valuesShort = values.length <= opts.maxValuesPerArray
@@ -711,10 +711,10 @@ exports.printObj = function (obj, options) {
             value &&
             value.constructor === Object) {
             if (past.has(value)) {
-                return "{ cyclic reference ... }";
+                return "{ cyclic reference ..." + past.get(value) + " }";
             }
             else {
-                past.add(value);
+                past.set(value, path);
                 var propNames = opts.onlyEnumerableProperties
                     ? Object.keys(value)
                     : Object.getOwnPropertyNames(value);
@@ -722,7 +722,7 @@ exports.printObj = function (obj, options) {
                     return '{}';
                 }
                 var props = propNames
-                    .map(function (n) { return [n, loop(value[n], depth + 1), value[n]]; })
+                    .map(function (n) { return [n, loop(value[n], depth + 1, path + "." + n), value[n]]; })
                     .filter(function (p) { return !isExcluded(p[2]); });
                 props.sort(propertyComparer);
                 var totalLength = props.reduce(function (x, p) { return x + p[0].length + p[1].length + 4; }, 0);
@@ -755,6 +755,6 @@ exports.printObj = function (obj, options) {
             return str;
         }
     };
-    return loop(obj, 0);
+    return loop(obj, 0, '');
 };
 //# sourceMappingURL=common.js.map

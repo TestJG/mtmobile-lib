@@ -747,7 +747,7 @@ export const printObj = (
     const excludeConstructors = typeof opts.excludeConstructors === 'function'
         ? opts.excludeConstructors
         : ((x: Function) => (<Function[]>opts.excludeConstructors).indexOf(x) >= 0);
-    const past = new Set<any>();
+    const past = new Map<any, string>();
     const indentations = ['', opts.indentChars];
     const ind = (depth: number) => {
         while (depth >= indentations.length) {
@@ -762,17 +762,17 @@ export const printObj = (
             (a, b) => compareSameType(a[0], b[0]))
         : (a, b) => compareSameType(a[0], b[0]);
 
-    const loop = (value: any, depth: number): string => {
+    const loop = (value: any, depth: number, path: string): string => {
         if (depth < opts.maxDepth && value instanceof Array) {
             if (past.has(value)) {
-                return `[ cyclic reference ... ]`;
+                return `[ cyclic reference ...${past.get(value)} ]`;
             } else if (value.length === 0) {
                 return '[]';
             } else {
-                past.add(value);
+                past.set(value, path);
                 const values = value
                     .filter(v => !isExcluded(v))
-                    .map(v => loop(v, depth + 1));
+                    .map((v, i) => loop(v, depth + 1, `${path}[${i}]`));
                 const totalLength =
                     values.reduce((x, s) => x + s.length + 2, 0);
                 if (totalLength > opts.maxValueLength || values.some(s => hasNewLine(s))) {
@@ -797,9 +797,9 @@ export const printObj = (
             value.constructor === Object
         ) {
             if (past.has(value)) {
-                return `{ cyclic reference ... }`;
+                return `{ cyclic reference ...${past.get(value)} }`;
             } else {
-                past.add(value);
+                past.set(value, path);
                 const propNames = opts.onlyEnumerableProperties
                     ? Object.keys(value)
                     : Object.getOwnPropertyNames(value);
@@ -807,7 +807,7 @@ export const printObj = (
                     return '{}';
                 }
                 const props = propNames
-                    .map(n => <[string, string, any]>[n, loop(value[n], depth + 1), value[n]])
+                    .map(n => <[string, string, any]>[n, loop(value[n], depth + 1, `${path}.${n}`), value[n]])
                     .filter(p => !isExcluded(p[2]));
                 props.sort(propertyComparer);
                 const totalLength =
@@ -841,5 +841,5 @@ export const printObj = (
         }
     };
 
-    return loop(obj, 0);
+    return loop(obj, 0, '');
 };
