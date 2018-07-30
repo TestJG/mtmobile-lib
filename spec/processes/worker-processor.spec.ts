@@ -1,4 +1,4 @@
-import { Observable, Observer, ReplaySubject, Subject } from 'rxjs';
+import { Observable, Observer, ReplaySubject } from 'rxjs';
 import { testObs, testTaskOf } from '../utils/rxtest';
 import {
     IProcessorCore,
@@ -20,7 +20,7 @@ describe('Processes', () => {
                 expect(createBackgroundWorker).toBeInstanceOf(Function));
 
             describe('When a background worker is created from a well behaved processor', () => {
-                const procSubj = new Subject<IProcessor>();
+                const procSubj = new ReplaySubject<IProcessor>(1);
                 procSubj.next(fromServiceToDirectProcessor(
                     {
                         taskA: testTaskOf(5)(1, 2, 3),
@@ -76,7 +76,7 @@ describe('Processes', () => {
             });
 
             describe('When a background worker is created from a bad behaved processor', () => {
-                const procSubj = new Subject<IProcessor>();
+                const procSubj = new ReplaySubject<IProcessor>(1);
                 procSubj.next(fromServiceToDirectProcessor(
                     {
                         taskA: testTaskOf(5)(1, 2, new TransientError('transient')),
