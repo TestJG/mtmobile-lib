@@ -18,11 +18,11 @@ export interface WorkerItemResponse {
 }
 
 export const createBackgroundWorker = (opts: {
-    processor: IProcessor;
+    processor: Observable<IProcessor>;
     postMessage: typeof Worker.prototype.postMessage;
     terminate: typeof Worker.prototype.terminate;
 }) => {
-    opts.processor.onFinished$.subscribe({
+    opts.processor.switchMap(p => p.onFinished$).subscribe({
         complete: () => {
             opts.terminate();
         }
@@ -33,35 +33,38 @@ export const createBackgroundWorker = (opts: {
     const process = (item: WorkerItem) => {
         switch (item.kind) {
             case 'process': {
-                const subs = opts.processor.process(item.task).subscribe({
-                    next: v =>
-                        opts.postMessage(
-                            <WorkerItemResponse>{
-                                kind: 'N',
-                                uid: item.uid,
-                                valueOrError: v
-                            }
-                        ),
-                    error: err => {
-                        subscriptions.delete(item.uid);
-                        opts.postMessage(
-                            <WorkerItemResponse>{
-                                kind: 'E',
-                                uid: item.uid,
-                                valueOrError: err
-                            }
-                        );
-                    },
-                    complete: () => {
-                        subscriptions.delete(item.uid);
-                        opts.postMessage(
-                            <WorkerItemResponse>{
-                                kind: 'C',
-                                uid: item.uid
-                            }
-                        );
-                    }
-                });
+                const subs = opts.processor
+                    .first()
+                    .switchMap(p => p.process(item.task))
+                    .subscribe({
+                        next: v =>
+                            opts.postMessage(
+                                <WorkerItemResponse>{
+                                    kind: 'N',
+                                    uid: item.uid,
+                                    valueOrError: v
+                                }
+                            ),
+                        error: err => {
+                            subscriptions.delete(item.uid);
+                            opts.postMessage(
+                                <WorkerItemResponse>{
+                                    kind: 'E',
+                                    uid: item.uid,
+                                    valueOrError: err
+                                }
+                            );
+                        },
+                        complete: () => {
+                            subscriptions.delete(item.uid);
+                            opts.postMessage(
+                                <WorkerItemResponse>{
+                                    kind: 'C',
+                                    uid: item.uid
+                                }
+                            );
+                        }
+                    });
                 subscriptions.set(item.uid, subs);
                 break;
             }
@@ -76,7 +79,7 @@ export const createBackgroundWorker = (opts: {
             }
 
             case 'terminate': {
-                opts.processor.finish().subscribe();
+                opts.processor.first().switchMap(p => p.finish()).subscribe();
                 break;
             }
 

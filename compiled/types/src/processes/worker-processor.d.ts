@@ -1,3 +1,4 @@
+import { Observable } from 'rxjs/Observable';
 import { IProcessor, IProcessorCore, TaskItem } from './processor.interfaces';
 export interface WorkerItem {
     kind: 'process' | 'terminate' | 'unsubscribe';
@@ -10,7 +11,7 @@ export interface WorkerItemResponse {
     valueOrError?: any;
 }
 export declare const createBackgroundWorker: (opts: {
-    processor: IProcessor;
+    processor: Observable<IProcessor>;
     postMessage: (message: any, transfer?: any[]) => void;
     terminate: () => void;
 }) => {

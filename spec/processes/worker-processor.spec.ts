@@ -1,4 +1,4 @@
-import { Observable, Observer, ReplaySubject } from 'rxjs';
+import { Observable, Observer, ReplaySubject, Subject } from 'rxjs';
 import { testObs, testTaskOf } from '../utils/rxtest';
 import {
     IProcessorCore,
@@ -11,6 +11,7 @@ import {
     SimpleWorker,
     TransientError
 } from '../../src/processes';
+import { IProcessor } from "../../index";
 
 describe('Processes', () => {
     describe('Router Processor', () => {
@@ -19,17 +20,18 @@ describe('Processes', () => {
                 expect(createBackgroundWorker).toBeInstanceOf(Function));
 
             describe('When a background worker is created from a well behaved processor', () => {
-                const proc = fromServiceToDirectProcessor(
+                const procSubj = new Subject<IProcessor>();
+                procSubj.next(fromServiceToDirectProcessor(
                     {
                         taskA: testTaskOf(5)(1, 2, 3),
                         taskB: testTaskOf(5)(10, 20, 30)
                     },
                     'Proc'
-                );
+                ));
                 const postMessageSpy = jasmine.createSpy('postMessage');
                 const terminateSpy = jasmine.createSpy('terminate');
                 const worker = createBackgroundWorker({
-                    processor: proc,
+                    processor: procSubj.asObservable(),
                     postMessage: postMessageSpy,
                     terminate: terminateSpy
                 });
@@ -74,18 +76,19 @@ describe('Processes', () => {
             });
 
             describe('When a background worker is created from a bad behaved processor', () => {
-                const proc = fromServiceToDirectProcessor(
+                const procSubj = new Subject<IProcessor>();
+                procSubj.next(fromServiceToDirectProcessor(
                     {
                         taskA: testTaskOf(5)(1, 2, new TransientError('transient')),
                         taskB: testTaskOf(5)(10, 20, 30)
                     },
                     'Proc',
                     { maxRetries: 2, maxDelay: 5 }
-                );
+                ));
                 const postMessageSpy = jasmine.createSpy('postMessage');
                 const terminateSpy = jasmine.createSpy('terminate');
                 const worker = createBackgroundWorker({
-                    processor: proc,
+                    processor: procSubj.asObservable(),
                     postMessage: postMessageSpy,
                     terminate: terminateSpy
                 });

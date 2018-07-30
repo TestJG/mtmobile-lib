@@ -4,7 +4,7 @@ var Observable_1 = require("rxjs/Observable");
 var Subject_1 = require("rxjs/Subject");
 var common_1 = require("../utils/common");
 exports.createBackgroundWorker = function (opts) {
-    opts.processor.onFinished$.subscribe({
+    opts.processor.switchMap(function (p) { return p.onFinished$; }).subscribe({
         complete: function () {
             opts.terminate();
         }
@@ -13,7 +13,10 @@ exports.createBackgroundWorker = function (opts) {
     var process = function (item) {
         switch (item.kind) {
             case 'process': {
-                var subs = opts.processor.process(item.task).subscribe({
+                var subs = opts.processor
+                    .first()
+                    .switchMap(function (p) { return p.process(item.task); })
+                    .subscribe({
                     next: function (v) {
                         return opts.postMessage({
                             kind: 'N',
@@ -49,7 +52,7 @@ exports.createBackgroundWorker = function (opts) {
                 break;
             }
             case 'terminate': {
-                opts.processor.finish().subscribe();
+                opts.processor.first().switchMap(function (p) { return p.finish(); }).subscribe();
                 break;
             }
             default:
