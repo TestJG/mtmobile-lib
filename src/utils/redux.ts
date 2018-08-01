@@ -1,4 +1,5 @@
-import { Observable } from 'rxjs/Observable';
+import { map, filter } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { Action, ActionReducer } from '@ngrx/store';
 import {
     objFlatMap,
@@ -243,15 +244,15 @@ export const action = <T = any, S = any>(
     const create = (payload: T) => ({ type, payload });
     reducer = reducer || id;
     const is = (a: Action) => a.type && a.type === type;
-    const filter = (actions: Observable<Action>) =>
-        actions.filter(is).map(a => <T>(<any>a).payload);
+    const aux = (actions: Observable<Action>) =>
+        actions.pipe(filter(is), map(a => <T>(<any>a).payload));
     const result = Object.assign(create, {
         actionName,
         type,
         prefix,
         hasPayload: true,
         reducer,
-        filter,
+        filter: aux,
         is
     });
     return result;
@@ -277,15 +278,15 @@ export const actionEmpty = <S = any>(
     const create = () => ({ type });
     const reducer: ReducerOf<S, void> = aSimpleReducer || id;
     const is = (a: Action) => a.type && a.type === type;
-    const filter = (actions: Observable<Action>) =>
-        actions.filter(is).map(() => null);
+    const aux = (actions: Observable<Action>) =>
+        actions.pipe(filter(is), map(() => null));
     const result = Object.assign(create, {
         actionName,
         type,
         prefix,
         hasPayload: false,
         reducer,
-        filter,
+        filter: aux,
         is
     });
     return result;

@@ -1,3 +1,14 @@
 {
-    "eslint.enable": false
+    "eslint.enable": false,
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false,
+    "prettier.tabWidth": 2,
+    "prettier.singleQuote": true,
+    "prettier.trailingComma": "es5",
+    "prettier.arrowParens": "avoid",
+    "prettier.eslintIntegration": true,
+    "editor.rulers": [
+      80
+    ],
+    "files.trimTrailingWhitespace": true,
 }

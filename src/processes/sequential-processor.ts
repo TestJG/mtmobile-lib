@@ -1,6 +1,4 @@
-import { Observable } from 'rxjs/Observable';
-import { Subject } from 'rxjs/Subject';
-import { ReplaySubject } from 'rxjs/ReplaySubject';
+import { throwError, Subject, ReplaySubject } from 'rxjs';
 import { assign, objFilter } from '../utils/common';
 import { ObsLike } from '../utils/rxutils';
 import { TransientError } from './errors';
@@ -259,7 +257,7 @@ export function startSequentialProcessor(
     const process = (item: TaskItem) => {
         if (!_isAlive) {
             log('PROCESS - NOT ALIVE');
-            return Observable.throw(new Error('worker:finishing'));
+            return throwError(new Error('worker:finishing'));
         }
 
         const sub = new Subject<any>();

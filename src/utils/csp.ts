@@ -1,5 +1,5 @@
-import { Observable } from 'rxjs/Observable';
-import { Observer } from 'rxjs/Observer';
+import { take as takeObs } from 'rxjs/operators';
+import { Observable, Observer } from 'rxjs';
 import {
     chan,
     promiseChan,
@@ -299,7 +299,7 @@ export const promiseToChan = (
 export const firstToChan = (
     obs: Observable<any>,
     options?: Partial<ToChanOptions>
-): any => observableToChan(obs.take(1), options);
+): any => observableToChan(obs.pipe(takeObs(1)), options);
 
 export const observableToChan = (
     obs: Observable<any>,

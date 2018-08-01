@@ -1,16 +1,17 @@
-import { Observable, Observer } from 'rxjs';
+import { timer, merge } from 'rxjs';
 import {
     IProcessorCore,
     TaskItem,
-    task
+    task,
 } from '../../src/processes/processor.interfaces';
 import { testObs } from '../utils/rxtest';
 import {
     fromServiceToDirectProcessor,
     startDirectProcessor,
     startRouterProcessor,
-    startRouterProxy
+    startRouterProxy,
 } from '../../src/processes';
+import { map } from 'rxjs/operators';
 
 describe('Processes', () => {
     describe('Router Processor', () => {
@@ -19,10 +20,10 @@ describe('Processes', () => {
                 expect(startRouterProcessor).toBeInstanceOf(Function));
 
             describe('When a router processor is started with two processors', () => {
-                const dummy = ms => p => Observable.timer(ms).map(() => p);
+                const dummy = ms => p => timer(ms).pipe(map(() => p));
                 const service = (msa, msb) => ({
                     taskA: dummy(msa),
-                    taskB: dummy(msb)
+                    taskB: dummy(msb),
                 });
                 const proc1 = fromServiceToDirectProcessor(
                     service(5, 20),
@@ -39,11 +40,11 @@ describe('Processes', () => {
 
                 it('it should process task returning the well behaved result', done =>
                     testObs(
-                        Observable.merge(
+                        merge(
                             proc.process(task('svc1/taskA', 10)),
                             proc.process(task('svc1/taskB', 20)),
                             proc.process(task('svc2/taskA', 30)),
-                            proc.process(task('svc2/taskB', 40)),
+                            proc.process(task('svc2/taskB', 40))
                         ),
                         [10, 30, 40, 20],
                         null,
@@ -59,10 +60,10 @@ describe('Processes', () => {
                 expect(startRouterProxy).toBeInstanceOf(Function));
 
             describe('When a router proxy is started with a prefix', () => {
-                const dummy = ms => p => Observable.timer(ms).map(() => p);
+                const dummy = ms => p => timer(ms).pipe(map(() => p));
                 const service = (msa, msb) => ({
                     taskA: dummy(msa),
-                    taskB: dummy(msb)
+                    taskB: dummy(msb),
                 });
                 const proc1 = fromServiceToDirectProcessor(
                     service(5, 20),
@@ -76,16 +77,20 @@ describe('Processes', () => {
                     { svc1: proc1, svc2: proc2 },
                     { caption: 'Proc', routeSeparator: '/' }
                 );
-                const proxy1 = startRouterProxy(proc, 'svc1', { routeSeparator: '/' });
-                const proxy2 = startRouterProxy(proc, 'svc2', { routeSeparator: '/' });
+                const proxy1 = startRouterProxy(proc, 'svc1', {
+                    routeSeparator: '/',
+                });
+                const proxy2 = startRouterProxy(proc, 'svc2', {
+                    routeSeparator: '/',
+                });
 
                 it('it should process task returning the well behaved result', done =>
                     testObs(
-                        Observable.merge(
+                        merge(
                             proxy1.process(task('taskA', 10)),
                             proxy1.process(task('taskB', 20)),
                             proxy2.process(task('taskA', 30)),
-                            proxy2.process(task('taskB', 40)),
+                            proxy2.process(task('taskB', 40))
                         ),
                         [10, 30, 40, 20],
                         null,

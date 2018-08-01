@@ -1,13 +1,13 @@
-import { Observable, Observer } from 'rxjs';
 import {
-    IProcessorCore,
     TaskItem,
     task,
     makeRunTask,
     startSequentialProcessor,
-    TransientError
+    TransientError,
 } from '../../src/processes';
 import { testObs } from '../utils/rxtest';
+import { timer, of, throwError, merge } from 'rxjs';
+import { skip, concat, map, switchMap, take, flatMap } from 'rxjs/operators';
 
 describe('Processes', () => {
     describe('Sequential Processor', () => {
@@ -17,9 +17,10 @@ describe('Processes', () => {
 
             describe('When a sequential processor is started with well behaved task', () => {
                 const runner = (item: TaskItem) =>
-                    Observable.timer(5)
-                        .skip(1)
-                        .concat(Observable.of(1, 2, 3));
+                    timer(5).pipe(
+                        skip(1),
+                        concat(of(1, 2, 3))
+                    );
                 const proc = startSequentialProcessor(runner);
 
                 it('it should process task returning the well behaved result', done =>
@@ -33,13 +34,14 @@ describe('Processes', () => {
 
             describe('When a sequential processor is started with bad behaved task', () => {
                 const runner = (item: TaskItem) =>
-                    Observable.timer(5)
-                        .skip(1)
-                        .concat(Observable.of(1, 2, 3))
-                        .concat(Observable.throw(new TransientError('transient')));
+                    timer(5).pipe(
+                        skip(1),
+                        concat(of(1, 2, 3)),
+                        concat(throwError(new TransientError('transient')))
+                    );
                 const proc = startSequentialProcessor(runner, {
                     maxRetries: 3,
-                    nextDelay: d => d
+                    nextDelay: d => d,
                 });
 
                 it('it should process task returning the bad behaved result after retrying 3 times', done =>
@@ -54,18 +56,23 @@ describe('Processes', () => {
             describe('When a sequential processor is started with temporary error', () => {
                 let errorCount = 0;
                 const runner = (item: TaskItem) =>
-                    Observable.timer(5)
-                        .skip(1)
-                        .concat(
+                    timer(5).pipe(
+                        skip(1),
+                        concat(
                             ++errorCount <= 2
-                                ? Observable.of(1, 2, 3).concat(
-                                      Observable.throw(new TransientError('temporary'))
+                                ? of(1, 2, 3).pipe(
+                                      concat(
+                                          throwError(
+                                              new TransientError('temporary')
+                                          )
+                                      )
                                   )
-                                : Observable.of(1, 2, 3, 4)
-                        );
+                                : of(1, 2, 3, 4)
+                        )
+                    );
                 const proc = startSequentialProcessor(runner, {
                     maxRetries: 5,
-                    nextDelay: d => d
+                    nextDelay: d => d,
                 });
 
                 it('it should process task returning the well behaved result after the error is resolved', done =>
@@ -79,20 +86,24 @@ describe('Processes', () => {
 
             describe('Given a simple sequential processor', () => {
                 const runner = (item: TaskItem) =>
-                    Observable.timer(item.payload).map(() => item.payload);
+                    timer(item.payload).pipe(map(() => item.payload));
                 const processor = startSequentialProcessor(runner, {
                     maxRetries: 5,
-                    nextDelay: d => d
+                    nextDelay: d => d,
                 });
 
                 it('calling taskA and taskB should run them sequentially', done =>
                     testObs(
-                        Observable.merge(
-                            Observable.timer(10).switchMap(() =>
-                                processor.process(task('task1', 10))
+                        merge(
+                            timer(10).pipe(
+                                switchMap(() =>
+                                    processor.process(task('task1', 10))
+                                )
                             ),
-                            Observable.timer(5).switchMap(() =>
-                                processor.process(task('task2', 30))
+                            timer(5).pipe(
+                                switchMap(() =>
+                                    processor.process(task('task2', 30))
+                                )
                             )
                         ),
                         [30, 10],
@@ -104,28 +115,43 @@ describe('Processes', () => {
             describe('Given a simple sequential processor with a bad behaved task', () => {
                 const runner = makeRunTask({
                     taskA: (item: TaskItem) =>
-                        Observable.timer(item.payload).switchMap(() =>
-                            Observable.timer(0, 5).take(3).map(v => 100 * (v + 1))),
+                        timer(item.payload).pipe(
+                            switchMap(() =>
+                                timer(0, 5).pipe(
+                                    take(3),
+                                    map(v => 100 * (v + 1))
+                                )
+                            )
+                        ),
                     taskB: (item: TaskItem) =>
-                        Observable.timer(item.payload).switchMap(() =>
-                            Observable.timer(0, 5).take(2).map(v => 10 * (v + 1)))
-                                .concat(Observable.throw(new TransientError('transient'))),
+                        timer(item.payload).pipe(
+                            switchMap(() =>
+                                timer(0, 5).pipe(
+                                    take(2),
+                                    map(v => 10 * (v + 1))
+                                )
+                            ),
+                            concat(throwError(new TransientError('transient')))
+                        ),
                 });
                 const processor = startSequentialProcessor(runner, {
                     maxRetries: 3,
                     nextDelay: d => 2 * d,
-                    logs: false
+                    logToConsole: false,
                 });
 
                 it('it should reschedule the failing task 3 times', done => {
                     testObs(
-                        Observable.timer(10, 10).take(2).flatMap(i => {
-                            if (i === 0) {
-                                return processor.process(task('taskB', 30));
-                            } else {
-                                return processor.process(task('taskA', 10));
-                            }
-                        }),
+                        timer(10, 10).pipe(
+                            take(2),
+                            flatMap(i => {
+                                if (i === 0) {
+                                    return processor.process(task('taskB', 30));
+                                } else {
+                                    return processor.process(task('taskA', 10));
+                                }
+                            })
+                        ),
                         [10, 20, 100, 200, 300, 10, 20, 10, 20],
                         new TransientError('transient'),
                         done

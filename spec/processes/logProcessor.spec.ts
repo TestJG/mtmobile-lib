@@ -1,4 +1,4 @@
-import { Observable, Observer } from 'rxjs';
+import { ArgumentOutOfRangeError } from 'rxjs';
 import { testObs } from '../utils/rxtest';
 import { assign } from '../../src/utils/common';
 import {
@@ -7,9 +7,8 @@ import {
     logProcessorCore,
     defaultTaskFormatter,
     defaultErrorFormatter,
-    defaultValueFormatter
+    defaultValueFormatter,
 } from '../../src/processes';
-import { ArgumentOutOfRangeError } from 'rxjs/util/ArgumentOutOfRangeError';
 
 describe('Processes', () => {
     describe('logProcessor', () => {
@@ -86,9 +85,7 @@ describe('Processes', () => {
             expect(defaultValueFormatter(20)(item)).toBe(
                 '{"kind":"the-kind...'
             );
-            expect(defaultValueFormatter(10)(item)).toBe(
-                '{"kind"...'
-            );
+            expect(defaultValueFormatter(10)(item)).toBe('{"kind"...');
         });
     });
 });

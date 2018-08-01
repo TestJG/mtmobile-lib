@@ -1,5 +1,4 @@
-import { Observable } from 'rxjs/Observable';
-import { Observer } from 'rxjs/Observer';
+import { timer, of, throwError, EMPTY } from 'rxjs';
 import {
     chan,
     promiseChan,
@@ -11,7 +10,7 @@ import {
     take,
     putAsync,
     operations,
-    CLOSED
+    CLOSED,
 } from 'js-csp';
 import { testObs } from './rxtest';
 import {
@@ -36,12 +35,10 @@ import {
     toPreviousTarget,
     runPipelineNode,
     runPipelineSequence,
-    iterableToChan
+    iterableToChan,
 } from '../../src/utils/csp';
 import { conditionalLog } from '../../src/utils/common';
-import "rxjs/add/observable/empty";
-import "rxjs/add/observable/timer";
-import "rxjs/add/operator/toPromise";
+import { map, take as takeObs } from 'rxjs/operators';
 
 describe('Utils', () => {
     describe('CSP Tests', () => {
@@ -172,7 +169,7 @@ describe('Utils', () => {
                     [
                         new TypeError(
                             'iterable[Symbol.iterator] is not a function'
-                        )
+                        ),
                     ],
                     null,
                     done
@@ -251,24 +248,24 @@ describe('Utils', () => {
                 expect(promiseToChan).toBeInstanceOf(Function));
 
             it('with a resolving promise it should produce the value in the channel', done => {
-                const prom = Observable.timer(10)
-                    .switchMap(() => Observable.of(10))
+                const prom = timer(10)
+                    .pipe(() => of(10))
                     .toPromise();
                 const ch = promiseToChan(prom);
                 testObs(chanToObservable(ch), [10], null, done);
             });
 
             it('with a resolving promise and keepOpen it should produce the value and leave the channel open', done => {
-                const prom = Observable.timer(10)
-                    .switchMap(() => Observable.of(10))
+                const prom = timer(10)
+                    .pipe(() => of(10))
                     .toPromise();
                 const ch = promiseToChan(prom, { keepOpen: true });
                 testObs(chanToObservable(ch), [10, 'TIMEOUT'], null, done);
             });
 
             it('with a rejecting promise it should produce the error in the channel', done => {
-                const prom = Observable.timer(10)
-                    .switchMap(() => Observable.throw(new Error('unexpected')))
+                const prom = timer(10)
+                    .pipe(() => throwError(new Error('unexpected')))
                     .toPromise();
                 const ch = promiseToChan(prom);
                 testObs(
@@ -280,8 +277,8 @@ describe('Utils', () => {
             });
 
             it('with a rejecting promise and no include errors it should produce an empty channel', done => {
-                const prom = Observable.timer(10)
-                    .switchMap(() => Observable.throw(new Error('unexpected')))
+                const prom = timer(10)
+                    .pipe(() => throwError(new Error('unexpected')))
                     .toPromise();
                 const ch = promiseToChan(prom, { includeErrors: false });
                 testObs(chanToObservable(ch), [], null, done);
@@ -304,38 +301,37 @@ describe('Utils', () => {
                 expect(firstToChan).toBeInstanceOf(Function));
 
             it('with one value observable it should produce the value in the channel', done => {
-                const obs = Observable.timer(10).map(() => 42);
+                const obs = timer(10).pipe(map(() => 42));
                 const ch = firstToChan(obs);
                 testObs(chanToObservable(ch), [42], null, done);
             });
 
             it('with many value observable it should produce the first value in the channel', done => {
-                const obs = Observable.timer(10, 1).take(5).map(v => v + 10);
+                const obs = timer(10, 1).pipe(
+                    takeObs(5),
+                    map(v => v + 10)
+                );
                 const ch = firstToChan(obs);
                 testObs(chanToObservable(ch), [10], null, done);
             });
 
             it('with a failing observable it should produce the error in the channel', done => {
-                const obs = Observable.timer(10).switchMap(() =>
-                    Observable.throw(new Error('test'))
-                );
+                const obs = timer(10).pipe(() => throwError(new Error('test')));
                 const ch = firstToChan(obs);
                 testObs(chanToObservable(ch), [new Error('test')], null, done);
             });
 
             it('with an empty observable it should produce a CLOSED channel', done => {
-                const obs = Observable.timer(10).switchMap(() =>
-                    Observable.empty()
-                );
+                const obs = timer(10).pipe(() => EMPTY);
                 const ch = firstToChan(obs);
                 testObs(chanToObservable(ch), [], null, done);
             });
 
             it('with an uncompleted observable it should produce the value and leave the channel open', done => {
-                const obs = Observable.timer(10).map(() => 42);
+                const obs = timer(10).pipe(map(() => 42));
                 const ch = firstToChan(obs, { keepOpen: true });
                 testObs(chanToObservable(ch), [42, 'TIMEOUT'], null, done, {
-                    doneTimeout: 100
+                    doneTimeout: 100,
                 });
             });
         });
@@ -345,38 +341,37 @@ describe('Utils', () => {
                 expect(observableToChan).toBeInstanceOf(Function));
 
             it('with one value observable it should produce the value in the channel', done => {
-                const obs = Observable.timer(10).map(() => 42);
+                const obs = timer(10).pipe(map(() => 42));
                 const ch = observableToChan(obs);
                 testObs(chanToObservable(ch), [42], null, done);
             });
 
             it('with many value observable it should produce the values in the channel', done => {
-                const obs = Observable.timer(10, 1).take(5).map(v => v + 10);
+                const obs = timer(10, 1).pipe(
+                    takeObs(5),
+                    map(v => v + 10)
+                );
                 const ch = observableToChan(obs);
                 testObs(chanToObservable(ch), [10, 11, 12, 13, 14], null, done);
             });
 
             it('with a failing observable it should produce the error in the channel', done => {
-                const obs = Observable.timer(10).switchMap(() =>
-                    Observable.throw(new Error('test'))
-                );
+                const obs = timer(10).pipe(() => throwError(new Error('test')));
                 const ch = observableToChan(obs);
                 testObs(chanToObservable(ch), [new Error('test')], null, done);
             });
 
             it('with an empty observable it should produce a CLOSED channel', done => {
-                const obs = Observable.timer(10).switchMap(() =>
-                    Observable.empty()
-                );
+                const obs = timer(10).pipe(() => EMPTY);
                 const ch = observableToChan(obs);
                 testObs(chanToObservable(ch), [], null, done);
             });
 
             it('with an uncompleted observable it should produce the value and leave the channel open', done => {
-                const obs = Observable.timer(10).map(() => 42);
+                const obs = timer(10).pipe(map(() => 42));
                 const ch = observableToChan(obs, { keepOpen: true });
                 testObs(chanToObservable(ch), [42, 'TIMEOUT'], null, done, {
-                    doneTimeout: 100
+                    doneTimeout: 100,
                 });
             });
         });
@@ -407,15 +402,18 @@ describe('Utils', () => {
             });
 
             it('with a promise it should produce the value in the channel', done => {
-                const prom = Observable.timer(10)
-                    .switchMap(() => Observable.of(10))
+                const prom = timer(10)
+                    .pipe(() => of(10))
                     .toPromise();
                 const ch = toChan(prom);
                 testObs(chanToObservable(ch), [10], null, done);
             });
 
             it('with observable it should produce the values in the channel', done => {
-                const obs = Observable.timer(10, 1).take(5).map(v => v + 10);
+                const obs = timer(10, 1).pipe(
+                    takeObs(5),
+                    map(v => v + 10)
+                );
                 const ch = toChan(obs);
                 testObs(chanToObservable(ch), [10, 11, 12, 13, 14], null, done);
             });

@@ -58,7 +58,7 @@ describe('Utils', () => {
                 expect(getAsValue('hello')).toBe('hello');
                 expect(getAsValue(['hello'])).toEqual(['hello']);
                 expect(getAsValue({ greetings: 'hello' })).toEqual({
-                    greetings: 'hello'
+                    greetings: 'hello',
                 });
             });
             it('when used with a function should return the computed value', () => {
@@ -67,7 +67,7 @@ describe('Utils', () => {
                 expect(getAsValue(() => 'hello')).toBe('hello');
                 expect(getAsValue(() => ['hello'])).toEqual(['hello']);
                 expect(getAsValue(() => ({ greetings: 'hello' }))).toEqual({
-                    greetings: 'hello'
+                    greetings: 'hello',
                 });
             });
             it('when used with a function should pass the arguments to it', () => {
@@ -94,7 +94,7 @@ describe('Utils', () => {
                 expect(getAsValueOrError('hello', id)).toBe('hello');
                 expect(getAsValueOrError(['hello'], id)).toEqual(['hello']);
                 expect(getAsValueOrError({ greetings: 'hello' }, id)).toEqual({
-                    greetings: 'hello'
+                    greetings: 'hello',
                 });
             });
             it('when used with a function should return the computed value', () => {
@@ -102,12 +102,12 @@ describe('Utils', () => {
                 expect(getAsValueOrError(() => 1, id)).toBe(1);
                 expect(getAsValueOrError(() => 'hello', id)).toBe('hello');
                 expect(getAsValueOrError(() => ['hello'], id)).toEqual([
-                    'hello'
+                    'hello',
                 ]);
                 expect(
                     getAsValueOrError(() => ({ greetings: 'hello' }), id)
                 ).toEqual({
-                    greetings: 'hello'
+                    greetings: 'hello',
                 });
             });
             it('when used with a function should pass the arguments to it', () => {
@@ -134,13 +134,13 @@ describe('Utils', () => {
                 const init = {
                     firstName: 'John',
                     lastName: 'Doe',
-                    age: 40
+                    age: 40,
                 };
                 const actual = assign(init, { lastName: 'Smith' }, { age: 29 });
                 const expected = {
                     firstName: 'John',
                     lastName: 'Smith',
-                    age: 29
+                    age: 29,
                 };
                 expect(actual).toEqual(expected);
             });
@@ -148,7 +148,7 @@ describe('Utils', () => {
                 const init = {
                     firstName: 'John',
                     lastName: 'Doe',
-                    age: 40
+                    age: 40,
                 };
                 expect(assign(init, undefined, null)).toEqual(init);
             });
@@ -274,36 +274,36 @@ describe('Utils', () => {
                     '',
                     original,
                     () => false,
-                    { b: 234 }
+                    { b: 234 },
                 ],
                 [
                     'a true condition value',
                     'non-modifying changes value',
                     original,
                     true,
-                    { b: 123 }
+                    { b: 123 },
                 ],
                 [
                     'a true condition function',
                     'non-modifying changes value',
                     original,
                     () => true,
-                    { b: 123 }
+                    { b: 123 },
                 ],
                 [
                     'a true condition value',
                     'non-modifying changes function',
                     original,
                     true,
-                    () => ({ b: 123 })
+                    () => ({ b: 123 }),
                 ],
                 [
                     'a true condition function',
                     'non-modifying changes function',
                     original,
                     () => true,
-                    () => ({ b: 123 })
-                ]
+                    () => ({ b: 123 }),
+                ],
             ]);
 
             testCases('modified', [
@@ -312,29 +312,29 @@ describe('Utils', () => {
                     'modifying changes value',
                     original,
                     true,
-                    { b: 234 }
+                    { b: 234 },
                 ],
                 [
                     'a true condition function',
                     'modifying changes value',
                     original,
                     () => true,
-                    { b: 234 }
+                    { b: 234 },
                 ],
                 [
                     'a true condition value',
                     'modifying changes function',
                     original,
                     true,
-                    () => ({ b: 234 })
+                    () => ({ b: 234 }),
                 ],
                 [
                     'a true condition function',
                     'modifying changes function',
                     original,
                     () => true,
-                    () => ({ b: 234 })
-                ]
+                    () => ({ b: 234 }),
+                ],
             ]);
         });
 
@@ -368,7 +368,9 @@ describe('Utils', () => {
             });
             it('with long string should return the same string shortened to given length', () => {
                 expect(capString('lorem ipsum', 10)).toEqual('lorem i...');
-                expect(capString('lorem ipsum dolor', 10)).toEqual('lorem i...');
+                expect(capString('lorem ipsum dolor', 10)).toEqual(
+                    'lorem i...'
+                );
             });
             it('with very short string and empty ellipsis should return the same string', () => {
                 expect(capString('', 10, '')).toEqual('');
@@ -379,7 +381,9 @@ describe('Utils', () => {
             });
             it('with long string and empty ellipsis should return the same string shortened to given length', () => {
                 expect(capString('lorem ipsu', 10, '')).toEqual('lorem ipsu');
-                expect(capString('lorem ipsum dolor', 10, '')).toEqual('lorem ipsu');
+                expect(capString('lorem ipsum dolor', 10, '')).toEqual(
+                    'lorem ipsu'
+                );
             });
         });
 
@@ -419,7 +423,7 @@ describe('Utils', () => {
             it('on an empty object should return an empty array', () => {
                 const init = {
                     firstName: 'John',
-                    lastName: 'Doe'
+                    lastName: 'Doe',
                 };
                 const expected = [['firstName', 'John'], ['lastName', 'Doe']];
                 expect(toKVArray(init)).toEqual(expected);
@@ -437,7 +441,7 @@ describe('Utils', () => {
                 const init = [['firstName', 'John'], ['lastName', 'Doe']];
                 const expected = {
                     firstName: 'John',
-                    lastName: 'Doe'
+                    lastName: 'Doe',
                 };
                 expect(toKVMap(init)).toEqual(expected);
             });
@@ -447,7 +451,7 @@ describe('Utils', () => {
             it('on an empty object should return an empty array', () => {
                 const init = {
                     firstName: 'John',
-                    lastName: 'Doe'
+                    lastName: 'Doe',
                 };
                 expect(toKVMap(init)).toEqual(init);
             });
@@ -465,7 +469,7 @@ describe('Utils', () => {
             it('with identity mapper should return the same object', () => {
                 const init = {
                     firstName: 'John',
-                    lastName: 'Doe'
+                    lastName: 'Doe',
                 };
                 expect(
                     objFlatMap(([key, value]) => [[key, value]])(init)
@@ -474,25 +478,25 @@ describe('Utils', () => {
             it('with clear mapper should return the empty object', () => {
                 const init = {
                     firstName: 'John',
-                    lastName: 'Doe'
+                    lastName: 'Doe',
                 };
                 expect(objFlatMap(([key, value]) => [])(init)).toEqual({});
             });
             it('with multi mapper should return the correct object', () => {
                 const init = {
                     firstName: 'John',
-                    lastName: 'Doe'
+                    lastName: 'Doe',
                 };
                 expect(
                     objFlatMap(([key, value]) => [
                         [key + '_' + value, value + '#1'],
-                        [value + '_' + key, value + '#2']
+                        [value + '_' + key, value + '#2'],
                     ])(init)
                 ).toEqual({
                     firstName_John: 'John#1',
                     John_firstName: 'John#2',
                     lastName_Doe: 'Doe#1',
-                    Doe_lastName: 'Doe#2'
+                    Doe_lastName: 'Doe#2',
                 });
             });
         });
@@ -507,7 +511,7 @@ describe('Utils', () => {
             it('with identity mapper should return the same object', () => {
                 const init = {
                     firstName: 'John',
-                    lastName: 'Doe'
+                    lastName: 'Doe',
                 };
                 expect(objMap(([key, value]) => [key, value])(init)).toEqual(
                     init
@@ -516,11 +520,11 @@ describe('Utils', () => {
             it('with swapper mapper should return the correct object', () => {
                 const init = {
                     firstName: 'John',
-                    lastName: 'Doe'
+                    lastName: 'Doe',
                 };
                 expect(objMap(([key, value]) => [value, key])(init)).toEqual({
                     John: 'firstName',
-                    Doe: 'lastName'
+                    Doe: 'lastName',
                 });
             });
         });
@@ -535,20 +539,20 @@ describe('Utils', () => {
             it('with identity mapper should return the same object', () => {
                 const init = {
                     firstName: 'John',
-                    lastName: 'Doe'
+                    lastName: 'Doe',
                 };
                 expect(objMapValues((value, key) => value)(init)).toEqual(init);
             });
             it('with swapper mapper should return the correct object', () => {
                 const init = {
                     firstName: 'John',
-                    lastName: 'Doe'
+                    lastName: 'Doe',
                 };
                 expect(
                     objMapValues((value, key) => value + '_' + key)(init)
                 ).toEqual({
                     firstName: 'John_firstName',
-                    lastName: 'Doe_lastName'
+                    lastName: 'Doe_lastName',
                 });
             });
         });
@@ -635,48 +639,58 @@ describe('Utils', () => {
                 expect(printStr).toBeInstanceOf(Function));
 
             it('should be a function', () =>
-                expect(printStr('1234567890qwertyuiop', {
-                    maxLength: 10,
-                    ellipsis: '...',
-                    backChars: 3
-                })).toEqual('1234...iop');
+                expect(
+                    printStr('1234567890qwertyuiop', {
+                        maxLength: 10,
+                        ellipsis: '...',
+                        backChars: 3,
+                    })
+                ).toEqual('1234...iop'));
 
             it('should be a function', () =>
-                expect(printStr('1234567890', {
-                    maxLength: 10,
-                    ellipsis: '...',
-                    backChars: 3
-                })).toEqual('1234567890');
+                expect(
+                    printStr('1234567890', {
+                        maxLength: 10,
+                        ellipsis: '...',
+                        backChars: 3,
+                    })
+                ).toEqual('1234567890'));
 
             it('should be a function', () =>
-                expect(printStr('1234', {
-                    maxLength: 10,
-                    ellipsis: '...',
-                    backChars: 3
-                })).toEqual('1234');
+                expect(
+                    printStr('1234', {
+                        maxLength: 10,
+                        ellipsis: '...',
+                        backChars: 3,
+                    })
+                ).toEqual('1234'));
 
             it('should be a function', () =>
-                expect(printStr('1234567890qwertyuiop', {
-                    maxLength: 10,
-                    ellipsis: '...',
-                    backChars: 0
-                })).toEqual('1234567...');
+                expect(
+                    printStr('1234567890qwertyuiop', {
+                        maxLength: 10,
+                        ellipsis: '...',
+                        backChars: 0,
+                    })
+                ).toEqual('1234567...'));
 
             it('should be a function', () =>
-                expect(printStr('1234567890', {
-                    maxLength: 10,
-                    ellipsis: '...',
-                    backChars: 0
-                })).toEqual('1234567890');
+                expect(
+                    printStr('1234567890', {
+                        maxLength: 10,
+                        ellipsis: '...',
+                        backChars: 0,
+                    })
+                ).toEqual('1234567890'));
 
             it('should be a function', () =>
-                expect(printStr('1234', {
-                    maxLength: 10,
-                    ellipsis: '...',
-                    backChars: 0
-                })).toEqual('1234');
-
-
+                expect(
+                    printStr('1234', {
+                        maxLength: 10,
+                        ellipsis: '...',
+                        backChars: 0,
+                    })
+                ).toEqual('1234'));
         });
 
         describe('compareTypes', () => {
@@ -690,7 +704,7 @@ describe('Utils', () => {
                 'symbol',
                 'undefined',
                 'function',
-                'object'
+                'object',
             ];
 
             for (let first = 0; first < orderedTypes.length; first++) {
@@ -699,7 +713,7 @@ describe('Utils', () => {
                     const s = orderedTypes[second];
                     const comp = first === second ? 0 : first < second ? -1 : 1;
                     it(`compareTypes('${f}', '${s}') = ${comp}`, () =>
-                        expect(compareTypes(f, s)).toEqual(comp);
+                        expect(compareTypes(f, s)).toEqual(comp));
                 }
             }
         });
@@ -745,10 +759,18 @@ describe('Utils', () => {
             it('should be a function', () =>
                 expect(compareFunction).toBeInstanceOf(Function));
 
-            const fa_1_1 = function a(p1: string) { return; };
-            const fa_1_2 = function a(p2: number) { return; };
-            const fa_2_1 = function a(p1: number, p2: string) { return; };
-            const fb_1_1 = function b(p1: any) { return; };
+            const fa_1_1 = function a(p1: string) {
+                return;
+            };
+            const fa_1_2 = function a(p2: number) {
+                return;
+            };
+            const fa_2_1 = function a(p1: number, p2: string) {
+                return;
+            };
+            const fb_1_1 = function b(p1: any) {
+                return;
+            };
 
             it('should compare functions', () => {
                 expect(compareFunction(fa_1_1, fa_1_1)).toEqual(0);
@@ -825,9 +847,9 @@ describe('Utils', () => {
                 Symbol(''),
                 Symbol('abc'),
                 undefined,
-                function a () {},
-                function a (p: any) {},
-                function b () {},
+                function a() {},
+                function a(p: any) {},
+                function b() {},
                 null,
                 [],
                 ['a', false],
@@ -841,8 +863,10 @@ describe('Utils', () => {
                 for (let second = 0; second < objs.length; second++) {
                     const s = objs[second];
                     const comp = first === second ? 0 : first < second ? -1 : 1;
-                    it(`compareDataByType(${JSON.stringify(f)}, ${JSON.stringify(s)}) = ${comp}`, () =>
-                        expect(compareDataByType(f, s)).toEqual(comp);
+                    it(`compareDataByType(${JSON.stringify(
+                        f
+                    )}, ${JSON.stringify(s)}) = ${comp}`, () =>
+                        expect(compareDataByType(f, s)).toEqual(comp));
                 }
             }
         });
@@ -852,32 +876,32 @@ describe('Utils', () => {
                 expect(printData).toBeInstanceOf(Function));
 
             const objs: [any, string][] = [
-                [ '', "''" ],
-                [ 'abc', "'abc'" ],
-                [ false, 'false' ],
-                [ true, 'true' ],
-                [ 0, '0' ],
-                [ 3.14, '3.14' ],
-                [ Symbol(''), 'Symbol()' ],
-                [ Symbol('abc'), 'Symbol(abc)' ],
-                [ undefined, 'undefined' ],
-                [ function a () {}, 'a(... 0 args) => { ... }' ],
-                [ function a (p: any) {}, 'a(... 1 args) => { ... }' ],
-                [ function b () {}, 'b(... 0 args) => { ... }' ],
-                [ null, 'null' ],
-                [ [], '[]' ],
-                [ ['a'], "[ 1 item ]" ],
-                [ ['a', false], "[ ... 2 items ]" ],
-                [ [false], '[ 1 item ]' ],
-                [ new ArrayBuffer(10), "ArrayBuffer {}" ],
-                [ { age: 40, name: 'john' }, "{ ... 2 properties }" ],
-                [ { name: 'john' }, "{ 1 property }" ],
+                ['', "''"],
+                ['abc', "'abc'"],
+                [false, 'false'],
+                [true, 'true'],
+                [0, '0'],
+                [3.14, '3.14'],
+                [Symbol(''), 'Symbol()'],
+                [Symbol('abc'), 'Symbol(abc)'],
+                [undefined, 'undefined'],
+                [function a() {}, 'a(... 0 args) => { ... }'],
+                [function a(p: any) {}, 'a(... 1 args) => { ... }'],
+                [function b() {}, 'b(... 0 args) => { ... }'],
+                [null, 'null'],
+                [[], '[]'],
+                [['a'], '[ 1 item ]'],
+                [['a', false], '[ ... 2 items ]'],
+                [[false], '[ 1 item ]'],
+                [new ArrayBuffer(10), 'ArrayBuffer {}'],
+                [{ age: 40, name: 'john' }, '{ ... 2 properties }'],
+                [{ name: 'john' }, '{ 1 property }'],
             ];
 
             for (let i = 0; i < objs.length; i++) {
                 const [value, expected] = objs[i];
                 it(`printData(${JSON.stringify(value)}) = '${expected}'`, () =>
-                    expect(printData(value)).toEqual(expected);
+                    expect(printData(value)).toEqual(expected));
             }
         });
 
@@ -895,10 +919,14 @@ describe('Utils', () => {
                 expect(hasNewLine('Has one \r\nline breaks')).toBeTruthy());
 
             it('should detect new line at line end', () =>
-                expect(hasNewLine('Has one line break at the end\r\n')).toBeTruthy());
+                expect(
+                    hasNewLine('Has one line break at the end\r\n')
+                ).toBeTruthy());
 
             it('should detect new line at line end', () =>
-                expect(hasNewLine('\nHas one line break at the beginning')).toBeTruthy());
+                expect(
+                    hasNewLine('\nHas one line break at the beginning')
+                ).toBeTruthy());
         });
 
         describe('prettyPrint', () => {
@@ -908,32 +936,34 @@ describe('Utils', () => {
             const john = { age: 40, name: 'john' };
             const aFalse = ['a', false];
             const objs: [any, string][] = [
-                [ '', "''" ],
-                [ 'abc', "'abc'" ],
-                [ false, 'false' ],
-                [ true, 'true' ],
-                [ 0, '0' ],
-                [ 3.14, '3.14' ],
-                [ Symbol(''), 'Symbol()' ],
-                [ Symbol('abc'), 'Symbol(abc)' ],
-                [ undefined, 'undefined' ],
-                [ function a () {}, 'a(... 0 args) => { ... }' ],
-                [ function a (p: any) {}, 'a(... 1 args) => { ... }' ],
-                [ function b () {}, 'b(... 0 args) => { ... }' ],
-                [ null, 'null' ],
-                [ [], '[]' ],
-                [ ['a'], "[ 'a' ]" ],
-                [ aFalse, "[ 'a', false ]" ],
-                [ [false], '[ false ]' ],
-                [ new ArrayBuffer(10), "ArrayBuffer {}" ],
-                [ john, "{ name: 'john', age: 40 }" ],
-                [ { name: 'john' }, "{ name: 'john' }" ],
+                ['', "''"],
+                ['abc', "'abc'"],
+                [false, 'false'],
+                [true, 'true'],
+                [0, '0'],
+                [3.14, '3.14'],
+                [Symbol(''), 'Symbol()'],
+                [Symbol('abc'), 'Symbol(abc)'],
+                [undefined, 'undefined'],
+                [function a() {}, 'a(... 0 args) => { ... }'],
+                [function a(p: any) {}, 'a(... 1 args) => { ... }'],
+                [function b() {}, 'b(... 0 args) => { ... }'],
+                [null, 'null'],
+                [[], '[]'],
+                [['a'], "[ 'a' ]"],
+                [aFalse, "[ 'a', false ]"],
+                [[false], '[ false ]'],
+                [new ArrayBuffer(10), 'ArrayBuffer {}'],
+                [john, "{ name: 'john', age: 40 }"],
+                [{ name: 'john' }, "{ name: 'john' }"],
             ];
 
             for (let i = 0; i < objs.length; i++) {
                 const [value, expected] = objs[i];
-                it(`prettyPrint(${JSON.stringify(value)}) = '${expected}'`, () =>
-                    expect(printObj(value)).toEqual(expected);
+                it(`prettyPrint(${JSON.stringify(
+                    value
+                )}) = '${expected}'`, () =>
+                    expect(printObj(value)).toEqual(expected));
             }
 
             {
@@ -943,7 +973,9 @@ describe('Utils', () => {
                 }
 
                 it(`prettyPrint(complex object with string properties) should work`, () =>
-                    expect(printObj(bigObject)).toEqual("{ str1: 'string 1', str2: 'string 2', str3: 'string 3' }");
+                    expect(printObj(bigObject)).toEqual(
+                        "{ str1: 'string 1', str2: 'string 2', str3: 'string 3' }"
+                    ));
             }
 
             {
@@ -953,7 +985,9 @@ describe('Utils', () => {
                 }
 
                 it(`prettyPrint(complex object with boolean properties) should work`, () =>
-                    expect(printObj(bigObject)).toEqual("{ bool1: false, bool2: true, bool3: false }");
+                    expect(printObj(bigObject)).toEqual(
+                        '{ bool1: false, bool2: true, bool3: false }'
+                    ));
             }
 
             {
@@ -963,7 +997,9 @@ describe('Utils', () => {
                 }
 
                 it(`prettyPrint(complex object with number properties) should work`, () =>
-                    expect(printObj(bigObject)).toEqual("{ num1: 1, num2: 2, num3: 3 }");
+                    expect(printObj(bigObject)).toEqual(
+                        '{ num1: 1, num2: 2, num3: 3 }'
+                    ));
             }
 
             {
@@ -973,7 +1009,9 @@ describe('Utils', () => {
                 }
 
                 it(`prettyPrint(complex object with symbol properties) should work`, () =>
-                    expect(printObj(bigObject)).toEqual("{ sym1: Symbol(s1), sym2: Symbol(s2), sym3: Symbol(s3) }");
+                    expect(printObj(bigObject)).toEqual(
+                        '{ sym1: Symbol(s1), sym2: Symbol(s2), sym3: Symbol(s3) }'
+                    ));
             }
 
             {
@@ -983,7 +1021,9 @@ describe('Utils', () => {
                 }
 
                 it(`prettyPrint(complex object with undefined properties) should work`, () =>
-                    expect(printObj(bigObject)).toEqual("{ und1: undefined, und2: undefined, und3: undefined }");
+                    expect(printObj(bigObject)).toEqual(
+                        '{ und1: undefined, und2: undefined, und3: undefined }'
+                    ));
             }
 
             {
@@ -994,21 +1034,26 @@ describe('Utils', () => {
 
                 it(`prettyPrint(complex object with object properties) should work`, () =>
                     expect(printObj(bigObject)).toEqual(
-                        "{ obj1: { prop1: 'value1' }, obj2: { prop2: 'value2' }, obj3: { prop3: 'value3' } }");
+                        "{ obj1: { prop1: 'value1' }, obj2: { prop2: 'value2' }, obj3: { prop3: 'value3' } }"
+                    ));
 
                 it(`prettyPrint(complex object with object properties and short space) should work`, () =>
-                    expect(printObj(bigObject, {
-                        maxValueLength: 20
-                    })).toEqual(`{
+                    expect(
+                        printObj(bigObject, {
+                            maxValueLength: 20,
+                        })
+                    ).toEqual(`{
     obj1: { prop1: 'value1' },
     obj2: { prop2: 'value2' },
     obj3: { prop3: 'value3' }
-}`);
+}`));
 
                 it(`prettyPrint(complex object with object properties and short space) should work`, () =>
-                    expect(printObj(bigObject, {
-                        maxValueLength: 10
-                    })).toEqual(`{
+                    expect(
+                        printObj(bigObject, {
+                            maxValueLength: 10,
+                        })
+                    ).toEqual(`{
     obj1: {
         prop1: 'value1'
     },
@@ -1018,7 +1063,7 @@ describe('Utils', () => {
     obj3: {
         prop3: 'value3'
     }
-}`);
+}`));
             }
 
             {
@@ -1028,9 +1073,11 @@ describe('Utils', () => {
                 }
 
                 it(`prettyPrint(complex array with object properties and short space) should work`, () =>
-                    expect(printObj(bigArray, {
-                        maxValueLength: 20
-                    })).toEqual(`[
+                    expect(
+                        printObj(bigArray, {
+                            maxValueLength: 20,
+                        })
+                    ).toEqual(`[
     { prop1: 'value1' },
     { prop2: 'value2' },
     { prop3: 'value3' },
@@ -1041,12 +1088,14 @@ describe('Utils', () => {
     { prop8: 'value8' },
     { prop9: 'value9' },
     { prop10: 'value10' }
-]`);
+]`));
 
                 it(`prettyPrint(complex array with object properties and short space) should work`, () =>
-                    expect(printObj(bigArray, {
-                        maxValueLength: 10
-                    })).toEqual(`[
+                    expect(
+                        printObj(bigArray, {
+                            maxValueLength: 10,
+                        })
+                    ).toEqual(`[
     {
         prop1: 'value1'
     },
@@ -1077,7 +1126,7 @@ describe('Utils', () => {
     {
         prop10: 'value10'
     }
-]`);
+]`));
             }
 
             {
@@ -1087,9 +1136,11 @@ describe('Utils', () => {
                 }
 
                 it(`prettyPrint(complex array with object properties and short space) should work`, () =>
-                    expect(printObj(bigArray, {
-                        maxValueLength: 20
-                    })).toEqual(`[
+                    expect(
+                        printObj(bigArray, {
+                            maxValueLength: 20,
+                        })
+                    ).toEqual(`[
     [ true, 'value1', 1 ],
     [ false, 'value2', 2 ],
     [ true, 'value3', 3 ],
@@ -1099,12 +1150,14 @@ describe('Utils', () => {
     [ true, 'value7', 7 ],
     [ false, 'value8', 8 ],
     [ true, 'value9', 9 ]
-]`);
+]`));
 
                 it(`prettyPrint(complex array with object properties and short space) should work`, () =>
-                    expect(printObj(bigArray, {
-                        maxValueLength: 10
-                    })).toEqual(`[
+                    expect(
+                        printObj(bigArray, {
+                            maxValueLength: 10,
+                        })
+                    ).toEqual(`[
     [
         true,
         'value1',
@@ -1150,31 +1203,31 @@ describe('Utils', () => {
         'value9',
         9
     ]
-]`);
+]`));
             }
 
             {
                 const cyclicObject = {
                     a: {},
                     b: {},
-                    c: {}
+                    c: <any>{},
                 };
                 cyclicObject.c.next = cyclicObject;
 
                 it(`prettyPrint(complex object cycles) should work`, () =>
-                    expect(printObj(cyclicObject)).toEqual("{ a: {}, b: {}, c: { next: { cyclic reference ... } } }");
+                    expect(printObj(cyclicObject)).toEqual(
+                        '{ a: {}, b: {}, c: { next: { cyclic reference ... } } }'
+                    ));
             }
 
             {
-                const cyclicArray = [
-                    {},
-                    {},
-                    {}
-                ];
+                const cyclicArray = [{}, {}, <any>{}];
                 cyclicArray[2].next = cyclicArray;
 
                 it(`prettyPrint(complex array cycles) should work`, () =>
-                    expect(printObj(cyclicArray)).toEqual("[ {}, {}, { next: [ cyclic reference ... ] } ]");
+                    expect(printObj(cyclicArray)).toEqual(
+                        '[ {}, {}, { next: [ cyclic reference ... ] } ]'
+                    ));
             }
 
             {
@@ -1187,9 +1240,9 @@ describe('Utils', () => {
                     b_array3: ['a'],
                     b_array4: [],
                     c_null: null,
-                    d_func1: function b () {},
-                    d_func2: function a (p: any) {},
-                    d_func3: function a () {},
+                    d_func1: function b() {},
+                    d_func2: function a(p: any) {},
+                    d_func3: function a() {},
                     e_sym1: Symbol('abc'),
                     e_sym2: Symbol(),
                     f_num1: 3.14,
@@ -1220,10 +1273,11 @@ describe('Utils', () => {
     b_array3: [ 'a' ],
     b_array4: [],
     c_null: null
-}`);
+}`));
 
                 it(`prettyPrint(object with messy properties including functions) should work`, () =>
-                    expect(printObj(messyObject, { excludeTypes: [] })).toEqual(`{
+                    expect(printObj(messyObject, { excludeTypes: [] }))
+                        .toEqual(`{
     h_string1: 'abc',
     h_string2: '',
     g_bool1: true,
@@ -1244,10 +1298,15 @@ describe('Utils', () => {
     b_array3: [ 'a' ],
     b_array4: [],
     c_null: null
-}`);
+}`));
 
                 it(`prettyPrint(object with messy properties sorted by name) should work`, () =>
-                    expect(printObj(messyObject, { excludeTypes: [], propertyOrder: 'byName' })).toEqual(`{
+                    expect(
+                        printObj(messyObject, {
+                            excludeTypes: [],
+                            propertyOrder: 'byName',
+                        })
+                    ).toEqual(`{
     a_object1: { name: 'john' },
     a_object2: { age: 40, name: 'john' },
     a_object3: ArrayBuffer {},
@@ -1268,7 +1327,7 @@ describe('Utils', () => {
     h_string1: 'abc',
     h_string2: '',
     i_undefined1: undefined
-}`);
+}`));
             }
         });
     });
