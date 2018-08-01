@@ -1,7 +1,5 @@
-import { Observable } from 'rxjs/Observable';
-import { Subject } from 'rxjs/Subject';
-import { Observer } from 'rxjs/Observer';
-import { Subscription } from 'rxjs/Subscription';
+import { switchMap, first } from 'rxjs/operators';
+import { Observable, Subject, Observer, Subscription } from 'rxjs';
 import { IProcessor, IProcessorCore, TaskItem } from './processor.interfaces';
 import { uuid } from '../utils/common';
 
@@ -22,7 +20,7 @@ export const createBackgroundWorker = (opts: {
     postMessage: typeof Worker.prototype.postMessage;
     terminate: typeof Worker.prototype.terminate;
 }) => {
-    opts.processor.switchMap(p => p.onFinished$).subscribe({
+    opts.processor.pipe(switchMap(p => p.onFinished$)).subscribe({
         complete: () => {
             opts.terminate();
         }
@@ -33,9 +31,9 @@ export const createBackgroundWorker = (opts: {
     const process = (item: WorkerItem) => {
         switch (item.kind) {
             case 'process': {
-                const subs = opts.processor
-                    .first()
-                    .switchMap(p => p.process(item.task))
+                const subs = opts.processor.pipe(
+                    first(),
+                    switchMap(p => p.process(item.task)))
                     .subscribe({
                         next: v =>
                             opts.postMessage(
@@ -79,7 +77,7 @@ export const createBackgroundWorker = (opts: {
             }
 
             case 'terminate': {
-                opts.processor.first().switchMap(p => p.finish()).subscribe();
+                opts.processor.pipe(first(), switchMap(p => p.finish())).subscribe();
                 break;
             }
 

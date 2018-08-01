@@ -1,5 +1,6 @@
+import { tap } from 'rxjs/operators';
 import { IProcessor, IProcessorCore, TaskItem } from './processor.interfaces';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { capString } from '../utils/common';
 
 export function logProcessor(processor: IProcessor) {
@@ -114,7 +115,7 @@ export function logProcessorCore<T extends IProcessorCore>(
             console.log(`${print('START')}`);
             let result = processor.process(item);
             if (!opts.basicProcessLog) {
-                result = result.do({
+                result = result.pipe(tap({
                     next: x =>
                         console.log(
                             `${print('NEXT ')} VAL: ${opts.valueFormatter(x, item)}`
@@ -125,7 +126,7 @@ export function logProcessorCore<T extends IProcessorCore>(
                                 opts.valueFormatter(x, item)}`
                         ),
                     complete: () => console.log(`${print('COMPL')}`)
-                });
+                }));
             }
             return result;
         }
@@ -152,7 +153,7 @@ export function logProcessorCore<T extends IProcessorCore>(
             console.log(print('START'));
             let result = processor.finish();
             if (!opts.basicProcessLog) {
-                result = result.do({
+                result = result.pipe(tap({
                     next: () => console.log(print('NEXT')),
                     error: x =>
                         console.log(
@@ -160,7 +161,7 @@ export function logProcessorCore<T extends IProcessorCore>(
                                 opts.valueFormatter(x, undefined)}`
                         ),
                     complete: () => console.log(print('COMPLETE'))
-                });
+                }));
             }
             return result;
         }

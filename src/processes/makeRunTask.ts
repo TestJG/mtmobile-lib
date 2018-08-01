@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs/Observable';
+import { throwError, Observable } from 'rxjs';
 import { TaskItem } from './processor.interfaces';
 import { ObsLike, tryTo } from '../utils/rxutils';
 
@@ -7,17 +7,17 @@ export function makeRunTask(runners: {
 }) {
     return (task: TaskItem) => {
         if (!task) {
-            return Observable.throw(new Error('argument.null.task'));
+            return throwError(new Error('argument.null.task'));
         }
 
         if (!task.kind) {
-            return Observable.throw(new Error('argument.null.task.kind'));
+            return throwError(new Error('argument.null.task.kind'));
         }
 
         const runner: (payload: any) => ObsLike = runners[task.kind];
 
         if (!runner) {
-            return Observable.throw(new Error(`unknown.task:${task.kind}`));
+            return throwError(new Error(`unknown.task:${task.kind}`));
         }
 
         return tryTo(() => runner(task.payload));

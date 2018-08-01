@@ -1,17 +1,15 @@
-import { Observable, Observer, ReplaySubject } from 'rxjs';
+import { ReplaySubject, timer } from 'rxjs';
 import { testObs, testTaskOf } from '../utils/rxtest';
 import {
-    IProcessorCore,
-    TaskItem,
     task,
     fromServiceToDirectProcessor,
-    startDirectProcessor,
     createBackgroundWorker,
     createForegroundWorker,
     SimpleWorker,
     TransientError
 } from '../../src/processes';
 import { IProcessor } from "../../index";
+import { timeoutWith } from "rxjs/operators";
 
 describe('Processes', () => {
     describe('Router Processor', () => {
@@ -304,7 +302,9 @@ describe('Processes', () => {
                 it("the worker's postMessage should have been called", done => {
                     const theTask = task('inc');
                     const subscription = testObs(
-                        foreWorker.process(theTask).timeoutWith(20, ['timeout-signal']),
+                        foreWorker.process(theTask).pipe(
+                          timeoutWith(20, ['timeout-signal'])
+                        ),
                         [1, 2, 'timeout-signal'],
                         null,
                         done
@@ -321,7 +321,7 @@ describe('Processes', () => {
                         kind: 'N',
                         valueOrError: 2
                     });
-                    Observable.timer(40).subscribe(() => subscription.unsubscribe());
+                    timer(40).subscribe(() => subscription.unsubscribe());
                 });
             });
         });

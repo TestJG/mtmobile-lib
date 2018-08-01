@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { Observable, of, EMPTY } from 'rxjs';
 import {
     fromProcessorToService,
     IProcessorCore,
@@ -48,14 +48,14 @@ describe('Processes', () => {
                 const processor: IProcessorCore = {
                     process: jasmine
                         .createSpy('process', item =>
-                            Observable.of(item.kind + item.payload)
+                            of(item.kind + item.payload)
                         )
                         .and.callThrough(),
                     isAlive: jasmine
                         .createSpy('isAlive', () => true)
                         .and.callThrough(),
                     finish: jasmine
-                        .createSpy('finish', () => Observable.empty<void>())
+                        .createSpy('finish', () => EMPTY)
                         .and.callThrough()
                 };
                 const service = fromProcessorToService<T>(processor, names);

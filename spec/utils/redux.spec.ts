@@ -1,9 +1,9 @@
-import { Observable } from 'rxjs/Observable';
-import { Notification } from 'rxjs/Notification';
+// import { Observable } from 'rxjs';
 import { testObs } from './rxtest';
 import * as common from '../../src/utils/common';
 import * as rxutils from '../../src/utils/rxutils';
 import * as redux from '../../src/utils/redux';
+import { of } from "rxjs";
 
 interface Person {
     firstName: string;
@@ -144,7 +144,7 @@ describe('Utils', () => {
                 it("function 'filter' should filter out non-corresponding actions", done =>
                     testObs(
                         setAge.filter(
-                            Observable.of(
+                            of(
                                 setAge(42),
                                 { type: 'other action' },
                                 setAge(15)
@@ -219,7 +219,7 @@ describe('Utils', () => {
                 it("function 'filter' should filter out non-corresponding actions", done =>
                     testObs(
                         incAge.filter(
-                            Observable.of(
+                            of(
                                 incAge(),
                                 { type: 'other action' },
                                 incAge()
@@ -292,7 +292,7 @@ describe('Utils', () => {
                 it("function 'filter' should filter out non-corresponding actions", done =>
                     testObs(
                         setAge.filter(
-                            Observable.of(
+                            of(
                                 setAge(42),
                                 { type: 'other action' },
                                 setAge(15)
@@ -352,7 +352,7 @@ describe('Utils', () => {
                 it("function 'filter' should filter out non-corresponding actions", done =>
                     testObs(
                         incAge.filter(
-                            Observable.of(
+                            of(
                                 incAge(),
                                 { type: 'other action' },
                                 incAge()

@@ -1,4 +1,5 @@
-import { Observable } from 'rxjs/Observable';
+import { throwError, merge, Observable } from 'rxjs';
+import { map, last } from 'rxjs/operators';
 import { IProcessor, IProcessorCore, TaskItem } from './processor.interfaces';
 import { assign } from '../utils/common';
 
@@ -22,17 +23,17 @@ export function startRouterProcessor(
     const isAlive = () => routeKeys.some(key => routes[key].isAlive());
 
     const finish = () =>
-        Observable.merge(...routeKeys.map(key => routes[key].finish())).last();
+        merge(...routeKeys.map(key => routes[key].finish())).pipe(last());
 
     const process = (task: TaskItem) => {
         const pos = task.kind.indexOf(options.routeSeparator);
         if (pos < 0) {
-            return Observable.throw(new Error('argument.invalid.task.kind'));
+            return throwError(new Error('argument.invalid.task.kind'));
         }
         const prefix = task.kind.substr(0, pos);
         const route = routes[prefix];
         if (!route) {
-            return Observable.throw(new Error('argument.invalid.task.prefix'));
+            return throwError(new Error('argument.invalid.task.prefix'));
         }
         const newKind = task.kind.substr(pos + options.routeSeparator.length);
         const newTask = assign(task, { kind: newKind });
@@ -44,43 +45,43 @@ export function startRouterProcessor(
             kind: `${prefix}${options.routeSeparator}${item.kind}`
         });
 
-    const onFinished$ = Observable.merge(
+    const onFinished$ = merge(
         ...routeKeys.map(key => routes[key].onFinished$)
-    ).last();
+    ).pipe(last());
 
-    const onTaskStarted$ = Observable.merge(
+    const onTaskStarted$ = merge(
         ...routeKeys.map(key =>
-            routes[key].onTaskStarted$.map(recoverPrefix(key))
+            routes[key].onTaskStarted$.pipe(map(recoverPrefix(key)))
         )
     );
 
-    const onTaskReStarted$ = Observable.merge(
+    const onTaskReStarted$ = merge(
         ...routeKeys.map(key =>
-            routes[key].onTaskReStarted$.map(recoverPrefix(key))
+            routes[key].onTaskReStarted$.pipe(map(recoverPrefix(key)))
         )
     );
 
-    const onTaskResult$ = Observable.merge(
+    const onTaskResult$ = merge(
         ...routeKeys.map(key =>
-            routes[key].onTaskResult$.map(
+            routes[key].onTaskResult$.pipe(map(
                 ([item, value]) =>
                     <[TaskItem, any]>[recoverPrefix(key)(item), value]
-            )
+            ))
         )
     );
 
-    const onTaskError$ = Observable.merge(
+    const onTaskError$ = merge(
         ...routeKeys.map(key =>
-            routes[key].onTaskError$.map(
+            routes[key].onTaskError$.pipe(map(
                 ([item, value]) =>
                     <[TaskItem, any]>[recoverPrefix(key)(item), value]
-            )
+            ))
         )
     );
 
-    const onTaskCompleted$ = Observable.merge(
+    const onTaskCompleted$ = merge(
         ...routeKeys.map(key =>
-            routes[key].onTaskCompleted$.map(recoverPrefix(key))
+            routes[key].onTaskCompleted$.pipe(map(recoverPrefix(key)))
         )
     );
 
@@ -115,7 +116,7 @@ export function startRouterProxy(
 
     const isAlive = () => processor.isAlive();
 
-    const finish = () => Observable.throw(new Error('invalidop.proxy.finish'));
+    const finish = () => throwError(new Error('invalidop.proxy.finish'));
 
     const process = (task: TaskItem) => {
         const newTask = assign(task, {

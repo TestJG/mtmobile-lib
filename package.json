@@ -58,8 +58,6 @@
     ]
   },
   "devDependencies": {
-    "@angular/compiler": "~4.4.1",
-    "@angular/core": "~4.4.1",
     "@ngrx/store": "^4.1.1",
     "@types/deep-equal": "^1.0.1",
     "@types/jest": "^20.0.0",
@@ -78,7 +76,8 @@
     "rollup-plugin-commonjs": "^8.0.2",
     "rollup-plugin-node-resolve": "^3.0.0",
     "rollup-plugin-sourcemaps": "^0.4.2",
-    "rxjs": "^5.5.0",
+    "rxjs": "^6.2.2",
+    "rxjs-tslint": "^0.1.5",
     "ts-jest": "^21.0.0",
     "ts-node": "^3.0.6",
     "tsc-watch": "^1.0.5",

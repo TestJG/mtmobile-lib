@@ -1,6 +1,4 @@
-import { Observable} from 'rxjs/Observable';
-import { Subject } from 'rxjs/Subject';
-import { ReplaySubject } from 'rxjs/ReplaySubject';
+import { of, from, throwError, Observable, Subject, ReplaySubject } from 'rxjs';
 import { assign, objMapValues } from '../utils/common';
 import { ObsLike } from '../utils/rxutils';
 import { TransientError } from './errors';
@@ -99,15 +97,15 @@ export function startDirectProcessor(
             try {
                 obs = runTask(item);
             } catch (error) {
-                obs = Observable.throw(error);
+                obs = throwError(error);
             }
 
             if (obs instanceof Observable) {
                 // It is already an observable, let it be!
             } else if (Promise.resolve(obs) === obs) {
-                obs = Observable.fromPromise(obs);
+                obs = from(obs);
             } else {
-                obs = Observable.of(obs);
+                obs = of(obs);
             }
 
             return obs;
@@ -151,7 +149,7 @@ export function startDirectProcessor(
 
     const process = (item: TaskItem) => {
         if (!isAlive()) {
-            return Observable.throw(new Error('worker:finishing'));
+            return throwError(new Error('worker:finishing'));
         }
         runningCount++;
         const sub = new Subject<any>();

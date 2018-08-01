@@ -1,13 +1,13 @@
-import { Observable } from 'rxjs';
+import { merge, timer, of } from 'rxjs';
 import {
-    IProcessorCore,
     TaskItem,
     task,
     fromServiceToDirectProcessor,
     startDirectProcessor,
-    TransientError
+    TransientError,
 } from '../../src/processes';
 import { testObs, testTaskOf } from '../utils/rxtest';
+import { switchMap, skip, concat } from 'rxjs/operators';
 
 describe('Processes', () => {
     describe('Direct Processor', () => {
@@ -33,7 +33,7 @@ describe('Processes', () => {
                     testTaskOf(5)(1, 2, 3, new TransientError('transient'))();
                 const proc = startDirectProcessor(runner, {
                     maxRetries: 3,
-                    nextDelay: d => d
+                    nextDelay: d => d,
                 });
 
                 it('it should process task returning the bad behaved result after retrying 3 times', done =>
@@ -59,7 +59,7 @@ describe('Processes', () => {
                 };
                 const proc = startDirectProcessor(runner, {
                     maxRetries: 5,
-                    nextDelay: d => d
+                    nextDelay: d => d,
                 });
 
                 it('it should process task returning the well behaved result after the error is resolved', done =>
@@ -79,7 +79,7 @@ describe('Processes', () => {
             describe('When a simple service is given', () => {
                 const service = {
                     taskA: testTaskOf(5)(42),
-                    taskB: testTaskOf(15)(60)
+                    taskB: testTaskOf(15)(60),
                 };
                 const processor = fromServiceToDirectProcessor(service);
 
@@ -104,11 +104,11 @@ describe('Processes', () => {
 
                 it('calling taskA and taskB should run them simultaneously', done =>
                     testObs(
-                        Observable.merge(
-                            Observable.timer(10).switchMap(() =>
+                        merge(
+                            timer(10).pipe(() =>
                                 processor.process(task('taskB', 50))
                             ),
-                            Observable.timer(1).switchMap(() =>
+                            timer(1).pipe(() =>
                                 processor.process(task('taskA'))
                             )
                         ),
@@ -121,35 +121,43 @@ describe('Processes', () => {
             describe('When a simple service is given and the processor is finished', () => {
                 const service = {
                     taskA: () =>
-                        Observable.timer(5)
-                            .skip(1)
-                            .concat(Observable.of('A')),
+                        timer(5).pipe(
+                            skip(1),
+                            concat(of('A'))
+                        ),
                     taskB: (p: number) =>
-                        Observable.timer(p)
-                            .skip(1)
-                            .concat(Observable.of('B' + p))
+                        timer(p).pipe(
+                            skip(1),
+                            concat(of('B' + p))
+                        ),
                 };
                 const processor = fromServiceToDirectProcessor(service);
 
                 it('calling a task after processor.finish should prevent it from running', done => {
                     testObs(
-                        Observable.merge(
-                            Observable.timer(10).switchMap(() =>
-                                processor.process(task('taskB', 30))
+                        merge(
+                            timer(10).pipe(
+                                switchMap(() =>
+                                    processor.process(task('taskB', 30))
+                                )
                             ),
-                            Observable.timer(0).switchMap(() =>
-                                processor.process(task('taskA'))
+                            timer(0).pipe(
+                                switchMap(() =>
+                                    processor.process(task('taskA'))
+                                )
                             ),
-                            Observable.timer(50).switchMap(() =>
-                                processor.process(task('taskB', 20))
+                            timer(50).pipe(
+                                switchMap(() =>
+                                    processor.process(task('taskB', 20))
+                                )
                             )
                         ),
                         ['A', 'B30'],
                         new Error('worker:finishing'),
                         done
                     );
-                    Observable.timer(35)
-                        .switchMap(() => processor.finish())
+                    timer(35)
+                        .pipe(switchMap(() => processor.finish()))
                         .subscribe();
                 });
             });

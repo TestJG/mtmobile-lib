@@ -1,12 +1,21 @@
-import { Observable } from 'rxjs/Observable';
-import { Notification } from 'rxjs/Notification';
-import { ReplaySubject } from 'rxjs/ReplaySubject';
+import {
+    Observable,
+    Notification,
+    ReplaySubject,
+    timer,
+    throwError,
+    of,
+} from 'rxjs';
 import { deepEqual } from '../../src/utils/equality';
 import { joinStr, conditionalLog, ValueOrFunc, LogOpts } from '../../src/utils';
-import "rxjs/add/observable/timer";
-import "rxjs/add/operator/concatMap";
-import "rxjs/add/operator/timeoutWith";
-import "rxjs/add/operator/toArray";
+import {
+    timeoutWith,
+    materialize,
+    tap,
+    toArray,
+    take,
+    concatMap,
+} from 'rxjs/operators';
 
 export interface DoneCallback {
     (...args: any[]): any;
@@ -34,16 +43,22 @@ export const testObsNotifications = <T = any>(
         options
     );
     const { anyValue, anyError, doneTimeout } = opts;
-    const log = conditionalLog(opts, { prefix: 'TEST_OBS: ',  });
+    const log = conditionalLog(opts, { prefix: 'TEST_OBS: ' });
 
     const toStr = (n: Notification<any>) => {
         switch (n.kind) {
             case 'N': {
-                const str = n.value instanceof Error ? `${n.value.name || 'Error'}('${n.value.message}')` : JSON.stringify(n.value);
+                const str =
+                    n.value instanceof Error
+                        ? `${n.value.name || 'Error'}('${n.value.message}')`
+                        : JSON.stringify(n.value);
                 return `a VALUE ${str}`;
             }
             case 'E': {
-                const str = n.error instanceof Error ? `${n.error.name || 'Error'}('${n.error.message}')` : JSON.stringify(n.error);
+                const str =
+                    n.error instanceof Error
+                        ? `${n.error.name || 'Error'}('${n.error.message}')`
+                        : JSON.stringify(n.error);
                 return `an ERROR ${str}`;
             }
             case 'C':
@@ -54,10 +69,12 @@ export const testObsNotifications = <T = any>(
     };
 
     return actual
-        .timeoutWith(doneTimeout, ['TIMEOUT'])
-        .materialize()
-        .do(n => log('RECEIVED ', toStr(n)))
-        .toArray()
+        .pipe(
+            timeoutWith(doneTimeout, ['TIMEOUT']),
+            materialize(),
+            tap(n => log('RECEIVED ', toStr(n))),
+            toArray()
+        )
         .subscribe({
             next: actArr => {
                 try {
@@ -67,7 +84,7 @@ export const testObsNotifications = <T = any>(
                 }
             },
             error: e => done.fail(e),
-            complete: () => done()
+            complete: () => done(),
         });
 };
 
@@ -107,13 +124,14 @@ export const testObsValues = <T = any>(
 export const testTaskOf = (due: number, period: number = 0) => (
     ...args: any[]
 ) => (p?: any) =>
-    Observable.timer(due, period)
-        .take(args.length)
-        .concatMap(i => {
+    timer(due, period).pipe(
+        take(args.length),
+        concatMap(i => {
             const elem = args[i];
             if (i === args.length - 1 && elem instanceof Error) {
-                return Observable.throw(elem);
+                return throwError(elem);
             } else {
-                return Observable.of(elem);
+                return of(elem);
             }
-        });
+        })
+    );
