@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var operators_1 = require("rxjs/operators");
 var common_1 = require("../utils/common");
 function logProcessor(processor) {
     processor.onTaskStarted$.subscribe(function (t) {
@@ -95,7 +96,7 @@ function logProcessorCore(processor, options) {
             console.log("" + print_1('START'));
             var result = processor.process(item);
             if (!opts.basicProcessLog) {
-                result = result.do({
+                result = result.pipe(operators_1.tap({
                     next: function (x) {
                         return console.log(print_1('NEXT ') + " VAL: " + opts.valueFormatter(x, item));
                     },
@@ -104,7 +105,7 @@ function logProcessorCore(processor, options) {
                             opts.valueFormatter(x, item)));
                     },
                     complete: function () { return console.log("" + print_1('COMPL')); }
-                });
+                }));
             }
             return result;
         }
@@ -133,14 +134,14 @@ function logProcessorCore(processor, options) {
             console.log(print_3('START'));
             var result = processor.finish();
             if (!opts.basicProcessLog) {
-                result = result.do({
+                result = result.pipe(operators_1.tap({
                     next: function () { return console.log(print_3('NEXT')); },
                     error: function (x) {
                         return console.log(print_3('ERROR') + " " + (opts.errorFormatter(x, undefined) ||
                             opts.valueFormatter(x, undefined)));
                     },
                     complete: function () { return console.log(print_3('COMPLETE')); }
-                });
+                }));
             }
             return result;
         }

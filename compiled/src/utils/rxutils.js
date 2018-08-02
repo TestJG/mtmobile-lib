@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var Observable_1 = require("rxjs/Observable");
+var rxjs_1 = require("rxjs");
+var operators_1 = require("rxjs/operators");
 var common_1 = require("./common");
 exports.normalizeErrorOnCatch = function (err) {
-    return Observable_1.Observable.throw(common_1.normalizeError(err));
+    return rxjs_1.throwError(common_1.normalizeError(err));
 };
 exports.fromObsLike = function (source, treatArraysAsValues) {
     if (treatArraysAsValues === void 0) { treatArraysAsValues = true; }
@@ -11,10 +12,10 @@ exports.fromObsLike = function (source, treatArraysAsValues) {
         (Promise.resolve(source) === source ||
             typeof source['subscribe'] === 'function' ||
             (!treatArraysAsValues && source instanceof Array))) {
-        return Observable_1.Observable.from(source);
+        return rxjs_1.from(source);
     }
     else {
-        return Observable_1.Observable.of(source);
+        return rxjs_1.of(source);
     }
 };
 exports.tryTo = function (thunk, treatArraysAsValues) {
@@ -46,49 +47,44 @@ exports.tryTo = function (thunk, treatArraysAsValues) {
     catch (error) {
         obs = exports.normalizeErrorOnCatch(error);
     }
-    return obs.do({ complete: runDefers, error: runDefers });
+    return obs.pipe(operators_1.tap({ complete: runDefers, error: runDefers }));
 };
 exports.wrapFunctionStream = function (stream) {
-    var conn = stream.publishReplay(1);
+    var conn = stream.pipe(operators_1.publishReplay(1));
     var subs = conn.connect();
     return (function () {
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
-        return conn.first().switchMap(function (f) { return f.apply(void 0, args); });
+        return conn.pipe(operators_1.first(), operators_1.switchMap(function (f) { return f.apply(void 0, args); }));
     });
 };
 exports.wrapServiceStreamFromNames = function (source, names) {
-    var conn = source.publishReplay(1);
+    var conn = source.pipe(operators_1.publishReplay(1));
     var subs = conn.connect();
     return names.reduce(function (prev, name) {
         return Object.assign(prev, (_a = {},
-            _a[name] = exports.wrapFunctionStream(conn.map(function (s) { return s[name]; })),
+            _a[name] = exports.wrapFunctionStream(conn.pipe(operators_1.map(function (s) { return s[name]; }))),
             _a));
         var _a;
     }, {});
 };
-exports.firstMap = function (source) { return function (mapper) { return source.first().map(mapper).catch(exports.normalizeErrorOnCatch); }; };
+exports.firstMap = function (source) { return function (mapper) { return source.pipe(operators_1.first(), operators_1.map(mapper), operators_1.catchError(exports.normalizeErrorOnCatch)); }; };
 exports.firstSwitchMap = function (source) { return function (mapper) {
-    return source
-        .first()
-        .switchMap(mapper)
-        .catch(exports.normalizeErrorOnCatch);
+    return source.pipe(operators_1.first(), operators_1.switchMap(mapper), operators_1.catchError(exports.normalizeErrorOnCatch));
 }; };
 exports.getAsObs = function (source) {
     return exports.tryTo(function () { return common_1.getAsValue(source); });
 };
 function makeState(init, updates$) {
-    var state$ = updates$
-        .scan(function (prev, up) { return up(prev); }, init)
-        .publishBehavior(init);
+    var state$ = updates$.pipe(operators_1.scan(function (prev, up) { return up(prev); }, init), operators_1.publishBehavior(init));
     var connection = state$.connect();
     return [state$, connection];
 }
 exports.makeState = makeState;
 function mapUntilCancelled(observable, cancel) {
-    return Observable_1.Observable.merge(observable.takeUntil(cancel), cancel.first().takeUntil(observable.ignoreElements().materialize()));
+    return rxjs_1.merge(observable.pipe(operators_1.takeUntil(cancel)), cancel.pipe(operators_1.first(), operators_1.takeUntil(observable.pipe(operators_1.ignoreElements(), operators_1.materialize()))));
 }
 exports.mapUntilCancelled = mapUntilCancelled;
 function logObserver(logger, maxLength, logNext, logErrors, logComplete) {

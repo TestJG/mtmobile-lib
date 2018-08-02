@@ -156,6 +156,48 @@ export function startSequentialProcessor(
         return result;
     };
 
+    const loop = () => {
+      const work = pickWork();
+      log(() => `LOOP - PICK ${!work ? 'nothing' : logWork(work)}`);
+      if (work) {
+          // tslint:disable-next-line:no-use-before-declare
+          runTaskOnce(work);
+      } else if (!_isAlive && _retryPendingCount === 0) {
+          // Only once all input and retries has been processed
+          _isActive = false;
+          finishSub.next();
+          finishSub.complete();
+          onFinishedSub.next(null);
+          onFinishedSub.complete();
+          onTaskStartedSub.complete();
+          onTaskReStartedSub.complete();
+          onTaskResultSub.complete();
+          onTaskErrorSub.complete();
+          onTaskCompletedSub.complete();
+          log('LOOP - CLOSED');
+      } else {
+          _isActive = false;
+          log('LOOP - DEACTIVATED');
+      }
+    };
+
+    const pushWorkItem = (work: WorkState) => {
+      if (work.retries === 0) {
+          inputCh.push(work);
+          log(() => 'PUSH - INPUT ' + logWork(work));
+      } else {
+          _retryPendingCount--;
+          retriesCh.push(work);
+          log(() => 'PUSH - RETRY ' + logWork(work));
+      }
+
+      if (!_isActive) {
+          _isActive = true;
+          setTimeout(loop, 1);
+          log('PUSH - REACTIVATE');
+      }
+    };
+
     const runTaskOnce = (work: WorkState) => {
         if (work.retries === 0) {
             onTaskStartedSub.next(work.item);
@@ -211,47 +253,6 @@ export function startSequentialProcessor(
                     onTaskCompletedSub.next(work.item);
                 }
             });
-    };
-
-    const loop = () => {
-        const work = pickWork();
-        log(() => `LOOP - PICK ${!work ? 'nothing' : logWork(work)}`);
-        if (work) {
-            runTaskOnce(work);
-        } else if (!_isAlive && _retryPendingCount === 0) {
-            // Only once all input and retries has been processed
-            _isActive = false;
-            finishSub.next();
-            finishSub.complete();
-            onFinishedSub.next(null);
-            onFinishedSub.complete();
-            onTaskStartedSub.complete();
-            onTaskReStartedSub.complete();
-            onTaskResultSub.complete();
-            onTaskErrorSub.complete();
-            onTaskCompletedSub.complete();
-            log('LOOP - CLOSED');
-        } else {
-            _isActive = false;
-            log('LOOP - DEACTIVATED');
-        }
-    };
-
-    const pushWorkItem = (work: WorkState) => {
-        if (work.retries === 0) {
-            inputCh.push(work);
-            log(() => 'PUSH - INPUT ' + logWork(work));
-        } else {
-            _retryPendingCount--;
-            retriesCh.push(work);
-            log(() => 'PUSH - RETRY ' + logWork(work));
-        }
-
-        if (!_isActive) {
-            _isActive = true;
-            setTimeout(loop, 1);
-            log('PUSH - REACTIVATE');
-        }
     };
 
     const process = (item: TaskItem) => {

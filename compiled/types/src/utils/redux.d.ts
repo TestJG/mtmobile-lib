@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { Action, ActionReducer } from '@ngrx/store';
 /**
  * An ngrx action with a typed payload property.

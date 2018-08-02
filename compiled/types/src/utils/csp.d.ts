@@ -1,5 +1,4 @@
-import { Observable } from 'rxjs/Observable';
-import { Observer } from 'rxjs/Observer';
+import { Observable, Observer } from 'rxjs';
 import { LogOpts, Logger } from './common';
 export declare const isChan: (value: any) => boolean;
 export declare const isInstruction: (value: any) => any;
@@ -19,8 +18,8 @@ export declare const bufferedObserver: (options?: Partial<ToChanOptions>) => Obs
 export declare const generatorToChan: (gen: any, options?: Partial<ToChanOptions>) => any;
 export declare const iterableToChan: (iterable: any, options?: Partial<ToChanOptions>) => any;
 export declare const promiseToChan: (promise: Promise<any>, options?: Partial<ToChanOptions>) => any;
-export declare const firstToChan: (obs: Observable<any>, options?: Partial<ToChanOptions>) => any;
 export declare const observableToChan: (obs: Observable<any>, options?: Partial<ToChanOptions>) => any;
+export declare const firstToChan: (obs: Observable<any>, options?: Partial<ToChanOptions>) => any;
 export declare const toChan: (source: any, options?: Partial<ToChanOptions>) => any;
 export declare const toYielder: (source: any) => any;
 export declare const chanToObservable: <T>(ch: any, options?: Partial<LogOpts>) => Observable<T> & Logger;

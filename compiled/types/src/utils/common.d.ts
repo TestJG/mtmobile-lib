@@ -86,10 +86,10 @@ export declare type Comparer<T = any> = (x: T, y: T) => number;
 export declare const compareTypes: Comparer;
 export declare const compareSameType: Comparer;
 export declare const compareNumber: Comparer<number>;
+export declare const compareBy: <T = any>(...comparers: Comparer<T>[]) => Comparer<T>;
 export declare const compareFunction: Comparer<Function>;
 export declare const compareArray: Comparer<Array<any>>;
 export declare const compareObject: Comparer<Object>;
-export declare const compareBy: <T = any>(...comparers: Comparer<T>[]) => Comparer<T>;
 export declare const compareDataByType: (x: any, y: any) => number;
 export declare function printData(value: any, opts?: Partial<{
     maxLength: number;

@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { IProcessor, IProcessorCore, TaskItem } from './processor.interfaces';
 export interface WorkerItem {
     kind: 'process' | 'terminate' | 'unsubscribe';

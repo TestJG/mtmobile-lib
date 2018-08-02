@@ -1,8 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var Observable_1 = require("rxjs/Observable");
-var Subject_1 = require("rxjs/Subject");
-var ReplaySubject_1 = require("rxjs/ReplaySubject");
+var rxjs_1 = require("rxjs");
 var common_1 = require("../utils/common");
 var errors_1 = require("./errors");
 var utils_1 = require("../utils");
@@ -28,7 +26,7 @@ function startSequentialProcessor(runTask, options) {
     }, options);
     var inputCh = [];
     var retriesCh = [];
-    var finishSub = new Subject_1.Subject();
+    var finishSub = new rxjs_1.Subject();
     var finishObs = finishSub.asObservable();
     var _isAlive = true;
     var _isActive = false;
@@ -47,17 +45,17 @@ function startSequentialProcessor(runTask, options) {
     var logWork = function (work) {
         return "(" + work.item.kind + " R:" + work.retries + " D:" + work.delay + "ms ID:" + work.item.uid + ")";
     };
-    var onFinishedSub = new ReplaySubject_1.ReplaySubject(1);
+    var onFinishedSub = new rxjs_1.ReplaySubject(1);
     var onFinished$ = onFinishedSub.asObservable();
-    var onTaskStartedSub = new Subject_1.Subject();
+    var onTaskStartedSub = new rxjs_1.Subject();
     var onTaskStarted$ = onTaskStartedSub.asObservable();
-    var onTaskReStartedSub = new Subject_1.Subject();
+    var onTaskReStartedSub = new rxjs_1.Subject();
     var onTaskReStarted$ = onTaskReStartedSub.asObservable();
-    var onTaskResultSub = new Subject_1.Subject();
+    var onTaskResultSub = new rxjs_1.Subject();
     var onTaskResult$ = onTaskResultSub.asObservable();
-    var onTaskErrorSub = new Subject_1.Subject();
+    var onTaskErrorSub = new rxjs_1.Subject();
     var onTaskError$ = onTaskErrorSub.asObservable();
-    var onTaskCompletedSub = new Subject_1.Subject();
+    var onTaskCompletedSub = new rxjs_1.Subject();
     var onTaskCompleted$ = onTaskCompletedSub.asObservable();
     var isAlive = function () { return _isAlive; };
     var finish = function () {
@@ -84,6 +82,48 @@ function startSequentialProcessor(runTask, options) {
             ? pickInput() || pickRetry()
             : pickRetry() || pickInput();
         return result;
+    };
+    var loop = function () {
+        var work = pickWork();
+        log(function () { return "LOOP - PICK " + (!work ? 'nothing' : logWork(work)); });
+        if (work) {
+            // tslint:disable-next-line:no-use-before-declare
+            runTaskOnce(work);
+        }
+        else if (!_isAlive && _retryPendingCount === 0) {
+            // Only once all input and retries has been processed
+            _isActive = false;
+            finishSub.next();
+            finishSub.complete();
+            onFinishedSub.next(null);
+            onFinishedSub.complete();
+            onTaskStartedSub.complete();
+            onTaskReStartedSub.complete();
+            onTaskResultSub.complete();
+            onTaskErrorSub.complete();
+            onTaskCompletedSub.complete();
+            log('LOOP - CLOSED');
+        }
+        else {
+            _isActive = false;
+            log('LOOP - DEACTIVATED');
+        }
+    };
+    var pushWorkItem = function (work) {
+        if (work.retries === 0) {
+            inputCh.push(work);
+            log(function () { return 'PUSH - INPUT ' + logWork(work); });
+        }
+        else {
+            _retryPendingCount--;
+            retriesCh.push(work);
+            log(function () { return 'PUSH - RETRY ' + logWork(work); });
+        }
+        if (!_isActive) {
+            _isActive = true;
+            setTimeout(loop, 1);
+            log('PUSH - REACTIVATE');
+        }
     };
     var runTaskOnce = function (work) {
         if (work.retries === 0) {
@@ -131,53 +171,12 @@ function startSequentialProcessor(runTask, options) {
             }
         });
     };
-    var loop = function () {
-        var work = pickWork();
-        log(function () { return "LOOP - PICK " + (!work ? 'nothing' : logWork(work)); });
-        if (work) {
-            runTaskOnce(work);
-        }
-        else if (!_isAlive && _retryPendingCount === 0) {
-            // Only once all input and retries has been processed
-            _isActive = false;
-            finishSub.next();
-            finishSub.complete();
-            onFinishedSub.next(null);
-            onFinishedSub.complete();
-            onTaskStartedSub.complete();
-            onTaskReStartedSub.complete();
-            onTaskResultSub.complete();
-            onTaskErrorSub.complete();
-            onTaskCompletedSub.complete();
-            log('LOOP - CLOSED');
-        }
-        else {
-            _isActive = false;
-            log('LOOP - DEACTIVATED');
-        }
-    };
-    var pushWorkItem = function (work) {
-        if (work.retries === 0) {
-            inputCh.push(work);
-            log(function () { return 'PUSH - INPUT ' + logWork(work); });
-        }
-        else {
-            _retryPendingCount--;
-            retriesCh.push(work);
-            log(function () { return 'PUSH - RETRY ' + logWork(work); });
-        }
-        if (!_isActive) {
-            _isActive = true;
-            setTimeout(loop, 1);
-            log('PUSH - REACTIVATE');
-        }
-    };
     var process = function (item) {
         if (!_isAlive) {
             log('PROCESS - NOT ALIVE');
-            return Observable_1.Observable.throw(new Error('worker:finishing'));
+            return rxjs_1.throwError(new Error('worker:finishing'));
         }
-        var sub = new Subject_1.Subject();
+        var sub = new rxjs_1.Subject();
         var work = {
             item: item,
             sub: sub,

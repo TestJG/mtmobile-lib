@@ -399,6 +399,21 @@ exports.compareNumber = function (x, y) {
         return x === y ? 0 : x < y ? -1 : 1;
     }
 };
+exports.compareBy = function () {
+    var comparers = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        comparers[_i] = arguments[_i];
+    }
+    return function (x, y) {
+        for (var i = 0; i < comparers.length; i++) {
+            var comp = comparers[i](x, y);
+            if (comp !== 0) {
+                return comp;
+            }
+        }
+        return 0;
+    };
+};
 exports.compareFunction = function (x, y) {
     if (typeof x !== 'function' || typeof y !== 'function') {
         return 0;
@@ -419,6 +434,7 @@ exports.compareArray = function (x, y) {
     for (var i = 0; i < minLen; i++) {
         var a = x[i];
         var b = y[i];
+        // tslint:disable-next-line:no-use-before-declare
         var comp = exports.compareDataByType(a, b);
         if (comp !== 0) {
             return comp;
@@ -456,21 +472,6 @@ exports.compareObject = function (x, y) {
     var xProps = Object.getOwnPropertyNames(x).sort();
     var yProps = Object.getOwnPropertyNames(y).sort();
     return exports.compareArray(xProps, yProps);
-};
-exports.compareBy = function () {
-    var comparers = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        comparers[_i] = arguments[_i];
-    }
-    return function (x, y) {
-        for (var i = 0; i < comparers.length; i++) {
-            var comp = comparers[i](x, y);
-            if (comp !== 0) {
-                return comp;
-            }
-        }
-        return 0;
-    };
 };
 exports.compareDataByType = function (x, y) {
     var comp = exports.compareTypes(typeof x, typeof y);

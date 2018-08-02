@@ -27,7 +27,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var Observable_1 = require("rxjs/Observable");
+var operators_1 = require("rxjs/operators");
+var rxjs_1 = require("rxjs");
 var js_csp_1 = require("js-csp");
 var common_1 = require("./common");
 var index_1 = require("../../index");
@@ -326,12 +327,12 @@ exports.promiseToChan = function (promise, options) {
     }
     return Object.assign(ch, { log: log });
 };
-exports.firstToChan = function (obs, options) { return exports.observableToChan(obs.take(1), options); };
 exports.observableToChan = function (obs, options) {
     var observer = exports.bufferedObserver(options);
     obs.subscribe(observer);
     return observer.channel;
 };
+exports.firstToChan = function (obs, options) { return exports.observableToChan(obs.pipe(operators_1.take(1)), options); };
 exports.toChan = function (source, options) {
     var opts = Object.assign({
         keepOpen: false,
@@ -363,7 +364,7 @@ exports.toChan = function (source, options) {
     else if (Symbol.iterator in source) {
         return exports.iterableToChan(source, options);
     }
-    else if (source instanceof Observable_1.Observable) {
+    else if (source instanceof rxjs_1.Observable) {
         return exports.observableToChan(source, options);
     }
     else if (source && typeof source.next === 'function') {
@@ -387,7 +388,7 @@ exports.toYielder = function (source) {
 exports.chanToObservable = function (ch, options) {
     var opts = Object.assign({}, options);
     var log = common_1.conditionalLog(opts, { prefix: 'OBS_CHAN: ' });
-    var obsResult = Observable_1.Observable.create(function (o) {
+    var obsResult = rxjs_1.Observable.create(function (o) {
         log('Start');
         var cancelCh = js_csp_1.promiseChan();
         js_csp_1.go(function () {

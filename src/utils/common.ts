@@ -443,6 +443,16 @@ export const compareNumber: Comparer<number> = (x, y) => {
     }
 };
 
+export const compareBy = <T = any>(...comparers: Comparer<T>[]): Comparer<T> => (x, y) => {
+  for (let i = 0; i < comparers.length; i++) {
+      const comp = comparers[i](x, y);
+      if (comp !== 0) {
+          return comp;
+      }
+  }
+  return 0;
+};
+
 export const compareFunction: Comparer<Function> = (x, y) => {
     if (typeof x !== 'function' || typeof y !== 'function') {
         return 0;
@@ -467,6 +477,7 @@ export const compareArray: Comparer<Array<any>> = (x, y) => {
     for (let i = 0; i < minLen; i++) {
         const a = x[i];
         const b = y[i];
+        // tslint:disable-next-line:no-use-before-declare
         const comp = compareDataByType(a, b);
         if (comp !== 0) {
             return comp;
@@ -504,16 +515,6 @@ export const compareObject: Comparer<Object> = (x, y) => {
     const xProps = Object.getOwnPropertyNames(x).sort();
     const yProps = Object.getOwnPropertyNames(y).sort();
     return compareArray(xProps, yProps);
-};
-
-export const compareBy = <T = any>(...comparers: Comparer<T>[]): Comparer<T> => (x, y) => {
-    for (let i = 0; i < comparers.length; i++) {
-        const comp = comparers[i](x, y);
-        if (comp !== 0) {
-            return comp;
-        }
-    }
-    return 0;
 };
 
 export const compareDataByType = (x: any, y: any) => {

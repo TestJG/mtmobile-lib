@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var operators_1 = require("rxjs/operators");
 var common_1 = require("./common");
 /**
  * This function creates a full reducer given a partial reducer.
@@ -60,8 +61,8 @@ exports.action = function (prefix, actionName, reducer) {
     var create = function (payload) { return ({ type: type, payload: payload }); };
     reducer = reducer || common_1.id;
     var is = function (a) { return a.type && a.type === type; };
-    var filter = function (actions) {
-        return actions.filter(is).map(function (a) { return a.payload; });
+    var aux = function (actions) {
+        return actions.pipe(operators_1.filter(is), operators_1.map(function (a) { return a.payload; }));
     };
     var result = Object.assign(create, {
         actionName: actionName,
@@ -69,7 +70,7 @@ exports.action = function (prefix, actionName, reducer) {
         prefix: prefix,
         hasPayload: true,
         reducer: reducer,
-        filter: filter,
+        filter: aux,
         is: is
     });
     return result;
@@ -90,8 +91,8 @@ exports.actionEmpty = function (prefix, actionName, aSimpleReducer) {
     var create = function () { return ({ type: type }); };
     var reducer = aSimpleReducer || common_1.id;
     var is = function (a) { return a.type && a.type === type; };
-    var filter = function (actions) {
-        return actions.filter(is).map(function () { return null; });
+    var aux = function (actions) {
+        return actions.pipe(operators_1.filter(is), operators_1.map(function () { return null; }));
     };
     var result = Object.assign(create, {
         actionName: actionName,
@@ -99,7 +100,7 @@ exports.actionEmpty = function (prefix, actionName, aSimpleReducer) {
         prefix: prefix,
         hasPayload: false,
         reducer: reducer,
-        filter: filter,
+        filter: aux,
         is: is
     });
     return result;

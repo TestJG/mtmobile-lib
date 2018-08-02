@@ -296,19 +296,19 @@ export const promiseToChan = (
     return Object.assign(ch, { log });
 };
 
+export const observableToChan = (
+  obs: Observable<any>,
+  options?: Partial<ToChanOptions>
+): any => {
+  const observer = bufferedObserver(options);
+  obs.subscribe(observer);
+  return observer.channel;
+};
+
 export const firstToChan = (
     obs: Observable<any>,
     options?: Partial<ToChanOptions>
 ): any => observableToChan(obs.pipe(takeObs(1)), options);
-
-export const observableToChan = (
-    obs: Observable<any>,
-    options?: Partial<ToChanOptions>
-): any => {
-    const observer = bufferedObserver(options);
-    obs.subscribe(observer);
-    return observer.channel;
-};
 
 export const toChan = (source: any, options?: Partial<ToChanOptions>) => {
     const opts = Object.assign(

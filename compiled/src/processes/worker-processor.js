@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var Observable_1 = require("rxjs/Observable");
-var Subject_1 = require("rxjs/Subject");
+var operators_1 = require("rxjs/operators");
+var rxjs_1 = require("rxjs");
 var common_1 = require("../utils/common");
 exports.createBackgroundWorker = function (opts) {
-    opts.processor.switchMap(function (p) { return p.onFinished$; }).subscribe({
+    opts.processor.pipe(operators_1.switchMap(function (p) { return p.onFinished$; })).subscribe({
         complete: function () {
             opts.terminate();
         }
@@ -13,9 +13,7 @@ exports.createBackgroundWorker = function (opts) {
     var process = function (item) {
         switch (item.kind) {
             case 'process': {
-                var subs = opts.processor
-                    .first()
-                    .switchMap(function (p) { return p.process(item.task); })
+                var subs = opts.processor.pipe(operators_1.first(), operators_1.switchMap(function (p) { return p.process(item.task); }))
                     .subscribe({
                     next: function (v) {
                         return opts.postMessage({
@@ -52,7 +50,7 @@ exports.createBackgroundWorker = function (opts) {
                 break;
             }
             case 'terminate': {
-                opts.processor.first().switchMap(function (p) { return p.finish(); }).subscribe();
+                opts.processor.pipe(operators_1.first(), operators_1.switchMap(function (p) { return p.finish(); })).subscribe();
                 break;
             }
             default:
@@ -67,7 +65,7 @@ exports.createForegroundWorker = function (opts) {
     var caption = opts.caption || 'worker';
     var status = 'open';
     var terminateUUID = common_1.uuid();
-    var terminateSub = new Subject_1.Subject();
+    var terminateSub = new rxjs_1.Subject();
     var terminate$ = terminateSub.asObservable();
     var terminateSubscription = terminateSub.subscribe({
         complete: function () {
@@ -89,9 +87,9 @@ exports.createForegroundWorker = function (opts) {
         return terminate$;
     };
     var process = function (task) {
-        var result = Observable_1.Observable.create(function (o) {
+        var result = rxjs_1.Observable.create(function (o) {
             var id = common_1.uuid();
-            var sub = new Subject_1.Subject();
+            var sub = new rxjs_1.Subject();
             var obs$ = sub.asObservable();
             observers.set(id, sub);
             worker.postMessage({ kind: 'process', uid: id, task: task });
