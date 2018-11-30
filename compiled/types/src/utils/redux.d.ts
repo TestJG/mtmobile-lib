@@ -228,6 +228,4 @@ export declare const makeReducer: <S>(initialState: S) => (...actionGroups: Acti
  * representing actions you want to override their reducers.
  * @returns {T}
  */
-export declare const overrideActions: <T extends ActionMap<S1>, S1, S2>(actions: T, newReducers?: Partial<{
-    [P in keyof T]: PartialReducerOf<any, S2>;
-}>) => ActionMap<S2>;
+export declare const overrideActions: <T extends ActionMap<S1>, S1, S2>(actions: T, newReducers?: Partial<{ [P in keyof T]: PartialReducerOf<any, S2>; }>) => ActionMap<S2>;

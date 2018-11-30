@@ -13,16 +13,12 @@ import {
     FormItem,
     FormFieldInit,
     FormField,
-    FormItemState,
     FormGroupInit,
     FormGroup,
-    FormGroupState,
     FormGroupFields,
     FormListingInit,
     FormListing,
-    FormListingState,
     FormListingFields,
-    FormError,
     ExtraFormInfo
 } from './forms.interfaces';
 import {
@@ -125,10 +121,10 @@ export const field = <T = any>(
     }
 };
 
-export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
-    fields: F,
+export const group = <T = any>(
+    fields: FormGroupFields<T>,
     options?: Partial<FormGroupInit<T>>
-): FormGroup<T, F> => {
+): FormGroup<T> => {
     if (!(fields instanceof Object) || fields.constructor !== Object) {
         throw new Error('Group fields must be a plain JS object.');
     }
@@ -154,10 +150,10 @@ export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
 
     const coerce = coerceAll(coerceInit);
     const validator = mergeValidators(validatorInit);
-    const theFields = <F>Object.assign({}, fields);
+    const theFields = Object.assign({}, fields);
     const theInitValue = initValue || <T>createGroupValue(theFields);
 
-    const result: FormGroup<T, F> = {
+    const result: FormGroup<T> = {
         // Type
         type: 'group',
 
@@ -182,7 +178,7 @@ export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
         fields: theFields
     };
 
-    return <FormGroup<T, F>>setValueInternal(result, theInitValue, '', {
+    return <FormGroup<T>>setValueInternal(result, theInitValue, '', {
         affectDirty: false,
         compareValues: false,
         initialization: true
@@ -190,12 +186,11 @@ export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
 };
 
 export const listing = <
-    T extends any[] = any,
-    F extends FormListingFields = FormListingFields
+    T extends any[] = any[]
 >(
-    fields: F,
+    fields: FormListingFields<T>,
     options?: Partial<FormListingInit<T>>
-): FormListing<T, F> => {
+): FormListing<T> => {
     if (!(fields instanceof Array)) {
         throw new Error('Listing fields must be a plain JS Array.');
     }
@@ -221,10 +216,10 @@ export const listing = <
 
     const coerce = coerceAll(coerceInit);
     const validator = mergeValidators(validatorInit);
-    const theFields = <F>(<any>fields.slice());
+    const theFields = fields.slice();
     const theInitValue = initValue || <T>createListingValue(theFields);
 
-    const result: FormListing<T, F> = {
+    const result: FormListing<T> = {
         // Type
         type: 'listing',
 
@@ -249,7 +244,7 @@ export const listing = <
         fields: theFields
     };
 
-    return <FormListing<T, F>>setValueInternal(result, theInitValue, '', {
+    return <FormListing<T>>setValueInternal(result, theInitValue, '', {
         affectDirty: false,
         compareValues: false,
         initialization: true

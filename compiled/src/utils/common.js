@@ -166,8 +166,8 @@ exports.toKVMap = function (kvs) {
     if (kvs instanceof Array) {
         return kvs.reduce(function (prev, _a) {
             var key = _a[0], value = _a[1];
-            return Object.assign(prev, (_b = {}, _b[key] = value, _b));
             var _b;
+            return Object.assign(prev, (_b = {}, _b[key] = value, _b));
         }, {});
     }
     return kvs;
@@ -195,13 +195,13 @@ exports.objFilter = function (filter) { return function (source) {
     }
     var original = exports.toKVMap(source);
     return exports.toKVMap(Object.keys(original).reduce(function (obj, key) {
+        var _a;
         if (filter([key, original[key]])) {
             return Object.assign(obj, (_a = {}, _a[key] = original[key], _a));
         }
         else {
             return obj;
         }
-        var _a;
     }, {}));
 }; };
 exports.normalizeError = function (err) {

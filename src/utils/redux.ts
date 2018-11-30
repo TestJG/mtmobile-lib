@@ -1,14 +1,7 @@
 import { map, filter } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { Action, ActionReducer } from '@ngrx/store';
-import {
-    objFlatMap,
-    objMapValues,
-    objMap,
-    joinStr,
-    id,
-    assignOrSame
-} from './common';
+import { objMapValues, joinStr, id, assignOrSame } from './common';
 
 /**
  * An ngrx action with a typed payload property.
@@ -366,6 +359,6 @@ export const overrideActions = <T extends ActionMap<S1>, S1, S2>(
         return def.hasPayload
             ? partial(def.prefix, def.actionName, newReducer)
             : partialEmpty(def.prefix, def.actionName, s =>
-                  newReducer(s, undefined)
+                  (newReducer as Function)(s, undefined)
               );
     })(actions);

@@ -70,7 +70,7 @@ export interface FormFieldState<T = any>
     isValidInput: boolean;
 }
 
-export interface FormField<T = any> extends FormFieldState<T>, FormPart<T> {}
+export interface FormField<T> extends FormFieldState<T>, FormPart<T> {}
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -78,39 +78,43 @@ export interface FormField<T = any> extends FormFieldState<T>, FormPart<T> {}
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-export interface FormGroupValuesMapping {
-    [name: string]: any;
-}
+// export interface FormGroupValuesMapping {
+//     [name: string]: any;
+// }
 
-export interface FormGroupFieldStates {
-    [name: string]: FormItemState;
-}
+// export interface FormGroupFieldStates {
+//     [name: string]: FormItemState;
+// }
 
-export interface FormGroupFields {
-    [name: string]: FormItem;
-}
+export type FormGroupFields<T = any> = {
+  [K in keyof T]: FormItem<T[K]> ;
+};
 
 export interface FormGroupInit<T = any> extends FormPartInit<T> {
     initValue: T;
 }
 
-export interface FormGroupConfig<T = any> extends FormPartConfig<T> {
-    type: 'group';
-}
+// export interface FormGroupConfig<T = any> extends FormPartConfig<T> {
+//     type: 'group';
+// }
 
-export interface FormGroupState<
-    T = any,
-    F extends FormGroupFieldStates = FormGroupFieldStates
-> extends FormGroupConfig<T>, FormPartState<T> {
-    fields: F;
-}
+// export interface FormGroupState<
+//     T = any,
+//     F extends FormGroupFieldStates = FormGroupFieldStates
+// > extends FormGroupConfig<T>, FormPartState<T> {
+//     fields: F;
+// }
 
-export interface FormGroup<
-    T = any,
-    F extends FormGroupFields = FormGroupFields
-> extends FormGroupState<T>, FormPart<T> {
-    fields: F;
+export interface FormGroup<T extends Object> extends FormPart<T> {
+    type: "group";
+    fields: FormGroupFields<T>;
 }
+// export interface FormGroup<
+//     T = any,
+//     F extends FormGroupFields = FormGroupFields
+// > extends FormGroupState<T>, FormPart<T> {
+//     fields: F;
+// }
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -118,36 +122,44 @@ export interface FormGroup<
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-export type FormListingValuesMapping = Array<any>;
+// export type FormListingValuesMapping = Array<any>;
 
-export interface FormListingFieldStates {
-    [index: number]: FormItemState;
-}
+// export interface FormListingFieldStates {
+//     [index: number]: FormItemState;
+// }
 
-export interface FormListingFields {
-    [index: number]: FormItem;
-}
+// export interface FormListingFields {
+//     [index: number]: FormItem;
+// }
 
-export interface FormListingInit<T = any> extends FormPartInit<T> {
+// type ArrayItem<T extends any[]> = T[keyof T];
+
+export type FormListingFields<T = any> = FormItem<T>[];
+
+export interface FormListingInit<T extends T[] = any[]> extends FormPartInit<T> {
     initValue: T;
 }
 
-export interface FormListingConfig<T = any> extends FormPartConfig<T> {
-    type: 'listing';
-}
+// let list: FormListing<string[]>;
+// list.fields.forEach(f => f.value)
+// export interface FormListingConfig<T = any> extends FormPartConfig<T> {
+//     type: 'listing';
+// }
 
-export interface FormListingState<
-    T = any,
-    F extends FormListingFieldStates = FormListingFieldStates
-> extends FormListingConfig<T>, FormPartState<T> {
-    fields: F;
-}
+// export interface FormListingState<
+//     T = any,
+//     F extends FormListingFieldStates = FormListingFieldStates
+// > extends FormListingConfig<T>, FormPartState<T> {
+//     fields: F;
+// }
+
 
 export interface FormListing<
-    T = any,
-    F extends FormListingFields = FormListingFields
-> extends FormListingState<T>, FormPart<T> {
-    fields: F;
+    T extends T[] = any[],
+> extends FormPart<T> {
+    type: "listing";
+    fields: FormListingFields<T[0]>;
+    // value: T[];
 }
 
 ////////////////////////////////////////////////////////////////
@@ -156,19 +168,19 @@ export interface FormListing<
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-export type FormItemType = 'field' | 'group' | 'listing';
+// export type FormItemType = 'field' | 'group' | 'listing';
 
-export type FormItemConfig<T = any> =
-    | FormFieldConfig<T>
-    | FormGroupConfig<T>
-    | FormListingConfig<T>;
+// export type FormItemConfig<T = any> =
+//     | FormFieldConfig<T>
+//     | FormGroupConfig<T>
+//     | FormListingConfig<T>;
 
-export type FormItemState<T = any> =
-    | FormFieldState<T>
-    | FormGroupState<T>
-    | FormListingState<T>;
+// export type FormItemState<T = any> =
+//     | FormFieldState<T>
+//     | FormGroupState<T>
+//     | FormListingState<T>;
 
-export type FormItem<T = any> = FormField<T> | FormGroup<T> | FormListing<T>;
+export type FormItem<T = any> = FormField<T> | FormGroup<T> | FormListing;
 
 export interface FormError {
     path: string;

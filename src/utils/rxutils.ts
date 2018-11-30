@@ -9,7 +9,8 @@ import {
     getAsValue,
     conditionalLog,
     capString,
-    noop
+    noop,
+    FuncOf
 } from './common';
 
 export type ObsLike<T = any> = Subscribable<T> | PromiseLike<T> | T[] | T;
@@ -68,7 +69,7 @@ export const tryTo = <T>(
     return obs.pipe(tap({ complete: runDefers, error: runDefers }));
 };
 
-type FuncOf<V> = (...args: any[]) => V;
+// type FuncOf<V> = (...args: any[]) => V;
 type FuncOfObs<V> = FuncOf<Observable<V>>;
 
 export const wrapFunctionStream = <V, F extends FuncOfObs<V>>(

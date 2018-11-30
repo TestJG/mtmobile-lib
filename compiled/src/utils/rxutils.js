@@ -64,10 +64,10 @@ exports.wrapServiceStreamFromNames = function (source, names) {
     var conn = source.pipe(operators_1.publishReplay(1));
     var subs = conn.connect();
     return names.reduce(function (prev, name) {
+        var _a;
         return Object.assign(prev, (_a = {},
             _a[name] = exports.wrapFunctionStream(conn.pipe(operators_1.map(function (s) { return s[name]; }))),
             _a));
-        var _a;
     }, {});
 };
 exports.firstMap = function (source) { return function (mapper) { return source.pipe(operators_1.first(), operators_1.map(mapper), operators_1.catchError(exports.normalizeErrorOnCatch)); }; };

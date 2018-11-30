@@ -3,7 +3,8 @@ export declare const isNothing: (x: any) => boolean;
 export declare const isSomething: (x: any) => boolean;
 export declare const assign: <T>(s: T, ...u: Partial<T>[]) => T;
 export declare const assignArray: <T>(s: T[], ...u: [number, T[]][]) => T[];
-export declare type ValueOrFunc<T = any> = T | ((...args: any[]) => T);
+export declare type FuncOf<T> = (...args: any[]) => T;
+export declare type ValueOrFunc<T = any> = T | FuncOf<T>;
 export declare const getAsValue: <T>(valueOrFunc: ValueOrFunc<T>, ...args: any[]) => T;
 export declare const getAsValueOrError: <T>(valueOrFunc: ValueOrFunc<T>, onError: ValueOrFunc<T>, ...args: any[]) => T;
 export declare const assignOrSameWith: <T>(equality: EqualityComparer<T>, s: T, ...u: Partial<T>[]) => T;
@@ -39,7 +40,7 @@ export interface LogOpts {
 export interface Logger {
     log: typeof console.log;
 }
-export declare const conditionalLog: (logOpts?: string | boolean | LogOpts | ((...args: any[]) => string), options?: Partial<{
+export declare const conditionalLog: (logOpts?: string | boolean | LogOpts | FuncOf<string>, options?: Partial<{
     prefix: ValueOrFunc<string>;
     logger: {
         (message?: any, ...optionalParams: any[]): void;
@@ -55,7 +56,7 @@ export declare const conditionalLog: (logOpts?: string | boolean | LogOpts | ((.
         };
     };
 };
-export declare const subLog: (parentLog: any, enabled: string | boolean | ((...args: any[]) => string), options?: Partial<{
+export declare const subLog: (parentLog: any, enabled: string | boolean | FuncOf<string>, options?: Partial<{
     prefix: ValueOrFunc<string>;
     logger: {
         (message?: any, ...optionalParams: any[]): void;
