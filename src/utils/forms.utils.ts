@@ -121,13 +121,13 @@ export const locateInGroupOrFail = <T>(
     path: string,
     failIfNoChild: boolean = true
 ) => {
-    const match = matchGroupPath(path);
+    const match = <{step: keyof T, rest: string}>matchGroupPath(path);
     if (!match) {
         throw new Error(
             `Unexpected path accessing this group: ${JSON.stringify(path)}`
         );
     }
-    const child: FormItem<keyof T> = item.fields[match.step];
+    const child = item.fields[match.step];
     if (!child && failIfNoChild) {
         throw new Error(
             `Unexpected field name accessing this group: ${JSON.stringify(
@@ -135,7 +135,7 @@ export const locateInGroupOrFail = <T>(
             )}`
         );
     }
-    return <[keyof T, FormItem<keyof T>, string]>[
+    return <[keyof T, FormItem<T[keyof T]>, string]>[
         match.step,
         child,
         match.rest,
@@ -162,7 +162,7 @@ export const locateInListingOrFail = <T extends any[]>(
             )}`
         );
     }
-    return <[number, FormItem<T>, string]>[match.step, child, match.rest];
+    return <[number, FormItem<T[0]>, string]>[match.step, child, match.rest];
 };
 
 const checkGroupValue = (value: any) => {

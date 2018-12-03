@@ -62,11 +62,12 @@ export declare type FormListingFields<T = any> = FormItem<T>[];
 export interface FormListingInit<T extends T[] = any[]> extends FormPartInit<T> {
     initValue: T;
 }
-export interface FormListing<T extends T[] = any[]> extends FormPart<T> {
+export interface FormListing<T extends any[]> extends FormPart<T> {
     type: "listing";
     fields: FormListingFields<T[0]>;
+    value: T[0];
 }
-export declare type FormItem<T = any> = FormField<T> | FormGroup<T> | FormListing;
+export declare type FormItem<T = any> = FormField<T> | FormGroup<T> | FormListing<T[]>;
 export interface FormError {
     path: string;
     item: FormItem;

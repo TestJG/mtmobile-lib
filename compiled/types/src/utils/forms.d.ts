@@ -12,7 +12,7 @@ export declare const setInput: <I extends FormItem<any> = FormItem<any>>(item: I
 export declare const setInputDoNotTouch: <I extends FormItem<any> = FormItem<any>>(item: I, input: any, pathToField?: string) => I;
 export declare const resetValue: <I extends FormItem<any> = FormItem<any>>(item: I, pathToField?: string, value?: any) => I;
 export declare const setGroupField: <I extends FormItem<any> = FormItem<any>>(item: I, pathToGroupField: string, formItem: ValueOrFunc<FormItem<any>>) => I;
-export declare const insertListingFields: <I extends FormItem<any> = FormItem<any>>(item: I, pathToListing: string, newFields: ValueOrFunc<FormListing<any[]> | FormField<any> | FormGroup<any> | FormItem<any>[]>, atPosition?: number) => I;
+export declare const insertListingFields: <I extends FormItem<any> = FormItem<any>>(item: I, pathToListing: string, newFields: ValueOrFunc<FormField<any> | FormGroup<any> | FormListing<any[]> | FormItem<any>[]>, atPosition?: number) => I;
 export declare const removeListingFields: <I extends FormItem<any> = FormItem<any>>(item: I, pathToListing: string, atPosition: number, count?: number) => I;
 export declare const updateFormInfo: <I extends FormItem<any> = FormItem<any>>(item: I, pathToFormItem: string, updater: ValueOrFunc<Partial<ExtraFormInfo>>) => I;
 export declare const getAllErrors: (item: FormItem<any>) => import("./forms.interfaces").FormError[];
