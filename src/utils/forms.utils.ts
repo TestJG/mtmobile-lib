@@ -121,7 +121,7 @@ export const locateInGroupOrFail = <T>(
     path: string,
     failIfNoChild: boolean = true
 ) => {
-    const match = <{step: keyof T, rest: string}>matchGroupPath(path);
+    const match = <{ step: keyof T; rest: string }>matchGroupPath(path);
     if (!match) {
         throw new Error(
             `Unexpected path accessing this group: ${JSON.stringify(path)}`
@@ -214,13 +214,12 @@ export const createGroupValue = (fields: FormGroupFields): any =>
 export const createGroupInitValue = (fields: FormGroupFields): any =>
     objMapValues((f: FormItem) => f.initValue)(fields);
 
-export const createListingValue = <T extends T[]>(
-    fields: FormListingFields<T[0]>
-) => fields.map(f => f.value) as T;
+export const createListingValue = <T>(fields: FormListingFields<T>) =>
+    fields.map(f => f.value as T);
 
-export const createListingInitValue = <T extends T[]>(
+export const createListingInitValue = <T extends any[]>(
     fields: FormListingFields<T[0]>
-) => fields.map(f => f.initValue) as T;
+) => fields.map(f => f.initValue);
 
 export interface SetValueOptions {
     affectDirty: boolean;
@@ -241,8 +240,8 @@ const updateGroupFields = <T>(
         fields
     );
 
-const updateListingFields = <T extends any[]>(
-    value: any,
+const updateListingFields = <T>(
+    value: T[],
     fields: FormListingFields<T>,
     opts: SetValueOptions
 ) =>
@@ -410,9 +409,9 @@ const createNewGroupFieldsFromDirectValue = <T>(
     return updateGroupFields(newValue, item.fields, opts);
 };
 
-const createNewListingFieldsFromDirectValue = <T extends any[]>(
+const createNewListingFieldsFromDirectValue = <T>(
     item: FormListing<T>,
-    value: ValueOrFunc,
+    value: ValueOrFunc<T[]>,
     opts: SetValueOptions,
     data: UpdateFormItemData
 ): FormListingFields<T> => {
@@ -491,9 +490,9 @@ const updateFinalGroupFields = <T>(item: FormGroup<T>) => {
     });
 };
 
-const updateFinalListingFields = <T extends any[]>(item: FormListing<T>) => {
-    const computedValue = createListingValue<T>(item.fields);
-    const computedInitValue = createListingInitValue<T>(item.fields);
+const updateFinalListingFields = <T>(item: FormListing<T>) => {
+    const computedValue = createListingValue(item.fields);
+    const computedInitValue = createListingInitValue(item.fields);
     const errors = item.validator(computedValue);
     const isDirty = (<FormItem[]>item.fields).some(f => f.isDirty);
     const isTouched = (<FormItem[]>item.fields).some(f => f.isTouched);
@@ -553,8 +552,8 @@ const updateGroupFieldsAux = <T>(
 };
 
 const updateListingFieldsAux = <T extends any[]>(
-    item: FormListing<T>,
-    newFields: FormListingFields<T>,
+    item: FormListing<T[0]>,
+    newFields: FormListingFields<T[0]>,
     opts: SetValueOptions
 ) => {
     if (newFields === null) {
@@ -580,10 +579,10 @@ const updateListingFieldsAux = <T extends any[]>(
     }
 };
 
-const updateFormItemInternalRec = <T>(
+const updateFormItemInternalRec = <T = any>(
     item: FormItem<T>,
     path: PathStep[],
-    updater: ValueOrFunc<FormItem>,
+    updater: ValueOrFunc<FormItem<T>>,
     opts: SetValueOptions,
     data: UpdateFormItemData
 ): FormItem<T> => {
@@ -648,9 +647,7 @@ const updateFormItemInternalRec = <T>(
                     if (newField && newField !== child) {
                         // If newField is not null and not the same as previous
                         // child, then set [name] to newField
-                        return assignOrSame(prevFields, <
-                            Partial<FormGroupFields<T>>
-                        >{
+                        return assignOrSame(prevFields, <any>{
                             [name]: newField,
                         });
                     } else if (!newField && child) {
@@ -769,7 +766,12 @@ const setValueUpdater = <T>(value: ValueOrFunc<T>, opts: SetValueOptions) => (
         case 'listing': {
             return updateListingFieldsAux(
                 item,
-                createNewListingFieldsFromDirectValue(item, value, opts, data),
+                createNewListingFieldsFromDirectValue(
+                    item,
+                    (value as unknown) as ValueOrFunc<T[]>,
+                    opts,
+                    data
+                ),
                 opts
             );
         }
@@ -781,9 +783,9 @@ const setValueUpdater = <T>(value: ValueOrFunc<T>, opts: SetValueOptions) => (
     }
 };
 
-export function setValueInternal<T>(
+export function setValueInternal<T = any>(
     item: FormItem<T>,
-    value: ValueOrFunc,
+    value: ValueOrFunc<T>,
     path: string,
     options?: Partial<SetValueOptions>
 ): FormItem<T> {

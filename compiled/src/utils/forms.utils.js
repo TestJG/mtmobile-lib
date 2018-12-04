@@ -136,7 +136,9 @@ exports.createGroupValue = function (fields) {
 exports.createGroupInitValue = function (fields) {
     return common_1.objMapValues(function (f) { return f.initValue; })(fields);
 };
-exports.createListingValue = function (fields) { return fields.map(function (f) { return f.value; }); };
+exports.createListingValue = function (fields) {
+    return fields.map(function (f) { return f.value; });
+};
 exports.createListingInitValue = function (fields) { return fields.map(function (f) { return f.initValue; }); };
 var updateGroupFields = function (value, fields, opts) {
     return Object.keys(fields).reduce(function (fs, key) {

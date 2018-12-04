@@ -185,7 +185,7 @@ export const group = <T = any>(
     });
 };
 
-export const listing = <T extends any[] = any[]>(
+export const listing = <T = any>(
     fields: FormListingFields<T>,
     options?: Partial<FormListingInit<T>>
 ): FormListing<T> => {
@@ -215,7 +215,7 @@ export const listing = <T extends any[] = any[]>(
     const coerce = coerceAll(coerceInit);
     const validator = mergeValidators(validatorInit);
     const theFields = fields.slice();
-    const theInitValue = initValue || <T>createListingValue(theFields);
+    const theInitValue = initValue || createListingValue(theFields);
 
     const result: FormListing<T> = {
         // Type
@@ -241,12 +241,12 @@ export const listing = <T extends any[] = any[]>(
 
         fields: theFields,
     };
-
-    return <FormListing<T>>setValueInternal(result, theInitValue, '', {
+    const init = theInitValue as unknown as ValueOrFunc<T>;
+    return setValueInternal((result as FormItem<T>), init, '', {
         affectDirty: false,
         compareValues: false,
         initialization: true,
-    });
+    }) as FormListing<T>;
 };
 
 ////////////////////////////////////////////////////////////////
@@ -254,6 +254,40 @@ export const listing = <T extends any[] = any[]>(
 //                     Form Item Manipulations                //
 //                                                            //
 ////////////////////////////////////////////////////////////////
+
+const throwUnexpectedFormType = (
+    type: 'field' | 'group' | 'listing',
+    path: string
+) => {
+    throw new Error(`Unexpected form type (${type}) on ${path}`);
+};
+
+export const getFormField = <T = any>(item: FormItem, path: string = '') => {
+    const formField = getFormItem(item, path);
+    if (formField.type !== 'field') {
+        throwUnexpectedFormType(formField.type, path);
+    }
+    return formField as FormField<T>;
+};
+
+export const getFormGroup = <T = any>(item: FormItem, path: string = '') => {
+    const formGroup = getFormItem(item, path);
+    if (formGroup.type !== 'group') {
+        throwUnexpectedFormType(formGroup.type, path);
+    }
+    return formGroup as FormGroup<T>;
+};
+
+export const getFormListing = <T extends any[] = any[]>(
+    item: FormItem,
+    path: string = ''
+) => {
+    const formListing = getFormItem(item, path);
+    if (formListing.type !== 'listing') {
+        throwUnexpectedFormType(formListing.type, path);
+    }
+    return formListing as FormListing<T>;
+};
 
 export const getFormItem = <T extends FormItem = FormItem>(
     item: FormItem,

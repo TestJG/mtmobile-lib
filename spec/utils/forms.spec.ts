@@ -4,7 +4,7 @@ import {
     assignOrSame,
     assignArrayOrSame,
     FormItemConfig,
-    FormItemState,
+    // FormItemState,
     FormItem,
     FormItemType,
     FormField,
@@ -15,7 +15,7 @@ import {
     setValue,
     setValueDoNotTouch,
     setInput,
-    setInputDoNotTouch,
+    // setInputDoNotTouch,
     setInfo,
     resetValue,
     getValue,
@@ -26,11 +26,11 @@ import {
     removeListingFields,
     updateFormInfo,
     getAllErrors,
-    Coerce,
+    // Coerce,
     mustNotBeBelow,
     mustNotBeAbove,
-    mustBeBetween,
-    Validator,
+    // mustBeBetween,
+    // Validator,
     shouldBe,
     shouldNotBeEmpty,
     shouldBeGreaterThanOrEqualTo,
@@ -44,7 +44,10 @@ import {
     decimalFormatter,
     numberFormatter,
     numberParser,
-    printObj
+    // printObj,
+    getFormField,
+    getFormGroup,
+    getFormListing
 } from '../../src/utils';
 
 interface Person {
@@ -149,7 +152,9 @@ const expectConfig = <T>(
                 it(`it's coerce(${JSON.stringify(
                     value
                 )}) should return ${JSON.stringify(expectedValue)}`, () =>
-                    expect(item.coerce(value)).toEqual(expectedValue));
+                    expect((item as FormField<T>).coerce(value)).toEqual(
+                      expectedValue
+                    ));
             }
         }
     }
@@ -161,17 +166,18 @@ const expectConfig = <T>(
             it(`it's validator should be a function`, () =>
                 expect(item.validator).toBeInstanceOf(Function));
 
+            const validator = (item as FormField<T>).validator;
             for (const [value, expectedErrors] of expected.validator) {
                 if (expectedErrors && expectedErrors.length) {
                     it(`it's validator(${JSON.stringify(
                         value
                     )}) should return some errors`, () =>
-                        expect(item.validator(value)).toEqual(expectedErrors));
+                        expect(validator(value)).toEqual(expectedErrors));
                 } else {
                     it(`it's validator(${JSON.stringify(
                         value
                     )}) should not return any error`, () =>
-                        expect(item.validator(value)).toEqual(expectedErrors));
+                        expect(validator(value)).toEqual(expectedErrors));
                 }
             }
         }
@@ -1994,7 +2000,7 @@ describe('Utils', () => {
                                 { initValue: <Pet[]>undefined }
                             )
                         },
-                        { initValue: <Person & { pet: Pet[] }>undefined }
+                        { initValue: <Person & { pets: Pet[] }>undefined }
                     );
                     const aGroupCopy = Object.assign({}, aForm);
                     const newGroup = setInput(
@@ -2300,6 +2306,75 @@ describe('Utils', () => {
     });
 });
 
+// getFormField
+describe('Utils', () => {
+    describe('Forms Tests', () => {
+        const aField = field(40);
+        const aGroup = group({ age: field(40) });
+        const aListing = listing([aField]);
+
+        describe('getFormField', () => {
+            it('should be a function', () =>
+                expect(getFormField).toBeInstanceOf(Function));
+
+            describe('When a field is passed', () => {
+                it('should return a field', () =>
+                    expect(getFormField(aField).type).toBe("field"));
+            });
+
+            describe('When a group is passed', () => {
+                it('should throw', () => expect(() =>
+                    getFormField(aGroup)).toThrowError());
+            });
+
+            describe('When a listing is passed', () => {
+                it('should throw', () => expect(() =>
+                    getFormField(aListing)).toThrowError());
+            });
+        });
+
+        describe('getFormGroup', () => {
+            it('should be a function', () =>
+                expect(getFormGroup).toBeInstanceOf(Function));
+
+            describe('When a group is passed', () => {
+                it('should return a group', () =>
+                    expect(getFormGroup(aGroup).type).toBe("group"));
+            });
+
+            describe('When a field is passed', () => {
+                it('should throw', () => expect(() =>
+                    getFormGroup(aField)).toThrowError());
+            });
+
+            describe('When a listing is passed', () => {
+                it('should throw', () => expect(() =>
+                    getFormGroup(aListing)).toThrowError());
+            });
+        });
+
+        describe('getFormListing', () => {
+            it('should be a function', () =>
+                expect(getFormListing).toBeInstanceOf(Function));
+
+            describe('When a listing is passed', () => {
+                it('should return a listing', () =>
+                    expect(getFormListing(aListing).type).toBe("listing"));
+            });
+
+            describe('When a field is passed', () => {
+                it('should throw', () => expect(() =>
+                    getFormListing(aField)).toThrowError());
+            });
+
+            describe('When a group is passed', () => {
+                it('should throw', () => expect(() =>
+                    getFormListing(aGroup)).toThrowError());
+            });
+        });
+    });
+});
+
 // existFormItem
 describe('Utils', () => {
     describe('Forms Tests', () => {
@@ -2331,10 +2406,10 @@ describe('Utils', () => {
                                     { initValue: newPet('garfield', 'cat') }
                                 )
                             ],
-                            { initValue: <Pet[]>undefined }
+                            { initValue: undefined }
                         )
                     },
-                    { initValue: <Person & { pet: Pet[] }>undefined }
+                    { initValue: <Person & { pets: Pet[] }>undefined }
                 );
 
                 it('with path empty it should return the form itself', () =>
