@@ -5,9 +5,9 @@ export declare const isInstruction: (value: any) => any;
 export declare const promiseOf: (value: any) => any;
 export declare const protectChan: (name: string) => (ch: any) => any;
 export declare type ToChanOptions = {
-    bufferOrN;
-    transducer;
-    exHandler;
+    bufferOrN: any;
+    transducer: any;
+    exHandler: any;
     keepOpen: boolean;
     includeErrors: boolean;
     nullReplacement: any;

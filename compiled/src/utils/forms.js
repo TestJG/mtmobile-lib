@@ -50,20 +50,20 @@ exports.field = function (initValue, options) {
         isValidInput: true,
         // Derived
         isValid: true,
-        showErrors: false
+        showErrors: false,
     };
     if (initInput !== null) {
         return forms_utils_1.setInputInternal(result, initInput, '', {
             affectDirty: false,
             compareValues: false,
-            initialization: true
+            initialization: true,
         });
     }
     else {
         return forms_utils_1.setValueInternal(result, initValue, '', {
             affectDirty: false,
             compareValues: false,
-            initialization: true
+            initialization: true,
         });
     }
 };
@@ -77,7 +77,7 @@ exports.group = function (fields, options) {
         info: undefined,
         coerce: undefined,
         validations: undefined,
-        initValue: undefined
+        initValue: undefined,
     }, options), caption = _a.caption, description = _a.description, info = _a.info, coerceInit = _a.coerce, validatorInit = _a.validations, initValue = _a.initValue;
     var coerce = coercion_1.coerceAll(coerceInit);
     var validator = validation_1.mergeValidators(validatorInit);
@@ -101,12 +101,12 @@ exports.group = function (fields, options) {
         // Derived
         isValid: true,
         showErrors: false,
-        fields: theFields
+        fields: theFields,
     };
     return forms_utils_1.setValueInternal(result, theInitValue, '', {
         affectDirty: false,
         compareValues: false,
-        initialization: true
+        initialization: true,
     });
 };
 exports.listing = function (fields, options) {
@@ -119,7 +119,7 @@ exports.listing = function (fields, options) {
         info: undefined,
         coerce: undefined,
         validations: undefined,
-        initValue: undefined
+        initValue: undefined,
     }, options), caption = _a.caption, description = _a.description, info = _a.info, coerceInit = _a.coerce, validatorInit = _a.validations, initValue = _a.initValue;
     var coerce = coercion_1.coerceAll(coerceInit);
     var validator = validation_1.mergeValidators(validatorInit);
@@ -143,12 +143,13 @@ exports.listing = function (fields, options) {
         // Derived
         isValid: true,
         showErrors: false,
-        fields: theFields
+        fields: theFields,
     };
-    return forms_utils_1.setValueInternal(result, theInitValue, '', {
+    var init = theInitValue;
+    return forms_utils_1.setValueInternal(result, init, '', {
         affectDirty: false,
         compareValues: false,
-        initialization: true
+        initialization: true,
     });
 };
 ////////////////////////////////////////////////////////////////
@@ -156,6 +157,33 @@ exports.listing = function (fields, options) {
 //                     Form Item Manipulations                //
 //                                                            //
 ////////////////////////////////////////////////////////////////
+var throwUnexpectedFormType = function (type, path) {
+    throw new Error("Unexpected form type (" + type + ") on " + path);
+};
+exports.getFormField = function (item, path) {
+    if (path === void 0) { path = ''; }
+    var formField = exports.getFormItem(item, path);
+    if (formField.type !== 'field') {
+        throwUnexpectedFormType(formField.type, path);
+    }
+    return formField;
+};
+exports.getFormGroup = function (item, path) {
+    if (path === void 0) { path = ''; }
+    var formGroup = exports.getFormItem(item, path);
+    if (formGroup.type !== 'group') {
+        throwUnexpectedFormType(formGroup.type, path);
+    }
+    return formGroup;
+};
+exports.getFormListing = function (item, path) {
+    if (path === void 0) { path = ''; }
+    var formListing = exports.getFormItem(item, path);
+    if (formListing.type !== 'listing') {
+        throwUnexpectedFormType(formListing.type, path);
+    }
+    return formListing;
+};
 exports.getFormItem = function (item, path) {
     if (path === void 0) { path = ''; }
     switch (item.type) {
@@ -204,7 +232,7 @@ exports.setValue = function (item, value, pathToField) {
 exports.setValueDoNotTouch = function (item, value, pathToField) {
     if (pathToField === void 0) { pathToField = ''; }
     return forms_utils_1.setValueInternal(item, value, pathToField, {
-        affectDirty: false
+        affectDirty: false,
     });
 };
 exports.setInput = function (item, input, pathToField) {
@@ -214,7 +242,7 @@ exports.setInput = function (item, input, pathToField) {
 exports.setInputDoNotTouch = function (item, input, pathToField) {
     if (pathToField === void 0) { pathToField = ''; }
     return forms_utils_1.setInputInternal(item, input, pathToField, {
-        affectDirty: false
+        affectDirty: false,
     });
 };
 exports.resetValue = function (item, pathToField, value) {
@@ -222,17 +250,18 @@ exports.resetValue = function (item, pathToField, value) {
     if (value === void 0) { value = undefined; }
     return forms_utils_1.setValueInternal(item, value, pathToField, {
         initialization: true,
-        compareValues: false
+        compareValues: false,
     });
 };
 exports.setGroupField = function (item, pathToGroupField, formItem) { return forms_utils_1.setGroupFieldInternal(item, pathToGroupField, formItem); };
 exports.insertListingFields = function (item, pathToListing, newFields, atPosition) {
-    return forms_utils_1.updateListingFieldsInternal(item, pathToListing, function (fields) {
+    return (forms_utils_1.updateListingFieldsInternal(item, pathToListing, function (fields) {
         var theNewFields = common_1.getAsValue(newFields);
         if (!(theNewFields instanceof Array)) {
             theNewFields = [theNewFields];
         }
-        if (typeof atPosition !== 'number' || atPosition >= fields.length) {
+        if (typeof atPosition !== 'number' ||
+            atPosition >= fields.length) {
             return fields.concat(theNewFields);
         }
         else {
@@ -247,15 +276,15 @@ exports.insertListingFields = function (item, pathToListing, newFields, atPositi
                     .concat(fields.slice(pos));
             }
         }
-    });
+    }));
 };
 exports.removeListingFields = function (item, pathToListing, atPosition, count) {
     if (count === void 0) { count = 1; }
-    return forms_utils_1.updateListingFieldsInternal(item, pathToListing, function (fields) {
+    return (forms_utils_1.updateListingFieldsInternal(item, pathToListing, function (fields) {
         return fields
             .slice(0, atPosition)
             .concat(fields.slice(atPosition + count));
-    });
+    }));
 };
 exports.updateFormInfo = function (item, pathToFormItem, updater) { return forms_utils_1.updateFormInfoInternal(item, pathToFormItem, updater); };
 exports.getAllErrors = function (item) { return forms_utils_1.getAllErrorsInternal(item); };

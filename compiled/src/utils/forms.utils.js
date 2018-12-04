@@ -3,16 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var _ = require("lodash");
 var equality_1 = require("./equality");
 var common_1 = require("./common");
-var log = console.log; // noop; // require('debug')('mtmobile-lib:utils:forms');
-var logIf = function (cond) {
-    var args = [];
-    for (var _i = 1; _i < arguments.length; _i++) {
-        args[_i - 1] = arguments[_i];
-    }
-    if (cond) {
-        log.apply(void 0, args);
-    }
-};
 exports.matchGroupPath = function (path, allowPatterns) {
     if (allowPatterns === void 0) { allowPatterns = false; }
     var match = !allowPatterns
@@ -91,7 +81,11 @@ exports.locateInGroupOrFail = function (item, path, failIfNoChild) {
     if (!child && failIfNoChild) {
         throw new Error("Unexpected field name accessing this group: " + JSON.stringify(match.step));
     }
-    return [match.step, child, match.rest];
+    return [
+        match.step,
+        child,
+        match.rest,
+    ];
 };
 exports.locateInListingOrFail = function (item, path, failIfNoChild) {
     if (failIfNoChild === void 0) { failIfNoChild = true; }
@@ -145,28 +139,24 @@ exports.createGroupInitValue = function (fields) {
 exports.createListingValue = function (fields) {
     return fields.map(function (f) { return f.value; });
 };
-exports.createListingInitValue = function (fields) {
-    return fields.map(function (f) { return f.initValue; });
-};
+exports.createListingInitValue = function (fields) { return fields.map(function (f) { return f.initValue; }); };
 var updateGroupFields = function (value, fields, opts) {
     return Object.keys(fields).reduce(function (fs, key) {
+        var _a;
         return common_1.assignOrSame(fs, (_a = {},
             _a[key] = setValueInternal(fs[key], value[key], '', opts),
             _a));
-        var _a;
     }, fields);
 };
 var updateListingFields = function (value, fields, opts) {
     return common_1.assignArrayOrSame(fields, [
         0,
-        fields.map(function (f, index) {
-            return setValueInternal(f, value[index], '', opts);
-        })
+        fields.map(function (f, index) { return setValueInternal(f, value[index], '', opts); }),
     ]);
 };
 var setFieldFromNewValue = function (item, 
-    // newValue: any,
-    opts, sameValue) {
+// newValue: any,
+opts, sameValue) {
     var isDirty = opts.initialization
         ? false
         : item.isDirty || (opts.affectDirty ? !sameValue : false);
@@ -179,7 +169,7 @@ var setFieldFromNewValue = function (item,
         isDirty: isDirty,
         isTouched: isTouched,
         isValid: isValid,
-        showErrors: showErrors
+        showErrors: showErrors,
     });
     return newItem;
 };
@@ -211,7 +201,7 @@ var setFieldInputInternal = function (item, inputFunc, opts, data) {
             input: input,
             validInput: validInput,
             isValidInput: isValidInput,
-            errors: errors
+            errors: errors,
         }), opts, sameValue);
         // log('RESULT AFTER SUCCESS', printObj(result));
         return result;
@@ -254,7 +244,7 @@ var setFieldValueInternal = function (item, value, opts, data) {
         input: input,
         validInput: validInput,
         isValidInput: isValidInput,
-        errors: errors
+        errors: errors,
     }), opts, sameValue);
 };
 var createNewGroupFieldsFromDirectValue = function (item, value, opts, data) {
@@ -289,17 +279,26 @@ var createNewListingFieldsFromDirectValue = function (item, value, opts, data) {
     // listing's children
     return updateListingFields(newValue, item.fields, opts);
 };
-var createNewGroupFieldsFromChildValue = function (item, value, path, opts) {
-    var _a = exports.locateInGroupOrFail(item, path), name = _a[0], child = _a[1], restOfPath = _a[2];
-    var newChild = setValueInternal(child, value, restOfPath, opts);
-    return common_1.assignOrSame(item.fields, (_b = {}, _b[name] = newChild, _b));
-    var _b;
-};
-var createNewListingFieldsFromChildValue = function (item, value, path, opts) {
-    var _a = exports.locateInListingOrFail(item, path), index = _a[0], child = _a[1], restOfPath = _a[2];
-    var newChild = setValueInternal(child, value, restOfPath, opts);
-    return common_1.assignArrayOrSame(item.fields, [index, [newChild]]);
-};
+// const createNewGroupFieldsFromChildValue = <T>(
+//     item: FormGroup<T>,
+//     value: ValueOrFunc,
+//     path: string,
+//     opts: SetValueOptions
+// ): FormGroupFields => {
+//     const [name, child, restOfPath] = locateInGroupOrFail(item, path);
+//     const newChild = setValueInternal(child, value, restOfPath, opts);
+//     return assignOrSame(item.fields, { [name]: newChild });
+// };
+// const createNewListingFieldsFromChildValue = <T extends any[]>(
+//     item: FormListing<T>,
+//     value: ValueOrFunc,
+//     path: string,
+//     opts: SetValueOptions
+// ): FormListingFields => {
+//     const [index, child, restOfPath] = locateInListingOrFail(item, path);
+//     const newChild = setValueInternal(child, value, restOfPath, opts);
+//     return assignArrayOrSame(<FormItem[]>item.fields, [index, [newChild]]);
+// };
 var updateFinalGroupFields = function (item) {
     var computedValue = exports.createGroupValue(item.fields);
     var computedInitValue = exports.createGroupInitValue(item.fields);
@@ -321,7 +320,7 @@ var updateFinalGroupFields = function (item) {
         isTouched: isTouched,
         // Derived
         isValid: isValid,
-        showErrors: showErrors
+        showErrors: showErrors,
     });
 };
 var updateFinalListingFields = function (item) {
@@ -343,7 +342,7 @@ var updateFinalListingFields = function (item) {
         isTouched: isTouched,
         // Derived
         isValid: isValid,
-        showErrors: showErrors
+        showErrors: showErrors,
     });
 };
 var updateGroupFieldsAux = function (item, newFields, opts) {
@@ -362,10 +361,10 @@ var updateGroupFieldsAux = function (item, newFields, opts) {
         var computedValue = exports.createGroupValue(newFields);
         // log('    Computing from new group fields.');
         return setValueInternal(common_1.assignOrSame(item, {
-            fields: newFields
+            fields: newFields,
         }), computedValue, '', common_1.assign(opts, {
             compareValues: true,
-            initialization: true
+            initialization: true,
         }));
     }
 };
@@ -383,7 +382,7 @@ var updateListingFieldsAux = function (item, newFields, opts) {
         var computedValue = exports.createListingValue(newFields);
         return setValueInternal(common_1.assignOrSame(item, { fields: newFields }), computedValue, '', common_1.assign(opts, {
             compareValues: true,
-            initialization: true
+            initialization: true,
         }));
     }
 };
@@ -416,6 +415,7 @@ var updateFormItemInternalRec = function (item, path, updater, opts, data) {
                     : [nameOrWildcard];
                 var restOfPath_1 = path.slice(1);
                 var newFields = names.reduce(function (prevFields, name) {
+                    var _a;
                     var child = prevFields[name];
                     if (!child) {
                         throw new Error("Unexpected field name accessing this group: " +
@@ -423,7 +423,7 @@ var updateFormItemInternalRec = function (item, path, updater, opts, data) {
                     }
                     // log(`    Down to ${name}`);
                     var newField = updateFormItemInternalRec(child, restOfPath_1, updater, opts, common_1.assign(data, {
-                        relativePath: exports.appendGroupPath(data.relativePath, name)
+                        relativePath: exports.appendGroupPath(data.relativePath, name),
                     }));
                     if (newField && newField !== child) {
                         // If newField is not null and not the same as previous
@@ -438,14 +438,13 @@ var updateFormItemInternalRec = function (item, path, updater, opts, data) {
                         return Object.keys(prevFields)
                             .filter(function (key) { return key !== name; })
                             .reduce(function (fs, key) {
-                            return Object.assign(fs, (_a = {}, _a[key] = newField, _a));
                             var _a;
+                            return Object.assign(fs, (_a = {}, _a[key] = newField, _a));
                         }, {});
                     }
                     else {
                         return prevFields;
                     }
-                    var _a;
                 }, item.fields);
                 var result = updateGroupFieldsAux(item, newFields, opts);
                 // log(`    UP FROM ${nameOrWildcard}:  ${printObj(result)}`);
@@ -469,14 +468,14 @@ var updateFormItemInternalRec = function (item, path, updater, opts, data) {
                             JSON.stringify(index));
                     }
                     var newField = updateFormItemInternalRec(child, restOfPath_2, updater, opts, common_1.assign(data, {
-                        relativePath: exports.appendListingPath(data.relativePath, index)
+                        relativePath: exports.appendListingPath(data.relativePath, index),
                     }));
                     if (newField) {
                         // If newField is not null and not the same as previous
                         // child, then set [name] to newField
                         return common_1.assignArrayOrSame(prevFields, [
                             index,
-                            [newField]
+                            [newField],
                         ]);
                     }
                     else if (!newField) {
@@ -525,7 +524,7 @@ function setValueInternal(item, value, path, options) {
     var opts = Object.assign({
         affectDirty: true,
         compareValues: true,
-        initialization: false
+        initialization: false,
     }, options);
     return updateFormItemInternalRec(item, exports.extractPath(path, true), setValueUpdater(value, opts), opts, { relativePath: '' });
 }
@@ -548,7 +547,7 @@ function setInputInternal(item, input, path, options) {
     var opts = Object.assign({
         affectDirty: true,
         compareValues: true,
-        initialization: false
+        initialization: false,
     }, options);
     return updateFormItemInternalRec(item, exports.extractPath(path, true), setInputUpdater(input, opts), opts, { relativePath: '' });
 }
@@ -561,12 +560,13 @@ function setInfoInternal(item, info, path, options) {
     var opts = Object.assign({
         affectDirty: true,
         compareValues: true,
-        initialization: false
+        initialization: false,
     }, options);
     return updateFormItemInternalRec(item, exports.extractPath(path, true), setInfoUpdater(info, opts), opts, { relativePath: '' });
 }
 exports.setInfoInternal = setInfoInternal;
 var setGroupFieldUpdater = function (fieldName, formItem, opts) { return function (item, data) {
+    var _a;
     switch (item.type) {
         case 'field':
             throw new Error('Expected to find a group but found a field');
@@ -587,8 +587,8 @@ var setGroupFieldUpdater = function (fieldName, formItem, opts) { return functio
                 newFields = Object.keys(item.fields)
                     .filter(function (key) { return key !== fieldName; })
                     .reduce(function (fs, key) {
-                    return Object.assign(fs, (_a = {}, _a[key] = newField_1, _a));
                     var _a;
+                    return Object.assign(fs, (_a = {}, _a[key] = newField_1, _a));
                 }, {});
             }
             return updateGroupFieldsAux(item, newFields, opts);
@@ -598,13 +598,12 @@ var setGroupFieldUpdater = function (fieldName, formItem, opts) { return functio
         default:
             throw new Error('Unknown form item type: ' + JSON.stringify(item.type));
     }
-    var _a;
 }; };
 exports.setGroupFieldInternal = function (item, path, formItem, options) {
     var opts = Object.assign({
         affectDirty: true,
         compareValues: true,
-        initialization: false
+        initialization: false,
     }, options);
     var newPath = exports.extractPath(path, true);
     var fieldName = newPath.length >= 1 ? newPath[newPath.length - 1] : undefined;
@@ -635,7 +634,7 @@ exports.updateListingFieldsInternal = function (item, path, fields, options) {
     var opts = Object.assign({
         affectDirty: true,
         compareValues: true,
-        initialization: false
+        initialization: false,
     }, options);
     return updateFormItemInternalRec(item, exports.extractPath(path, true), updateListingFieldsUpdater(fields, opts), opts, { relativePath: '' });
 };
@@ -666,12 +665,12 @@ exports.updateFormInfoInternal = function (item, pathToFormItem, updater) {
         var newInfo = common_1.getAsValue(updater, formItem, data);
         return common_1.assignIfMany(formItem, [newInfo.caption !== undefined, { caption: newInfo.caption }], [
             newInfo.description !== undefined,
-            { description: newInfo.description }
+            { description: newInfo.description },
         ], [newInfo.info !== undefined, { info: newInfo.info }]);
     }, {
         affectDirty: false,
         initialization: false,
-        compareValues: false
+        compareValues: false,
     }, { relativePath: '' });
 };
 exports.getAllErrorsInternal = function (item) {

@@ -4,7 +4,7 @@ import {
     assignOrSame,
     objMapValues,
     ValueOrFunc,
-    getAsValue
+    getAsValue,
 } from './common';
 import { coerceAll } from './coercion';
 import { mergeValidators } from './validation';
@@ -13,17 +13,13 @@ import {
     FormItem,
     FormFieldInit,
     FormField,
-    FormItemState,
     FormGroupInit,
     FormGroup,
-    FormGroupState,
     FormGroupFields,
     FormListingInit,
     FormListing,
-    FormListingState,
     FormListingFields,
-    FormError,
-    ExtraFormInfo
+    ExtraFormInfo,
 } from './forms.interfaces';
 import {
     checkPathInField,
@@ -37,7 +33,7 @@ import {
     setInputInternal,
     setInfoInternal,
     updateListingFieldsInternal,
-    updateFormInfoInternal
+    updateFormInfoInternal,
 } from './forms.utils';
 
 ////////////////////////////////////////////////////////////////
@@ -107,28 +103,28 @@ export const field = <T = any>(
 
         // Derived
         isValid: true,
-        showErrors: false
+        showErrors: false,
     };
 
     if (initInput !== null) {
         return <FormField<T>>setInputInternal(result, initInput, '', {
             affectDirty: false,
             compareValues: false,
-            initialization: true
+            initialization: true,
         });
     } else {
         return <FormField<T>>setValueInternal(result, initValue, '', {
             affectDirty: false,
             compareValues: false,
-            initialization: true
+            initialization: true,
         });
     }
 };
 
-export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
-    fields: F,
+export const group = <T = any>(
+    fields: FormGroupFields<T>,
     options?: Partial<FormGroupInit<T>>
-): FormGroup<T, F> => {
+): FormGroup<T> => {
     if (!(fields instanceof Object) || fields.constructor !== Object) {
         throw new Error('Group fields must be a plain JS object.');
     }
@@ -139,7 +135,7 @@ export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
         info,
         coerce: coerceInit,
         validations: validatorInit,
-        initValue
+        initValue,
     } = assign(
         <FormGroupInit<T>>{
             caption: '',
@@ -147,17 +143,17 @@ export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
             info: undefined,
             coerce: undefined,
             validations: undefined,
-            initValue: undefined
+            initValue: undefined,
         },
         options
     );
 
     const coerce = coerceAll(coerceInit);
     const validator = mergeValidators(validatorInit);
-    const theFields = <F>Object.assign({}, fields);
+    const theFields = Object.assign({}, fields);
     const theInitValue = initValue || <T>createGroupValue(theFields);
 
-    const result: FormGroup<T, F> = {
+    const result: FormGroup<T> = {
         // Type
         type: 'group',
 
@@ -179,23 +175,20 @@ export const group = <T = any, F extends FormGroupFields = FormGroupFields>(
         isValid: true,
         showErrors: false,
 
-        fields: theFields
+        fields: theFields,
     };
 
-    return <FormGroup<T, F>>setValueInternal(result, theInitValue, '', {
+    return <FormGroup<T>>setValueInternal(result, theInitValue, '', {
         affectDirty: false,
         compareValues: false,
-        initialization: true
+        initialization: true,
     });
 };
 
-export const listing = <
-    T extends any[] = any,
-    F extends FormListingFields = FormListingFields
->(
-    fields: F,
+export const listing = <T = any>(
+    fields: FormListingFields<T>,
     options?: Partial<FormListingInit<T>>
-): FormListing<T, F> => {
+): FormListing<T> => {
     if (!(fields instanceof Array)) {
         throw new Error('Listing fields must be a plain JS Array.');
     }
@@ -206,7 +199,7 @@ export const listing = <
         info,
         coerce: coerceInit,
         validations: validatorInit,
-        initValue
+        initValue,
     } = assign(
         <FormListingInit<T>>{
             caption: '',
@@ -214,17 +207,17 @@ export const listing = <
             info: undefined,
             coerce: undefined,
             validations: undefined,
-            initValue: undefined
+            initValue: undefined,
         },
         options
     );
 
     const coerce = coerceAll(coerceInit);
     const validator = mergeValidators(validatorInit);
-    const theFields = <F>(<any>fields.slice());
-    const theInitValue = initValue || <T>createListingValue(theFields);
+    const theFields = fields.slice();
+    const theInitValue = initValue || createListingValue(theFields);
 
-    const result: FormListing<T, F> = {
+    const result: FormListing<T> = {
         // Type
         type: 'listing',
 
@@ -246,14 +239,14 @@ export const listing = <
         isValid: true,
         showErrors: false,
 
-        fields: theFields
+        fields: theFields,
     };
-
-    return <FormListing<T, F>>setValueInternal(result, theInitValue, '', {
+    const init = theInitValue as unknown as ValueOrFunc<T>;
+    return setValueInternal((result as FormItem<T>), init, '', {
         affectDirty: false,
         compareValues: false,
-        initialization: true
-    });
+        initialization: true,
+    }) as FormListing<T>;
 };
 
 ////////////////////////////////////////////////////////////////
@@ -262,16 +255,53 @@ export const listing = <
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-export const getFormItem = (item: FormItem, path: string = ''): FormItem => {
+const throwUnexpectedFormType = (
+    type: 'field' | 'group' | 'listing',
+    path: string
+) => {
+    throw new Error(`Unexpected form type (${type}) on ${path}`);
+};
+
+export const getFormField = <T = any>(item: FormItem, path: string = '') => {
+    const formField = getFormItem(item, path);
+    if (formField.type !== 'field') {
+        throwUnexpectedFormType(formField.type, path);
+    }
+    return formField as FormField<T>;
+};
+
+export const getFormGroup = <T = any>(item: FormItem, path: string = '') => {
+    const formGroup = getFormItem(item, path);
+    if (formGroup.type !== 'group') {
+        throwUnexpectedFormType(formGroup.type, path);
+    }
+    return formGroup as FormGroup<T>;
+};
+
+export const getFormListing = <T extends any[] = any[]>(
+    item: FormItem,
+    path: string = ''
+) => {
+    const formListing = getFormItem(item, path);
+    if (formListing.type !== 'listing') {
+        throwUnexpectedFormType(formListing.type, path);
+    }
+    return formListing as FormListing<T>;
+};
+
+export const getFormItem = <T extends FormItem = FormItem>(
+    item: FormItem,
+    path: string = ''
+): T => {
     switch (item.type) {
         case 'field': {
             checkPathInField(path);
-            return item;
+            return item as T;
         }
 
         case 'group': {
             if (!path) {
-                return item;
+                return item as T;
             }
 
             const [_, child, restOfPath] = locateInGroupOrFail(item, path);
@@ -280,7 +310,7 @@ export const getFormItem = (item: FormItem, path: string = ''): FormItem => {
 
         case 'listing': {
             if (!path) {
-                return item;
+                return item as T;
             }
 
             const [_, child, restOfPath] = locateInListingOrFail(item, path);
@@ -318,9 +348,8 @@ export const setValueDoNotTouch = <I extends FormItem = FormItem>(
     item: I,
     value: ValueOrFunc,
     pathToField: string = ''
-): I =>
-    <I>setValueInternal(item, value, pathToField, {
-        affectDirty: false
+): I => <I>setValueInternal(item, value, pathToField, {
+        affectDirty: false,
     });
 
 export const setInput = <I extends FormItem = FormItem>(
@@ -333,19 +362,17 @@ export const setInputDoNotTouch = <I extends FormItem = FormItem>(
     item: I,
     input: ValueOrFunc,
     pathToField: string = ''
-): I =>
-    <I>setInputInternal(item, input, pathToField, {
-        affectDirty: false
+): I => <I>setInputInternal(item, input, pathToField, {
+        affectDirty: false,
     });
 
 export const resetValue = <I extends FormItem = FormItem>(
     item: I,
     pathToField: string = '',
     value: ValueOrFunc = undefined
-): I =>
-    <I>setValueInternal(item, value, pathToField, {
+): I => <I>setValueInternal(item, value, pathToField, {
         initialization: true,
-        compareValues: false
+        compareValues: false,
     });
 
 export const setGroupField = <I extends FormItem = FormItem>(
@@ -360,28 +387,33 @@ export const insertListingFields = <I extends FormItem = FormItem>(
     newFields: ValueOrFunc<FormItem | FormItem[]>,
     atPosition?: number
 ): I => {
-    return <I>updateListingFieldsInternal(
-        item,
-        pathToListing,
-        (fields: FormListingFields & Array<FormItem>) => {
-            let theNewFields = getAsValue(newFields);
-            if (!(theNewFields instanceof Array)) {
-                theNewFields = [theNewFields];
-            }
-            if (typeof atPosition !== 'number' || atPosition >= fields.length) {
-                return fields.concat(theNewFields);
-            } else {
-                const pos = atPosition < 0 ? 0 : atPosition;
-                if (pos === 0) {
-                    return theNewFields.concat(fields);
+    return <I>(
+        updateListingFieldsInternal(
+            item,
+            pathToListing,
+            (fields: FormListingFields & Array<FormItem>) => {
+                let theNewFields = getAsValue(newFields);
+                if (!(theNewFields instanceof Array)) {
+                    theNewFields = [theNewFields];
+                }
+                if (
+                    typeof atPosition !== 'number' ||
+                    atPosition >= fields.length
+                ) {
+                    return fields.concat(theNewFields);
                 } else {
-                    return fields
-                        .slice(0, pos)
-                        .concat(theNewFields)
-                        .concat(fields.slice(pos));
+                    const pos = atPosition < 0 ? 0 : atPosition;
+                    if (pos === 0) {
+                        return theNewFields.concat(fields);
+                    } else {
+                        return fields
+                            .slice(0, pos)
+                            .concat(theNewFields)
+                            .concat(fields.slice(pos));
+                    }
                 }
             }
-        }
+        )
     );
 };
 
@@ -391,14 +423,16 @@ export const removeListingFields = <I extends FormItem = FormItem>(
     atPosition: number,
     count: number = 1
 ): I => {
-    return <I>updateListingFieldsInternal(
-        item,
-        pathToListing,
-        (fields: FormListingFields & Array<FormItem>) => {
-            return fields
-                .slice(0, atPosition)
-                .concat(fields.slice(atPosition + count));
-        }
+    return <I>(
+        updateListingFieldsInternal(
+            item,
+            pathToListing,
+            (fields: FormListingFields & Array<FormItem>) => {
+                return fields
+                    .slice(0, atPosition)
+                    .concat(fields.slice(atPosition + count));
+            }
+        )
     );
 };
 

@@ -7,7 +7,7 @@ export declare const dateEqualFact: EqualityComparerFactory;
 export declare const arrayEqualFact: EqualityComparerFactory;
 export declare const objectEqualFact: EqualityComparerFactory;
 export declare const defaultEqualityFactories: [(string | Function | undefined), boolean, EqualityComparerFactory][];
-export declare const createEqualityComparer: (childComparer: () => EqualityComparer<any>, fallbackComparer: EqualityComparer<any>, factories: [string | Function, boolean, EqualityComparerFactory<any>][]) => EqualityComparer<any>;
+export declare const createEqualityComparer: (childComparer: () => EqualityComparer<any>, fallbackComparer: EqualityComparer<any>, factories: [TimerHandler, boolean, EqualityComparerFactory<any>][]) => EqualityComparer<any>;
 export declare const deepEqual: EqualityComparer<any>;
 export declare const deepEqualStrict: EqualityComparer<any>;
 export declare const shallowEqual: EqualityComparer<any>;

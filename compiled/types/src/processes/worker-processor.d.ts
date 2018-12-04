@@ -12,7 +12,7 @@ export interface WorkerItemResponse {
 }
 export declare const createBackgroundWorker: (opts: {
     processor: Observable<IProcessor>;
-    postMessage: (message: any, transfer?: any[]) => void;
+    postMessage: (message: any, transfer?: Transferable[]) => void;
     terminate: () => void;
 }) => {
     process: (item: WorkerItem) => void;

@@ -28,11 +28,13 @@ export const assignArray = <T>(s: T[], ...u: [number, T[]][]): T[] => {
     return arr;
 };
 
-export type ValueOrFunc<T = any> = T | ((...args: any[]) => T);
+export type FuncOf<T> = (...args: any[]) => T;
+
+export type ValueOrFunc<T = any> = T | FuncOf<T>;
 
 export const getAsValue = <T>(valueOrFunc: ValueOrFunc<T>, ...args: any[]) => {
     if (typeof valueOrFunc === 'function') {
-        return valueOrFunc(...args);
+        return (valueOrFunc as FuncOf<T>)(...args);
     } else {
         return valueOrFunc;
     }
@@ -45,7 +47,7 @@ export const getAsValueOrError = <T>(
 ) => {
     if (typeof valueOrFunc === 'function') {
         try {
-            return valueOrFunc(...args);
+            return (valueOrFunc as FuncOf<T>)(...args);
         } catch (error) {
             return getAsValue(onError, error);
         }

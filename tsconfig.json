@@ -8,9 +8,10 @@
         "declaration": true,
         "allowSyntheticDefaultImports": true,
         "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
+        "emitDecoratorMetadata": false,
         "declarationDir": "compiled/types",
         "outDir": "compiled",
+        "noEmitOnError": true,
         "allowUnreachableCode": false,
         "typeRoots": [
           "node_modules/@types"
@@ -18,6 +19,6 @@
     },
     "include": [
         "index.ts",
-        "src"
+        "src",
     ]
 }

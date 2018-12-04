@@ -136,6 +136,7 @@ function startSequentialProcessor(runTask, options) {
         }
         work.retries++;
         utils_1.tryTo(function () { return runTask(work.item); })
+            // .timeout(opts.taskTimeout)
             .subscribe({
             next: function (value) {
                 log(function () {
