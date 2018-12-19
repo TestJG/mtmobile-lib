@@ -88,7 +88,7 @@
     "tsc-watch": "^1.0.5",
     "tslint": "^5.7.0",
     "typedoc": "^0.13.0",
-    "typescript": "^3.1.6",
+    "typescript": "^3.2.2",
     "zone.js": "^0.8.17"
   },
   "peerDependencies": {

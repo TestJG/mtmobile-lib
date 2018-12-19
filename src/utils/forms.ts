@@ -262,6 +262,39 @@ const throwUnexpectedFormType = (
     throw new Error(`Unexpected form type (${type}) on ${path}`);
 };
 
+export const getFormItem = <T extends FormItem = FormItem>(
+  item: FormItem,
+  path: string = ''
+): T => {
+  switch (item.type) {
+      case 'field': {
+          checkPathInField(path);
+          return item as T;
+      }
+
+      case 'group': {
+          if (!path) {
+              return item as T;
+          }
+
+          const [_, child, restOfPath] = locateInGroupOrFail(item, path);
+          return getFormItem(child, restOfPath);
+      }
+
+      case 'listing': {
+          if (!path) {
+              return item as T;
+          }
+
+          const [_, child, restOfPath] = locateInListingOrFail(item, path);
+          return getFormItem(child, restOfPath);
+      }
+
+      default:
+          throw new Error('getFormItem: Not implemented');
+  }
+};
+
 export const getFormField = <T = any>(item: FormItem, path: string = '') => {
     const formField = getFormItem(item, path);
     if (formField.type !== 'field') {
@@ -287,39 +320,6 @@ export const getFormListing = <T extends any[] = any[]>(
         throwUnexpectedFormType(formListing.type, path);
     }
     return formListing as FormListing<T>;
-};
-
-export const getFormItem = <T extends FormItem = FormItem>(
-    item: FormItem,
-    path: string = ''
-): T => {
-    switch (item.type) {
-        case 'field': {
-            checkPathInField(path);
-            return item as T;
-        }
-
-        case 'group': {
-            if (!path) {
-                return item as T;
-            }
-
-            const [_, child, restOfPath] = locateInGroupOrFail(item, path);
-            return getFormItem(child, restOfPath);
-        }
-
-        case 'listing': {
-            if (!path) {
-                return item as T;
-            }
-
-            const [_, child, restOfPath] = locateInListingOrFail(item, path);
-            return getFormItem(child, restOfPath);
-        }
-
-        default:
-            throw new Error('getFormItem: Not implemented');
-    }
 };
 
 export const getValue = (item: FormItem, path: string = ''): any => {
