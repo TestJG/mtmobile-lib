@@ -551,9 +551,9 @@ const updateGroupFieldsAux = <T>(
     }
 };
 
-const updateListingFieldsAux = <T extends any[]>(
-    item: FormListing<T[0]>,
-    newFields: FormListingFields<T[0]>,
+const updateListingFieldsAux = <T>(
+    item: FormListing<T>,
+    newFields: FormListingFields<T>,
     opts: SetValueOptions
 ) => {
     if (newFields === null) {
@@ -575,14 +575,14 @@ const updateListingFieldsAux = <T extends any[]>(
                 compareValues: true,
                 initialization: true,
             })
-        );
+        ) as FormListing<T>;
     }
 };
 
-const updateFormItemInternalRec = <T = any>(
+const updateFormItemInternalRec = <T extends any = any>(
     item: FormItem<T>,
     path: PathStep[],
-    updater: ValueOrFunc<FormItem<T>>,
+    updater: ValueOrFunc<FormItem<T | T[0]>>,
     opts: SetValueOptions,
     data: UpdateFormItemData
 ): FormItem<T> => {
@@ -725,7 +725,7 @@ const updateFormItemInternalRec = <T = any>(
                             return prevFields;
                         }
                     },
-                    <FormItem[]>item.fields
+                    item.fields
                 );
 
                 const result = updateListingFieldsAux(item, newFields, opts);
@@ -747,7 +747,7 @@ const updateFormItemInternalRec = <T = any>(
     // }
 };
 
-const setValueUpdater = <T>(value: ValueOrFunc<T>, opts: SetValueOptions) => (
+const setValueUpdater = <T extends any>(value: ValueOrFunc<T>, opts: SetValueOptions) => (
     item: FormItem<T>,
     data: UpdateFormItemData
 ): FormItem => {
@@ -768,7 +768,7 @@ const setValueUpdater = <T>(value: ValueOrFunc<T>, opts: SetValueOptions) => (
                 item,
                 createNewListingFieldsFromDirectValue(
                     item,
-                    (value as unknown) as ValueOrFunc<T[]>,
+                    value as unknown as ValueOrFunc<T[0][]>,
                     opts,
                     data
                 ),

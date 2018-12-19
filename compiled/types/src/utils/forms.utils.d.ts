@@ -20,7 +20,7 @@ export declare const locateInListingOrFail: <T extends any[]>(item: FormListing<
 export declare const createGroupValue: (fields: FormGroupFields<any>) => any;
 export declare const createGroupInitValue: (fields: FormGroupFields<any>) => any;
 export declare const createListingValue: <T>(fields: FormItem<T>[]) => T[];
-export declare const createListingInitValue: <T extends any[]>(fields: FormItem<T[0]>[]) => (T[0] | T[0][])[];
+export declare const createListingInitValue: <T extends any[]>(fields: FormItem<T[0]>[]) => (T[0] | T[0][0][])[];
 export interface SetValueOptions {
     affectDirty: boolean;
     compareValues: boolean;

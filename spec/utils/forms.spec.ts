@@ -47,7 +47,9 @@ import {
     // printObj,
     getFormField,
     getFormGroup,
-    getFormListing
+    getFormListing,
+    FormListing,
+    FormGroup
 } from '../../src/utils';
 
 interface Person {
@@ -522,7 +524,7 @@ describe('Utils', () => {
             });
 
             describe('When a group is created with fields and no initValue', () => {
-                const aGroup = group({
+                const aGroup = group<any>({
                     firstName: field(''),
                     lastName: field(''),
                     age: field(20)
@@ -801,7 +803,11 @@ describe('Utils', () => {
             });
 
             describe('When a listing is created with fields and no initValue', () => {
-                const aListing = listing([field(''), field(''), field(20)]);
+                const aListing = listing<string | number>([
+                    field(''),
+                    field(''),
+                    field(20)
+                ]);
 
                 expectType(aListing, 'listing');
 
@@ -955,16 +961,16 @@ describe('Utils', () => {
                             person =>
                                 shouldNotBeEmpty(
                                     'firstName should not be empty'
-                                )(person[0]),
+                                )(person[0] as PersonArray[0]),
                             person =>
                                 shouldNotBeEmpty(
                                     'lastName should not be empty'
-                                )(person[1]),
+                                )(person[1] as PersonArray[1]),
                             person =>
                                 shouldBeGreaterThanOrEqualTo(
                                     18,
                                     'age should be greater than 18'
-                                )(person[2])
+                                )(person[2] as PersonArray[2])
                         ]
                     }
                 );
@@ -1619,7 +1625,7 @@ describe('Utils', () => {
                             { initValue: <Pet[]>undefined }
                         )
                     },
-                    { initValue: <Person & { pet: Pet[] }>undefined }
+                    { initValue: <Person & { pets: Pet[] }>undefined }
                 );
                 const aGroupCopy = Object.assign({}, aForm);
                 const newGroup = setValue(
@@ -1668,7 +1674,7 @@ describe('Utils', () => {
                             { initValue: <Pet[]>undefined }
                         )
                     },
-                    { initValue: <Person & { pet: Pet[] }>undefined }
+                    { initValue: <Person & { pets: Pet[] }>undefined }
                 );
                 const aGroupCopy = Object.assign({}, aForm);
                 const newGroup = setValueDoNotTouch(
@@ -1717,7 +1723,7 @@ describe('Utils', () => {
                             { initValue: <Pet[]>undefined }
                         )
                     },
-                    { initValue: <Person & { pet: Pet[] }>undefined }
+                    { initValue: <Person & { pets: Pet[] }>undefined }
                 );
                 const aGroupCopy = Object.assign({}, aForm);
                 const newGroupDirty = setValue(
@@ -1780,7 +1786,7 @@ describe('Utils', () => {
                             { initValue: <Pet[]>undefined }
                         )
                     },
-                    { initValue: <Person & { pet: Pet[] }>undefined }
+                    { initValue: <Person & { pets: Pet[] }>undefined }
                 );
                 const newGroup = setValue(
                     aForm,
@@ -2015,7 +2021,8 @@ describe('Utils', () => {
                     it('the original form should no be changed in place', () =>
                         expect(aForm).toEqual(aGroupCopy));
 
-                    const fido = newGroup.fields.pets.fields[0];
+                    const petLists = newGroup.fields.pets as FormListing<Pet>;
+                    const fido = petLists.fields[0] as FormGroup<AgedPet>;
                     const fidosAge = fido.fields.age;
 
                     // console.log('FIDO\'S AGE: ', printObj(fidosAge));
@@ -2169,7 +2176,7 @@ describe('Utils', () => {
                             { initValue: <Pet[]>undefined }
                         )
                     },
-                    { initValue: <Person & { pet: Pet[] }>undefined }
+                    { initValue: <Person & { pets: Pet[] }>undefined }
                 );
 
                 it('When changes are requested as a function it should receive the UpdateFormData', () => {
@@ -2223,7 +2230,7 @@ describe('Utils', () => {
                             { initValue: <Pet[]>undefined }
                         )
                     },
-                    { initValue: <Person & { pet: Pet[] }>undefined }
+                    { initValue: <Person & { pets: Pet[] }>undefined }
                 );
 
                 it("with path empty it should return the form's value", () =>
@@ -2281,7 +2288,7 @@ describe('Utils', () => {
                             { initValue: <Pet[]>undefined }
                         )
                     },
-                    { initValue: <Person & { pet: Pet[] }>undefined }
+                    { initValue: <Person & { pets: Pet[] }>undefined }
                 );
 
                 it('with path empty it should return the form itself', () =>
@@ -2292,9 +2299,11 @@ describe('Utils', () => {
                         aForm.fields.firstName
                     ));
 
+                const petList = aForm.fields.pets as FormListing<Pet>;
+                const firstPetGroup = petList.fields[0] as FormGroup<Pet>;
                 it('with complex path it should return the field', () =>
                     expect(getFormItem(aForm, 'pets[0].kind')).toBe(
-                        aForm.fields.pets.fields[0].fields.kind
+                        firstPetGroup.fields.kind
                     ));
 
                 it('with path invalid it should return undefined', () =>
@@ -2441,7 +2450,7 @@ describe('Utils', () => {
                         firstName: field('John'),
                         age: field(20)
                     },
-                    { initValue: <Person>undefined }
+                    { initValue: <Partial<Person>>undefined }
                 );
                 const aGroupCopy = Object.assign({}, aGroup);
                 const newGroup = setGroupField(
@@ -2489,7 +2498,7 @@ describe('Utils', () => {
                             { initValue: <Pet[]>undefined }
                         )
                     },
-                    { initValue: <Person & { pet: Pet[] }>undefined }
+                    { initValue: <Person & { pets: Pet[] }>undefined }
                 );
                 const newForm = setGroupField(aForm, 'pets[1].age', field(3));
 
@@ -2677,7 +2686,7 @@ describe('Utils', () => {
                             { initValue: <Pet[]>undefined }
                         )
                     },
-                    { initValue: <Person & { pet: Pet[] }>undefined }
+                    { initValue: <Person & { pets: Pet[] }>undefined }
                 );
                 const newForm = insertListingFields(
                     aForm,
@@ -2773,7 +2782,7 @@ describe('Utils', () => {
                             { initValue: <Pet[]>undefined }
                         )
                     },
-                    { initValue: <Person & { pet: Pet[] }>undefined }
+                    { initValue: <Person & { pets: Pet[] }>undefined }
                 );
                 const newForm = removeListingFields(aForm, 'pets', 0);
 
@@ -2944,9 +2953,9 @@ describe('Utils', () => {
                         )
                     },
                     {
-                        initValue: <Person>undefined,
+                        initValue: undefined,
                         validations: [
-                            shouldBe<Person>(
+                            shouldBe(
                                 p => p.firstName.length <= p.age,
                                 'Should meet this weird condition'
                             )
@@ -2999,7 +3008,7 @@ describe('Utils', () => {
                                 )
                             ],
                             {
-                                initValue: <Pet[]>undefined,
+                                initValue: undefined,
                                 validations: pets =>
                                     pets.length === 1
                                         ? ''
@@ -3008,9 +3017,9 @@ describe('Utils', () => {
                         )
                     },
                     {
-                        initValue: <Person>undefined,
+                        initValue: undefined,
                         validations: [
-                            shouldBe<Person>(
+                            shouldBe(
                                 p => p.firstName.length >= p.age,
                                 'weird'
                             )
@@ -3018,6 +3027,8 @@ describe('Utils', () => {
                     }
                 );
 
+                const petList = aGroup.fields.pets as FormListing<Pet>;
+                const petListGroup = petList.fields[0] as FormGroup<Pet>;
                 it('getAllErrors should return all errors in the form', () =>
                     expect(getAllErrors(aGroup)).toEqual(
                         <FormError[]>[
@@ -3048,7 +3059,7 @@ describe('Utils', () => {
                             },
                             {
                                 path: 'pets[0].name',
-                                item: aGroup.fields.pets.fields[0].fields.name,
+                                item: petListGroup.fields.name,
                                 errors: ['Should not be blank']
                             }
                         ]

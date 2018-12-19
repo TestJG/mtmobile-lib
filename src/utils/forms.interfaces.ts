@@ -149,7 +149,9 @@ export interface FormListingConfig<T = any> extends FormPartConfig<T> {
 //     fields: F;
 // }
 
-export interface FormListing<T = any> extends FormPart<T[]>, FormListingConfig<T[]> {
+export interface FormListing<T = any>
+    extends FormPart<T[]>,
+        FormListingConfig<T[]> {
     fields: FormListingFields<T>;
 }
 
@@ -171,7 +173,10 @@ export type FormItemConfig<T = any> =
 //     | FormGroupState<T>
 //     | FormListingState<T>;
 
-export type FormItem<T = any> = FormField<T> | FormGroup<T> | FormListing<T>;
+export type FormItem<T extends any = any> =
+    | FormField<T>
+    | FormGroup<T>
+    | FormListing<T[0]>;
 
 export interface FormError {
     path: string;

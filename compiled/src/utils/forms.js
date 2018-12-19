@@ -145,8 +145,7 @@ exports.listing = function (fields, options) {
         showErrors: false,
         fields: theFields,
     };
-    var init = theInitValue;
-    return forms_utils_1.setValueInternal(result, init, '', {
+    return forms_utils_1.setValueInternal(result, theInitValue, '', {
         affectDirty: false,
         compareValues: false,
         initialization: true,
@@ -159,30 +158,6 @@ exports.listing = function (fields, options) {
 ////////////////////////////////////////////////////////////////
 var throwUnexpectedFormType = function (type, path) {
     throw new Error("Unexpected form type (" + type + ") on " + path);
-};
-exports.getFormField = function (item, path) {
-    if (path === void 0) { path = ''; }
-    var formField = exports.getFormItem(item, path);
-    if (formField.type !== 'field') {
-        throwUnexpectedFormType(formField.type, path);
-    }
-    return formField;
-};
-exports.getFormGroup = function (item, path) {
-    if (path === void 0) { path = ''; }
-    var formGroup = exports.getFormItem(item, path);
-    if (formGroup.type !== 'group') {
-        throwUnexpectedFormType(formGroup.type, path);
-    }
-    return formGroup;
-};
-exports.getFormListing = function (item, path) {
-    if (path === void 0) { path = ''; }
-    var formListing = exports.getFormItem(item, path);
-    if (formListing.type !== 'listing') {
-        throwUnexpectedFormType(formListing.type, path);
-    }
-    return formListing;
 };
 exports.getFormItem = function (item, path) {
     if (path === void 0) { path = ''; }
@@ -208,6 +183,30 @@ exports.getFormItem = function (item, path) {
         default:
             throw new Error('getFormItem: Not implemented');
     }
+};
+exports.getFormField = function (item, path) {
+    if (path === void 0) { path = ''; }
+    var formField = exports.getFormItem(item, path);
+    if (formField.type !== 'field') {
+        throwUnexpectedFormType(formField.type, path);
+    }
+    return formField;
+};
+exports.getFormGroup = function (item, path) {
+    if (path === void 0) { path = ''; }
+    var formGroup = exports.getFormItem(item, path);
+    if (formGroup.type !== 'group') {
+        throwUnexpectedFormType(formGroup.type, path);
+    }
+    return formGroup;
+};
+exports.getFormListing = function (item, path) {
+    if (path === void 0) { path = ''; }
+    var formListing = exports.getFormItem(item, path);
+    if (formListing.type !== 'listing') {
+        throwUnexpectedFormType(formListing.type, path);
+    }
+    return formListing;
 };
 exports.getValue = function (item, path) {
     if (path === void 0) { path = ''; }
