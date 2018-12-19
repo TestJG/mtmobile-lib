@@ -241,8 +241,7 @@ export const listing = <T = any>(
 
         fields: theFields,
     };
-    const init = theInitValue as unknown as ValueOrFunc<T>;
-    return setValueInternal((result as FormItem<T>), init, '', {
+    return setValueInternal(result, theInitValue, '', {
         affectDirty: false,
         compareValues: false,
         initialization: true,
@@ -311,7 +310,7 @@ export const getFormGroup = <T = any>(item: FormItem, path: string = '') => {
     return formGroup as FormGroup<T>;
 };
 
-export const getFormListing = <T extends any[] = any[]>(
+export const getFormListing = <T = any>(
     item: FormItem,
     path: string = ''
 ) => {

@@ -73,7 +73,7 @@ export interface FormListing<T = any> extends FormPart<T[]>, FormListingConfig<T
 }
 export declare type FormItemType = 'field' | 'group' | 'listing';
 export declare type FormItemConfig<T = any> = FormFieldConfig<T> | FormGroupConfig<T> | FormListingConfig<T>;
-export declare type FormItem<T = any> = FormField<T> | FormGroup<T> | FormListing<T>;
+export declare type FormItem<T extends any = any> = FormField<T> | FormGroup<T> | FormListing<T[0]>;
 export interface FormError {
     path: string;
     item: FormItem;

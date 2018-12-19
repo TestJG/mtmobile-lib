@@ -3,10 +3,10 @@ import { FormItem, FormFieldInit, FormField, FormGroupInit, FormGroup, FormGroup
 export declare const field: <T = any>(initValue: T, options?: Partial<FormFieldInit<T>>) => FormField<T>;
 export declare const group: <T = any>(fields: FormGroupFields<T>, options?: Partial<FormGroupInit<T>>) => FormGroup<T>;
 export declare const listing: <T = any>(fields: FormItem<T>[], options?: Partial<FormListingInit<T>>) => FormListing<T>;
+export declare const getFormItem: <T extends FormItem<any> = FormItem<any>>(item: FormItem<any>, path?: string) => T;
 export declare const getFormField: <T = any>(item: FormItem<any>, path?: string) => FormField<T>;
 export declare const getFormGroup: <T = any>(item: FormItem<any>, path?: string) => FormGroup<T>;
-export declare const getFormListing: <T extends any[] = any[]>(item: FormItem<any>, path?: string) => FormListing<T>;
-export declare const getFormItem: <T extends FormItem<any> = FormItem<any>>(item: FormItem<any>, path?: string) => T;
+export declare const getFormListing: <T = any>(item: FormItem<any>, path?: string) => FormListing<T>;
 export declare const getValue: (item: FormItem<any>, path?: string) => any;
 export declare const existFormItem: (item: FormItem<any>, path: string) => boolean;
 export declare const setValue: <I extends FormItem<any> = FormItem<any>>(item: I, value: any, pathToField?: string) => I;
