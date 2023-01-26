@@ -20,6 +20,7 @@
     "url": "github:TestJG/mtmobile-lib"
   },
   "license": "MIT",
+  "packageManager": "pnpm@7.26.0",
   "engines": {
     "node": ">=6.9.0"
   },
