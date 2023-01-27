@@ -132,13 +132,13 @@ export interface FormGroup<T extends Object = any> extends FormPart<T> {
 
 // type ArrayItem<T extends any[]> = T[keyof T];
 
-export type FormListingFields<T = any> = FormItem<T>[];
+export type FormListingFields<T extends unknown[] = any> = FormItem<T[number]>[];
 
-export interface FormListingInit<T = any> extends FormPartInit<T[]> {
-    initValue: T[];
+export interface FormListingInit<T extends unknown[] = any> extends FormPartInit<T> {
+    initValue: T;
 }
 
-export interface FormListingConfig<T = any> extends FormPartConfig<T> {
+export interface FormListingConfig<T extends unknown[] = any> extends FormPartConfig<T> {
     type: 'listing';
 }
 
@@ -149,9 +149,9 @@ export interface FormListingConfig<T = any> extends FormPartConfig<T> {
 //     fields: F;
 // }
 
-export interface FormListing<T = any>
-    extends FormPart<T[]>,
-        FormListingConfig<T[]> {
+export interface FormListing<T extends unknown[] = any>
+    extends FormPart<T>,
+        FormListingConfig<T> {
     fields: FormListingFields<T>;
 }
 
@@ -166,7 +166,7 @@ export type FormItemType = 'field' | 'group' | 'listing';
 export type FormItemConfig<T = any> =
     | FormFieldConfig<T>
     | FormGroupConfig<T>
-    | FormListingConfig<T>;
+    | (T extends unknown[] ? FormListingConfig<T> : never);
 
 // export type FormItemState<T = any> =
 //     | FormFieldState<T>
@@ -176,10 +176,10 @@ export type FormItemConfig<T = any> =
 export type FormItem<T extends any = any> =
     | FormField<T>
     | FormGroup<T>
-    | FormListing<T[0]>;
+    | (T extends unknown[] ? FormListing<T> : never);
 
-export interface FormError {
+export interface FormError<T = any> {
     path: string;
-    item: FormItem;
+    item: FormItem<T>;
     errors: string[];
 }

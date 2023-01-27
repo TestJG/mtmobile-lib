@@ -185,7 +185,7 @@ export const group = <T = any>(
     });
 };
 
-export const listing = <T = any>(
+export const listing = <T extends unknown[] = any>(
     fields: FormListingFields<T>,
     options?: Partial<FormListingInit<T>>
 ): FormListing<T> => {
@@ -245,7 +245,7 @@ export const listing = <T = any>(
         affectDirty: false,
         compareValues: false,
         initialization: true,
-    }) as FormListing<T>;
+    });
 };
 
 ////////////////////////////////////////////////////////////////
@@ -310,7 +310,7 @@ export const getFormGroup = <T = any>(item: FormItem, path: string = '') => {
     return formGroup as FormGroup<T>;
 };
 
-export const getFormListing = <T = any>(
+export const getFormListing = <T extends unknown[] = any>(
     item: FormItem,
     path: string = ''
 ) => {

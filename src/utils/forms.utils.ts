@@ -214,12 +214,12 @@ export const createGroupValue = (fields: FormGroupFields): any =>
 export const createGroupInitValue = (fields: FormGroupFields): any =>
     objMapValues((f: FormItem) => f.initValue)(fields);
 
-export const createListingValue = <T>(fields: FormListingFields<T>) =>
-    fields.map(f => f.value as T);
+export const createListingValue = <T extends unknown[]>(fields: FormListingFields<T>) =>
+    fields.map(f => f.value) as T;
 
-export const createListingInitValue = <T extends any[]>(
-    fields: FormListingFields<T[0]>
-) => fields.map(f => f.initValue);
+export const createListingInitValue = <T extends unknown[]>(
+    fields: FormListingFields<T>
+) => fields.map(f => f.initValue) as T;
 
 export interface SetValueOptions {
     affectDirty: boolean;
@@ -240,8 +240,8 @@ const updateGroupFields = <T>(
         fields
     );
 
-const updateListingFields = <T>(
-    value: T[],
+const updateListingFields = <T extends unknown[]>(
+    value: T,
     fields: FormListingFields<T>,
     opts: SetValueOptions
 ) =>
@@ -409,9 +409,9 @@ const createNewGroupFieldsFromDirectValue = <T>(
     return updateGroupFields(newValue, item.fields, opts);
 };
 
-const createNewListingFieldsFromDirectValue = <T>(
+const createNewListingFieldsFromDirectValue = <T extends unknown[]>(
     item: FormListing<T>,
-    value: ValueOrFunc<T[]>,
+    value: ValueOrFunc<T>,
     opts: SetValueOptions,
     data: UpdateFormItemData
 ): FormListingFields<T> => {
@@ -490,7 +490,7 @@ const updateFinalGroupFields = <T>(item: FormGroup<T>) => {
     });
 };
 
-const updateFinalListingFields = <T>(item: FormListing<T>) => {
+const updateFinalListingFields = <T extends unknown[]>(item: FormListing<T>) => {
     const computedValue = createListingValue(item.fields);
     const computedInitValue = createListingInitValue(item.fields);
     const errors = item.validator(computedValue);
@@ -551,7 +551,7 @@ const updateGroupFieldsAux = <T>(
     }
 };
 
-const updateListingFieldsAux = <T>(
+const updateListingFieldsAux = <T extends unknown[]>(
     item: FormListing<T>,
     newFields: FormListingFields<T>,
     opts: SetValueOptions
@@ -579,13 +579,13 @@ const updateListingFieldsAux = <T>(
     }
 };
 
-const updateFormItemInternalRec = <T extends any = any>(
-    item: FormItem<T>,
+const updateFormItemInternalRec = (
+    item: FormItem,
     path: PathStep[],
-    updater: ValueOrFunc<FormItem<T | T[0]>>,
+    updater: ValueOrFunc<FormItem>,
     opts: SetValueOptions,
     data: UpdateFormItemData
-): FormItem<T> => {
+) => {
     // try {
     //     log(`updateRec ${JSON.stringify(path)} on ${item.type}`);
     if (path.length === 0) {
@@ -658,7 +658,7 @@ const updateFormItemInternalRec = <T extends any = any>(
                             .reduce(
                                 (fs, key) =>
                                     Object.assign(fs, { [key]: newField }),
-                                <FormGroupFields<T>>{}
+                                <FormGroupFields>{}
                             );
                     } else {
                         return prevFields;
@@ -747,7 +747,7 @@ const updateFormItemInternalRec = <T extends any = any>(
     // }
 };
 
-const setValueUpdater = <T extends any>(value: ValueOrFunc<T>, opts: SetValueOptions) => (
+const setValueUpdater = <T>(value: ValueOrFunc<T>, opts: SetValueOptions) => (
     item: FormItem<T>,
     data: UpdateFormItemData
 ): FormItem => {
@@ -768,7 +768,7 @@ const setValueUpdater = <T extends any>(value: ValueOrFunc<T>, opts: SetValueOpt
                 item,
                 createNewListingFieldsFromDirectValue(
                     item,
-                    value as unknown as ValueOrFunc<T[0][]>,
+                    value as ValueOrFunc<typeof item['value']>,
                     opts,
                     data
                 ),
@@ -783,12 +783,12 @@ const setValueUpdater = <T extends any>(value: ValueOrFunc<T>, opts: SetValueOpt
     }
 };
 
-export function setValueInternal<T = any>(
-    item: FormItem<T>,
-    value: ValueOrFunc<T>,
+export function setValueInternal<T extends FormItem>(
+    item: T,
+    value: ValueOrFunc<unknown>,
     path: string,
     options?: Partial<SetValueOptions>
-): FormItem<T> {
+): T {
     const opts: SetValueOptions = Object.assign(
         <SetValueOptions>{
             affectDirty: true,
