@@ -54,15 +54,16 @@ export const fromObsLike = <T>(
     source: ObsLike<T>,
     treatArraysAsValues = true
 ): Observable<T> => {
+    // Can't use isObservableInput because string qualifies as ObservableInput
+    // and current behavior is not to treat it as an observable.
     if (
-        isSomething(source) &&
-        (Promise.resolve(<any>source) === source ||
-            typeof source['subscribe'] === 'function' ||
-            (!treatArraysAsValues && source instanceof Array))
+        isPromiseLike(source) ||
+            isSubscribable(source) ||
+            (!treatArraysAsValues && source instanceof Array)
     ) {
-        return from(<any>source);
+        return from(source);
     } else {
-        return of(<T>source);
+        return of(source as T);
     }
 };
 
