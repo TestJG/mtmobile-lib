@@ -173,8 +173,8 @@ export function startDirectProcessor(
 
 /**
  * Creates an instance of IProcessor (Direct), from a given service, where each
- * TaskItem of the form { kind: 'method', payload: T } is implemented as
- * service.method(payload).
+ * TaskItem of the form `{ kind: 'method', payload: T }` is implemented as
+ * `service.method(payload)`.
  */
 export const fromServiceToDirectProcessor = (
     service: any,

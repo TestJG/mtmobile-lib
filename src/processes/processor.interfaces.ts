@@ -32,8 +32,8 @@ export const task = (kind: string, payload?: any, uid?: string) => <TaskItem>{
 
 /**
  * Creates an instance of a service, from a given processor and service methods,
- * where each call to * service.method(payload) is implemented as
- * processor.process({ kind: 'method', payload, uid }).
+ * where each call to `service.method(payload)` is implemented as
+ * `processor.process({ kind: 'method', payload, uid })`.
  */
 export const fromProcessorToService = <T = any>(
     processor: IProcessorCore,

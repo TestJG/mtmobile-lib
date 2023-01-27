@@ -27,7 +27,6 @@ export type ReducerOf<S, T = any> = (s: S, p: T) => S;
  * The result of the partial reducer can be false to
  * indicate that no update should be applied. It can also return one partial
  * state or an array of partial states.
- * @export
  * @template S The state type
  */
 export type PartialReduction<S> =
@@ -39,8 +38,7 @@ export type PartialReduction<S> =
 
 /**
  * A partial reducer function is such that receives a previous state and the
- * payload of a current action, and returns a {PartialReduction<S>}.
- * @export
+ * payload of a current action, and returns a {@link PartialReduction}.
  * @template S The state type
  * @template T The action payload type
  */
@@ -49,15 +47,13 @@ export type PartialReducerOf<S, T = any> = (s: S, p: T) => PartialReduction<S>;
 /**
  * A simple reducer function is such that receives a previous state, and
  * returns a new state.
- * @export
  * @template S The state type
  */
 export type SimpleReducerOf<S> = (s: S) => S;
 
 /**
  * A simple partial reducer function is such that receives a previous state,
- * and returns a {PartialReduction<S>}.
- * @export
+ * and returns a {@link PartialReduction}.
  * @template S The state type
  */
 export type SimplePartialReducerOf<S> = (s: S) => PartialReduction<S>;
@@ -121,8 +117,7 @@ export interface ActionDescBase<S> {
 /**
  * Describes an action with a typed payload property. It also represents a
  * function to create an instance of an action with a given payload.
- * @export
- * @interface ActionDesc
+ * @interface {@link ActionDesc}
  * @extends {ActionDescBase<S>}
  * @template T The action payload type
  * @template S The state type
@@ -147,8 +142,7 @@ export interface ActionDesc<T, S = any> extends ActionDescBase<S> {
 /**
  * Describes an action with no payload. It also represents a function to create
  * an instance of an action.
- * @export
- * @interface ActionDesc
+ * @interface {@link ActionDesc}
  * @extends {ActionDescBase<S>}
  * @template T The action payload type
  * @template S The state type
@@ -165,8 +159,7 @@ export interface ActionDescEmpty<S = any> extends ActionDescBase<S> {
 
 /**
  * Represents an object where each property is an action description.
- * @export
- * @interface ActionMap
+ * @interface {@link ActionMap}
  */
 export interface ActionMap<S = any> {
     [actionName: string]: ActionDescBase<S>;

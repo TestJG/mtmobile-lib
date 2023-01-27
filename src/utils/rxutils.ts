@@ -102,7 +102,7 @@ export const tryTo = <T>(
 };
 
 // type FuncOf<V> = (...args: any[]) => V;
-type FuncOfObs<V> = FuncOf<Observable<V>>;
+export type FuncOfObs<V> = FuncOf<Observable<V>>;
 
 export const wrapFunctionStream = <V, F extends FuncOfObs<V>>(
     stream: Observable<F>
