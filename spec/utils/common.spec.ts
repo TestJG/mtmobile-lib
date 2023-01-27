@@ -30,10 +30,104 @@ import {
     printData,
     hasNewLine,
     printObj,
+    isSomething,
+    isNothing,
+    isPromiseLike,
 } from '../../src/utils/common';
 
 describe('Utils', () => {
     describe('Common Tests', () => {
+        describe('isNothing', () => {
+          it('should be a function', () => {
+            expect(isNothing).toBeInstanceOf(Function);
+          });
+          it('should return true when null is passed as an argument', () => {
+            expect(isNothing(null)).toBe(true);
+          });
+          it('should return true when undefined is passed as an argument', () => {
+            expect(isNothing(undefined)).toBe(true);
+          });
+          it('should return false when an empty string is passed as an argument', () => {
+            expect(isNothing("")).toBe(false);
+          });
+          it('should return false when a 0 is passed as an argument', () => {
+            expect(isNothing(0)).toBe(false);
+          });
+          it('should return false when a function is passed as an argument', () => {
+            expect(isNothing(() => null)).toBe(false);
+          });
+          it('should return false when an object is passed as an argument', () => {
+            expect(isNothing({})).toBe(false);
+          });
+          it('should return false when a Symbol is passed as an argument', () => {
+            expect(isNothing(Symbol(''))).toBe(false);
+          });
+        });
+
+        describe('isSomething', () => {
+          it('should be a function', () => {
+            expect(isSomething).toBeInstanceOf(Function);
+          });
+          it('should return false when null is passed as an argument', () => {
+            expect(isSomething(null)).toBe(false);
+          });
+          it('should return false when undefined is passed as an argument', () => {
+            expect(isSomething(undefined)).toBe(false);
+          });
+          it('should return true when an empty string is passed as an argument', () => {
+            expect(isSomething("")).toBe(true);
+          });
+          it('should return true when a 0 is passed as an argument', () => {
+            expect(isSomething(0)).toBe(true);
+          });
+          it('should return true when a function is passed as an argument', () => {
+            expect(isSomething(() => null)).toBe(true);
+          });
+          it('should return true when an object is passed as an argument', () => {
+            expect(isSomething({})).toBe(true);
+          });
+          it('should return true when a Symbol is passed as an argument', () => {
+            expect(isSomething(Symbol(''))).toBe(true);
+          });
+        });
+
+        describe('isPromiseLike', () => {
+          it('should be a function', () => {
+            expect(isPromiseLike).toBeInstanceOf(Function);
+          });
+          it('should return true when a resolved promise is passed as an argument', () => {
+            expect(isPromiseLike(Promise.resolve())).toBe(true);
+          });
+          it('should return true when a new promise is passed as an argument', done => {
+            let resolve;
+            const promise = new Promise(r => { resolve = r; });
+            expect(isPromiseLike(promise)).toBe(true);
+            resolve();
+            done();
+          });
+          it('should return false when a thennable with resolve is passed as an argument', () => {
+            expect(isPromiseLike({ then: () => {}, resolve: () => this })).toBe(false);
+          });
+          it('should return false when a thennable is passed as an argument', () => {
+            expect(isPromiseLike({ then: () => {} })).toBe(false);
+          });
+          it('should return false when an empty string is passed as an argument', () => {
+            expect(isPromiseLike("")).toBe(false);
+          });
+          it('should return false when a 0 is passed as an argument', () => {
+            expect(isPromiseLike(0)).toBe(false);
+          });
+          it('should return false when a function is passed as an argument', () => {
+            expect(isPromiseLike(() => null)).toBe(false);
+          });
+          it('should return false when an object is passed as an argument', () => {
+            expect(isPromiseLike({})).toBe(false);
+          });
+          it('should return false when a Symbol is passed as an argument', () => {
+            expect(isPromiseLike(Symbol(''))).toBe(false);
+          });
+        });
+
         describe('id', () => {
             it('should be a function', () =>
                 expect(id).toBeInstanceOf(Function));

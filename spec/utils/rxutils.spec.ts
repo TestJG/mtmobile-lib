@@ -9,6 +9,8 @@ import {
     firstMap,
     firstSwitchMap,
     makeState,
+    isSubscribable,
+    isObservableInput,
 } from '../../src/utils/rxutils';
 import { concatMap, delay, concat, map, take } from 'rxjs/operators';
 
@@ -74,6 +76,78 @@ describe('Utils', () => {
                     done
                 );
             });
+        });
+
+        describe('isSubscribable', () => {
+          it('should be a function', () => {
+            expect(isSubscribable).toBeInstanceOf(Function);
+          });
+          it('should return true when an object is with a subscribe function is passed in as an argument', () => {
+            expect(isSubscribable({subscribe: () => {}})).toBe(true);
+          });
+          it('should return false when null is passed as an argument', () => {
+            expect(isSubscribable(null)).toBe(false);
+          });
+          it('should return false when undefined string is passed as an argument', () => {
+            expect(isSubscribable(undefined)).toBe(false);
+          });
+          it('should return false when an empty string is passed as an argument', () => {
+            expect(isSubscribable("")).toBe(false);
+          });
+          it('should return false when a 0 is passed as an argument', () => {
+            expect(isSubscribable(0)).toBe(false);
+          });
+          it('should return false when a function is passed as an argument', () => {
+            expect(isSubscribable(() => null)).toBe(false);
+          });
+          it('should return false when an object is passed as an argument', () => {
+            expect(isSubscribable({})).toBe(false);
+          });
+          it('should return false when a Symbol is passed as an argument', () => {
+            expect(isSubscribable(Symbol(''))).toBe(false);
+          });
+        });
+
+        describe('isObservableInput', () => {
+          it('should return true when an iterator is passed as an argument', () => {
+            expect(isObservableInput({[Symbol.iterator]: () => {}})).toBe(true);
+          });
+          it('should return true when a custom Subscribable is passed as an argument', () => {
+            expect(isObservableInput({subscribe: () => {}})).toBe(true);
+          });
+          it('should return true when a custom InterOpObservable is passed as an argument', () => {
+            expect(isObservableInput({[Symbol.observable]: () => {}})).toBe(true);
+          });
+          it('should return true when an observable is passed as an argument', () => {
+            expect(isObservableInput(of([]))).toBe(true);
+          });
+          it('should return true when an array is passed as an argument', () => {
+            expect(isObservableInput([])).toBe(true);
+          });
+          it('should return true when a promise is passed as an argument', () => {
+            expect(isObservableInput(Promise.resolve())).toBe(true);
+          });
+          it('should return true when an empty string is passed as an argument', () => {
+            expect(isObservableInput("")).toBe(true);
+          });
+          it('should return false when null is passed as an argument', () => {
+            expect(isObservableInput(null)).toBe(false);
+          });
+          it('should return false when undefined string is passed as an argument', () => {
+            expect(isObservableInput(undefined)).toBe(false);
+          });
+          it('should return false when a 0 is passed as an argument', () => {
+            expect(isObservableInput(0)).toBe(false);
+          });
+          it('should return false when a function is passed as an argument', () => {
+            expect(isObservableInput(() => null)).toBe(false);
+          });
+          it('should return false when an object is passed as an argument', () => {
+            expect(isObservableInput({})).toBe(false);
+          });
+          it('should return false when a Symbol is passed as an argument', () => {
+            expect(isObservableInput(Symbol(''))).toBe(false);
+          });
         });
 
         describe('tryTo', () => {
