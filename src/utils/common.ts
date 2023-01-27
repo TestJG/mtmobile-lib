@@ -4,6 +4,11 @@ import { EqualityComparer, shallowEqualStrict } from './equality';
 export const isNothing = x => x === undefined || x === null;
 export const isSomething = x => x !== undefined && x !== null;
 
+export const isPromiseLike = <T>(prom: unknown): prom is PromiseLike<T> =>
+  isSomething(prom) &&
+  typeof prom['then'] === 'function' &&
+  Promise.resolve(prom) === prom;
+
 export const assign = <T>(s: T, ...u: Partial<T>[]): T =>
     Object.assign({}, s, ...u);
 
