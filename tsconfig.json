@@ -2,8 +2,8 @@
     "compilerOptions": {
         "moduleResolution": "node",
         "target": "ES5",
-        "module":"CommonJS",
-        "lib": ["es2015", "es2016", "es2017", "dom"],
+        "module": "CommonJS",
+        "lib": ["es2017", "dom"],
         "sourceMap": true,
         "declaration": true,
         "allowSyntheticDefaultImports": true,
@@ -12,13 +12,19 @@
         "declarationDir": "compiled/types",
         "outDir": "compiled",
         "noEmitOnError": true,
-        "allowUnreachableCode": false,
-        "typeRoots": [
-          "node_modules/@types"
-        ]
+        "allowUnreachableCode": false
     },
-    "include": [
-        "index.ts",
-        "src",
+    "include": [],
+    "exclude": ["node_modules"],
+    "references": [
+        {
+            "path": "./tsconfig.lib.json"
+        },
+        {
+            "path": "./tsconfig.spec.json"
+        },
+        {
+            "path": "./tools/tsconfig.tools.json"
+        }
     ]
 }
