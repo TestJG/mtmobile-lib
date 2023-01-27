@@ -20,7 +20,7 @@ export type ObsOrFunc<T = any> = ValueOrFunc<ObsLike<T>>;
 export const normalizeErrorOnCatch = <T>(err: any): Observable<T> =>
     throwError(normalizeError(err));
 
-const isSubscribable = <T>(subs: unknown): subs is Subscribable<T> =>
+export const isSubscribable = <T>(subs: unknown): subs is Subscribable<T> =>
   isSomething(subs) && typeof subs['subscribe'] === 'function';
 
 export const isObservableInput = <T>(
