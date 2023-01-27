@@ -1,4 +1,4 @@
-import { merge, of, from, throwError,  Observable, Subscribable,  Observer,  Subscription, ConnectableObservable } from 'rxjs';
+import { merge, of, from, throwError,  Observable, Subscribable,  Observer,  Subscription, ConnectableObservable, ObservableInput } from 'rxjs';
 import {
     materialize,
     ignoreElements, tap, publishReplay, first, publishBehavior, map, catchError, scan, takeUntil, switchMap } from 'rxjs/operators';
@@ -10,7 +10,8 @@ import {
     conditionalLog,
     capString,
     noop,
-    FuncOf
+    FuncOf,
+    isPromiseLike
 } from './common';
 
 export type ObsLike<T = any> = Subscribable<T> | PromiseLike<T> | T[] | T;
@@ -21,6 +22,33 @@ export const normalizeErrorOnCatch = <T>(err: any): Observable<T> =>
 
 const isSubscribable = <T>(subs: unknown): subs is Subscribable<T> =>
   isSomething(subs) && typeof subs['subscribe'] === 'function';
+
+export const isObservableInput = <T>(
+  obs: unknown
+): obs is ObservableInput<T> => {
+    if (!isSomething(obs)) { return false; }
+
+    // Observable
+    if (obs instanceof Observable) { return true; }
+    // InteropObservable
+    if (typeof obs[Symbol.observable] === 'function') { return true; }
+    // PromiseLike
+    if (isPromiseLike(obs)) { return true; }
+    // Subscribable
+    if (isSubscribable(obs)) { return true; }
+    // Array
+    if (Array.isArray(obs)) { return true; }
+    // ArrayLike
+    if (
+      typeof obs !== 'function' &&
+      typeof obs['length'] === 'number' &&
+      obs['length'] > -1
+    ) { return true; }
+    // Iterable
+    if (typeof obs[Symbol.iterator] === 'function') { return true; }
+
+    return false;
+};
 
 export const fromObsLike = <T>(
     source: ObsLike<T>,
