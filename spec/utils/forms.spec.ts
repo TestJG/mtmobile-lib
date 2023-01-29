@@ -803,7 +803,7 @@ describe('Utils', () => {
             });
 
             describe('When a listing is created with fields and no initValue', () => {
-                const aListing = listing<string | number>([
+                const aListing = listing<(string | number)[]>([
                     field(''),
                     field(''),
                     field(20)
@@ -2021,7 +2021,7 @@ describe('Utils', () => {
                     it('the original form should no be changed in place', () =>
                         expect(aForm).toEqual(aGroupCopy));
 
-                    const petLists = newGroup.fields.pets as FormListing<Pet>;
+                    const petLists = newGroup.fields.pets as FormListing<Pet[]>;
                     const fido = petLists.fields[0] as FormGroup<AgedPet>;
                     const fidosAge = fido.fields.age;
 
@@ -2299,7 +2299,7 @@ describe('Utils', () => {
                         aForm.fields.firstName
                     ));
 
-                const petList = aForm.fields.pets as FormListing<Pet>;
+                const petList = aForm.fields.pets as FormListing<Pet[]>;
                 const firstPetGroup = petList.fields[0] as FormGroup<Pet>;
                 it('with complex path it should return the field', () =>
                     expect(getFormItem(aForm, 'pets[0].kind')).toBe(
@@ -3027,7 +3027,7 @@ describe('Utils', () => {
                     }
                 );
 
-                const petList = aGroup.fields.pets as FormListing<Pet>;
+                const petList = aGroup.fields.pets as FormListing<Pet[]>;
                 const petListGroup = petList.fields[0] as FormGroup<Pet>;
                 it('getAllErrors should return all errors in the form', () =>
                     expect(getAllErrors(aGroup)).toEqual(

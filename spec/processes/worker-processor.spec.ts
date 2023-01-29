@@ -26,8 +26,8 @@ describe('Processes', () => {
                     },
                     'Proc'
                 ));
-                const postMessageSpy = jasmine.createSpy('postMessage');
-                const terminateSpy = jasmine.createSpy('terminate');
+                const postMessageSpy = jest.fn();
+                const terminateSpy = jest.fn();
                 const worker = createBackgroundWorker({
                     processor: procSubj.asObservable(),
                     postMessage: postMessageSpy,
@@ -67,7 +67,7 @@ describe('Processes', () => {
                             expect(terminateSpy).not.toHaveBeenCalled();
                             done();
                         } catch (e) {
-                            done.fail(e);
+                            done(e);
                         }
                     }, 100);
                 });
@@ -83,8 +83,8 @@ describe('Processes', () => {
                     'Proc',
                     { maxRetries: 2, maxDelay: 5 }
                 ));
-                const postMessageSpy = jasmine.createSpy('postMessage');
-                const terminateSpy = jasmine.createSpy('terminate');
+                const postMessageSpy = jest.fn();
+                const terminateSpy = jest.fn();
                 const worker = createBackgroundWorker({
                     processor: procSubj.asObservable(),
                     postMessage: postMessageSpy,
@@ -130,7 +130,7 @@ describe('Processes', () => {
                             expect(terminateSpy).not.toHaveBeenCalled();
                             done();
                         } catch (e) {
-                            done.fail(e);
+                            done(e);
                         }
                     }, 100);
                 });
@@ -142,8 +142,8 @@ describe('Processes', () => {
                 expect(createForegroundWorker).toBeInstanceOf(Function));
 
             describe('When a foreground worker is created from a well behaved worker', () => {
-                const postMessage = jasmine.createSpy('postMessage');
-                const terminate = jasmine.createSpy('terminate');
+                const postMessage = jest.fn();
+                const terminate = jest.fn();
                 const worker: SimpleWorker = {
                     postMessage,
                     onmessage: null,
@@ -161,7 +161,7 @@ describe('Processes', () => {
                     foreWorker.process(theTask).subscribe();
                     expect(postMessage).toHaveBeenCalledTimes(1);
                     expect(terminate).not.toHaveBeenCalled();
-                    const workItem = postMessage.calls.mostRecent().args[0];
+                    const workItem = postMessage.mock.lastCall[0];
                     expect(workItem.task).toBe(theTask);
                     expect(workItem.uid).toBeDefined();
                     expect(workItem.kind).toEqual('process');
@@ -169,8 +169,8 @@ describe('Processes', () => {
             });
 
             describe('When a foreground worker is created and terminated', () => {
-                const postMessage = jasmine.createSpy('postMessage');
-                const terminate = jasmine.createSpy('terminate');
+                const postMessage = jest.fn();
+                const terminate = jest.fn();
                 const worker: SimpleWorker = {
                     postMessage,
                     onmessage: null,
@@ -193,11 +193,11 @@ describe('Processes', () => {
                     });
                     expect(postMessage).toHaveBeenCalledTimes(2);
                     expect(terminate).not.toHaveBeenCalled();
-                    const workItem = postMessage.calls.first().args[0];
+                    const workItem = postMessage.mock.calls[0][0];
                     expect(workItem.task).toBe(theTask);
                     expect(workItem.uid).toBeDefined();
                     expect(workItem.kind).toEqual('process');
-                    const termItem = postMessage.calls.mostRecent().args[0];
+                    const termItem = postMessage.mock.lastCall[0];
                     expect(termItem.task).toBeUndefined();
                     expect(termItem.uid).toBeDefined();
                     expect(termItem.kind).toEqual('terminate');
@@ -207,8 +207,8 @@ describe('Processes', () => {
             });
 
             describe('When a foreground worker is created and the worker responds with values and complete', () => {
-                const postMessage = jasmine.createSpy('postMessage');
-                const terminate = jasmine.createSpy('terminate');
+                const postMessage = jest.fn();
+                const terminate = jest.fn();
                 const worker: SimpleWorker = {
                     postMessage,
                     onmessage: null,
@@ -222,7 +222,7 @@ describe('Processes', () => {
                     const theTask = task('inc');
                     testObs(foreWorker.process(theTask), [1, 2, 3], null, done);
                     expect(postMessage).toHaveBeenCalledTimes(1);
-                    const workItem = postMessage.calls.first().args[0];
+                    const workItem = postMessage.mock.calls[0][0];
                     worker.onmessage({
                         uid: workItem.uid,
                         kind: 'N',
@@ -243,8 +243,8 @@ describe('Processes', () => {
             });
 
             describe('When a foreground worker is created and the worker responds with values and error', () => {
-                const postMessage = jasmine.createSpy('postMessage');
-                const terminate = jasmine.createSpy('terminate');
+                const postMessage = jest.fn();
+                const terminate = jest.fn();
                 const worker: SimpleWorker = {
                     postMessage,
                     onmessage: null,
@@ -263,7 +263,7 @@ describe('Processes', () => {
                         done
                     );
                     expect(postMessage).toHaveBeenCalledTimes(1);
-                    const workItem = postMessage.calls.first().args[0];
+                    const workItem = postMessage.mock.calls[0][0];
                     worker.onmessage({
                         uid: workItem.uid,
                         kind: 'N',
@@ -288,8 +288,8 @@ describe('Processes', () => {
             });
 
             describe('When a foreground worker is created the observable is unsubscribed', () => {
-                const postMessage = jasmine.createSpy('postMessage');
-                const terminate = jasmine.createSpy('terminate');
+                const postMessage = jest.fn();
+                const terminate = jest.fn();
                 const worker: SimpleWorker = {
                     postMessage,
                     onmessage: null,
@@ -310,7 +310,7 @@ describe('Processes', () => {
                         done
                     );
                     expect(postMessage).toHaveBeenCalledTimes(1);
-                    const workItem = postMessage.calls.first().args[0];
+                    const workItem = postMessage.mock.calls[0][0];
                     worker.onmessage({
                         uid: workItem.uid,
                         kind: 'N',

@@ -141,7 +141,7 @@ describe('Utils', () => {
                 it("function 'is' should reject a non-corresponding action", () =>
                     expect(setAge.is({ type: 'other action' })).toBeFalsy());
 
-                it("function 'filter' should filter out non-corresponding actions", done =>
+                it("function 'filter' should filter out non-corresponding actions", done => {
                     testObs(
                         setAge.filter(
                             of(
@@ -153,7 +153,8 @@ describe('Utils', () => {
                         [42, 15],
                         null,
                         done
-                    ));
+                    );
+                });
 
                 it("function 'reducer' should apply corresponding reduction", () =>
                     expect(setAge.reducer(john(), 43)).toEqual({
@@ -216,7 +217,7 @@ describe('Utils', () => {
                 it("function 'is' should reject a non-corresponding action", () =>
                     expect(incAge.is({ type: 'other action' })).toBeFalsy());
 
-                it("function 'filter' should filter out non-corresponding actions", done =>
+                it("function 'filter' should filter out non-corresponding actions", done => {
                     testObs(
                         incAge.filter(
                             of(
@@ -228,7 +229,8 @@ describe('Utils', () => {
                         [null, null],
                         null,
                         done
-                    ));
+                    );
+                });
 
                 it("function 'reducer' should apply corresponding reduction", () =>
                     expect(incAge.reducer(john(), 43)).toEqual({
@@ -289,7 +291,7 @@ describe('Utils', () => {
                 it("function 'is' should reject a non-corresponding action", () =>
                     expect(setAge.is({ type: 'other action' })).toBeFalsy());
 
-                it("function 'filter' should filter out non-corresponding actions", done =>
+                it("function 'filter' should filter out non-corresponding actions", done => {
                     testObs(
                         setAge.filter(
                             of(
@@ -301,7 +303,8 @@ describe('Utils', () => {
                         [42, 15],
                         null,
                         done
-                    ));
+                    );
+                });
 
                 it("function 'reducer' should apply corresponding reduction", () =>
                     expect(setAge.reducer(john(), 43)).toEqual({
@@ -349,7 +352,7 @@ describe('Utils', () => {
                 it("function 'is' should reject a non-corresponding action", () =>
                     expect(incAge.is({ type: 'other action' })).toBeFalsy());
 
-                it("function 'filter' should filter out non-corresponding actions", done =>
+                it("function 'filter' should filter out non-corresponding actions", done => {
                     testObs(
                         incAge.filter(
                             of(
@@ -361,7 +364,8 @@ describe('Utils', () => {
                         [null, null],
                         null,
                         done
-                    ));
+                    );
+                });
 
                 it("function 'reducer' should apply corresponding reduction", () =>
                     expect(incAge.reducer(john(), 43)).toEqual({

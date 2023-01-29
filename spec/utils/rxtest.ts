@@ -17,11 +17,6 @@ import {
     concatMap,
 } from 'rxjs/operators';
 
-export interface DoneCallback {
-    (...args: any[]): any;
-    fail(error?: string | { message: string }): any;
-}
-
 export type TestObsOptions<T = any> = {
     anyValue: T;
     anyError: any;
@@ -31,7 +26,7 @@ export type TestObsOptions<T = any> = {
 export const testObsNotifications = <T = any>(
     actual: Observable<T>,
     expected: Notification<T>[],
-    done: DoneCallback,
+    done: jest.DoneCallback,
     options?: Partial<TestObsOptions<T>>
 ) => {
     const opts = Object.assign(
@@ -76,14 +71,9 @@ export const testObsNotifications = <T = any>(
             toArray()
         )
         .subscribe({
-            next: actArr => {
-                try {
-                    expect(actArr.map(toStr)).toEqual(expected.map(toStr));
-                } catch (e) {
-                    done.fail(e);
-                }
-            },
-            error: e => done.fail(e),
+            next: actArr =>
+                expect(actArr.map(toStr)).toEqual(expected.map(toStr)),
+            error: e => done(e),
             complete: () => done(),
         });
 };
@@ -92,7 +82,7 @@ export const testObs = <T = any>(
     actual: Observable<T>,
     expectedValues: T[],
     expectedError: any | undefined,
-    done: DoneCallback,
+    done: jest.DoneCallback,
     options?: Partial<TestObsOptions<T>>
 ) =>
     testObsNotifications(
@@ -111,7 +101,7 @@ export const testObs = <T = any>(
 export const testObsValues = <T = any>(
     actual: Observable<T>,
     expected: T[],
-    done: DoneCallback,
+    done: jest.DoneCallback,
     options?: Partial<TestObsOptions<T>>
 ) =>
     testObsNotifications(

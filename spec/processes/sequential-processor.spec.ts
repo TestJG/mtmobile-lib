@@ -23,13 +23,14 @@ describe('Processes', () => {
                     );
                 const proc = startSequentialProcessor(runner);
 
-                it('it should process task returning the well behaved result', done =>
+                it('it should process task returning the well behaved result', done => {
                     testObs(
                         proc.process(task('taskA')),
                         [1, 2, 3],
                         null,
                         done
-                    ));
+                    );
+                });
             });
 
             describe('When a sequential processor is started with bad behaved task', () => {
@@ -44,13 +45,14 @@ describe('Processes', () => {
                     nextDelay: d => d,
                 });
 
-                it('it should process task returning the bad behaved result after retrying 3 times', done =>
+                it('it should process task returning the bad behaved result after retrying 3 times', done => {
                     testObs(
                         proc.process(task('taskA')),
                         [1, 2, 3, 1, 2, 3, 1, 2, 3],
                         new TransientError('transient'),
                         done
-                    ));
+                    );
+                });
             });
 
             describe('When a sequential processor is started with temporary error', () => {
@@ -75,13 +77,14 @@ describe('Processes', () => {
                     nextDelay: d => d,
                 });
 
-                it('it should process task returning the well behaved result after the error is resolved', done =>
+                it('it should process task returning the well behaved result after the error is resolved', done => {
                     testObs(
                         proc.process(task('taskA')),
                         [1, 2, 3, 1, 2, 3, 1, 2, 3, 4],
                         null,
                         done
-                    ));
+                    );
+                });
             });
 
             describe('Given a simple sequential processor', () => {
@@ -92,7 +95,7 @@ describe('Processes', () => {
                     nextDelay: d => d,
                 });
 
-                it('calling taskA and taskB should run them sequentially', done =>
+                it('calling taskA and taskB should run them sequentially', done => {
                     testObs(
                         merge(
                             timer(10).pipe(
@@ -109,7 +112,8 @@ describe('Processes', () => {
                         [30, 10],
                         null,
                         done
-                    ));
+                    );
+                });
             });
 
             describe('Given a simple sequential processor with a bad behaved task', () => {

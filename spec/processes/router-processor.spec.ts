@@ -38,7 +38,7 @@ describe('Processes', () => {
                     { caption: 'Proc', routeSeparator: '/' }
                 );
 
-                it('it should process task returning the well behaved result', done =>
+                it('it should process task returning the well behaved result', done => {
                     testObs(
                         merge(
                             proc.process(task('svc1/taskA', 10)),
@@ -49,7 +49,8 @@ describe('Processes', () => {
                         [10, 30, 40, 20],
                         null,
                         done
-                    ));
+                    );
+                });
             });
         });
     });
@@ -84,7 +85,7 @@ describe('Processes', () => {
                     routeSeparator: '/',
                 });
 
-                it('it should process task returning the well behaved result', done =>
+                it('it should process task returning the well behaved result', done => {
                     testObs(
                         merge(
                             proxy1.process(task('taskA', 10)),
@@ -95,7 +96,8 @@ describe('Processes', () => {
                         [10, 30, 40, 20],
                         null,
                         done
-                    ));
+                    );
+                });
             });
         });
     });

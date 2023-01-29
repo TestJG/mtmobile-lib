@@ -211,8 +211,8 @@ describe('Utils', () => {
             });
 
             it('on successful observable, deferred actions should be called after completion', done => {
-                const defer1 = jasmine.createSpy('defer1');
-                const defer2 = jasmine.createSpy('defer2');
+                const defer1 = jest.fn();
+                const defer2 = jest.fn();
                 tryTo(defer => {
                     defer(defer1);
                     defer(defer2);
@@ -222,7 +222,7 @@ describe('Utils', () => {
                         expect(defer1).not.toHaveBeenCalled();
                         expect(defer2).not.toHaveBeenCalled();
                     },
-                    error: e => done.fail('Error should not be called'),
+                    error: e => done('Error should not be called'),
                     complete: () =>
                         timer(10).subscribe(() => {
                             expect(defer1).toHaveBeenCalledTimes(1);
@@ -233,8 +233,8 @@ describe('Utils', () => {
             });
 
             it('on failing observable, deferred actions should be called after error', done => {
-                const defer1 = jasmine.createSpy('defer1');
-                const defer2 = jasmine.createSpy('defer2');
+                const defer1 = jest.fn();
+                const defer2 = jest.fn();
                 tryTo(defer => {
                     defer(defer1);
                     defer(defer2);
@@ -248,7 +248,7 @@ describe('Utils', () => {
                         expect(defer1).not.toHaveBeenCalled();
                         expect(defer2).not.toHaveBeenCalled();
                     },
-                    complete: () => done.fail('Complete should not be called'),
+                    complete: () => done('Complete should not be called'),
                     error: e =>
                         timer(10).subscribe(() => {
                             expect(defer1).toHaveBeenCalledTimes(1);

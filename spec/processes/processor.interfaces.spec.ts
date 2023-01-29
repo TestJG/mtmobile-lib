@@ -44,22 +44,16 @@ describe('Processes', () => {
             it('should be a function', () =>
                 expect(fromProcessorToService).toBeInstanceOf(Function));
 
-            const createInit = <T>(names: string[]): [IProcessorCore, T] => {
-                const processor: IProcessorCore = {
-                    process: jasmine
-                        .createSpy('process', item =>
+            const createInit = <T>(names: string[]) => {
+                const processor = {
+                    process: jest.fn(item =>
                             of(item.kind + item.payload)
-                        )
-                        .and.callThrough(),
-                    isAlive: jasmine
-                        .createSpy('isAlive', () => true)
-                        .and.callThrough(),
-                    finish: jasmine
-                        .createSpy('finish', () => EMPTY)
-                        .and.callThrough()
+                        ),
+                    isAlive: jest.fn(() => true),
+                    finish: jest.fn(() => EMPTY)
                 };
                 const service = fromProcessorToService<T>(processor, names);
-                return [processor, service];
+                return [processor, service] as const;
             };
 
             describe('When a processor is wrapped as a service', () => {
@@ -75,13 +69,14 @@ describe('Processes', () => {
 
                 it("it should call the processor's process", done => {
                     const [processor, service] = createInit(['taskA', 'taskB']);
-                    service.taskA(42);
+                    (service as any).taskA(42);
                     expect(processor.process).toHaveBeenCalledTimes(1);
-                    const call = (<jasmine.Spy>processor.process).calls.mostRecent();
-                    expect(call.args[0].kind).toEqual('taskA');
-                    expect(call.args[0].payload).toEqual(42);
-                    expect(call.returnValue).toBeInstanceOf(Observable);
-                    testObs(call.returnValue, ['taskA42'], null, done);
+                    const call = processor.process.mock.calls.pop();
+                    const returnValue = processor.process.mock.results.pop();
+                    expect(call[0].kind).toEqual('taskA');
+                    expect(call[0].payload).toEqual(42);
+                    expect(returnValue.value).toBeInstanceOf(Observable);
+                    testObs(returnValue.value, ['taskA42'], null, done);
                 });
             });
         });

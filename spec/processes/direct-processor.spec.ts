@@ -19,13 +19,14 @@ describe('Processes', () => {
                 const runner = (item: TaskItem) => testTaskOf(5)(1, 2, 3)();
                 const proc = startDirectProcessor(runner);
 
-                it('it should process task returning the well behaved result', done =>
+                it('it should process task returning the well behaved result', done => {
                     testObs(
                         proc.process(task('taskA')),
                         [1, 2, 3],
                         null,
                         done
-                    ));
+                    );
+                });
             });
 
             describe('When a direct processor is started with bad behaved task', () => {
@@ -36,13 +37,14 @@ describe('Processes', () => {
                     nextDelay: d => d,
                 });
 
-                it('it should process task returning the bad behaved result after retrying 3 times', done =>
+                it('it should process task returning the bad behaved result after retrying 3 times', done => {
                     testObs(
                         proc.process(task('taskA')),
                         [1, 2, 3, 1, 2, 3, 1, 2, 3],
                         new TransientError('transient'),
                         done
-                    ));
+                    );
+                });
             });
 
             describe('When a direct processor is started with temporary error', () => {
@@ -62,13 +64,14 @@ describe('Processes', () => {
                     nextDelay: d => d,
                 });
 
-                it('it should process task returning the well behaved result after the error is resolved', done =>
+                it('it should process task returning the well behaved result after the error is resolved', done => {
                     testObs(
                         proc.process(task('taskA')),
                         [1, 2, 3, 1, 2, 3, 1, 2, 3, 4],
                         null,
                         done
-                    ));
+                    );
+                });
             });
         });
 
@@ -86,23 +89,25 @@ describe('Processes', () => {
                 it('should not be undefined', () =>
                     expect(processor).not.toBeUndefined());
 
-                it("calling taskA should return the same results as service's taskA", done =>
+                it("calling taskA should return the same results as service's taskA", done => {
                     testObs(
                         processor.process(task('taskA')),
                         [42],
                         null,
                         done
-                    ));
+                    );
+                });
 
-                it("calling taskB with payload should return the same results as service's taskB", done =>
+                it("calling taskB with payload should return the same results as service's taskB", done => {
                     testObs(
                         processor.process(task('taskB', 23)),
                         [60],
                         null,
                         done
-                    ));
+                    );
+                });
 
-                it('calling taskA and taskB should run them simultaneously', done =>
+                it('calling taskA and taskB should run them simultaneously', done => {
                     testObs(
                         merge(
                             timer(10).pipe(() =>
@@ -115,7 +120,8 @@ describe('Processes', () => {
                         [42, 60],
                         null,
                         done
-                    ));
+                    );
+                });
             });
 
             describe('When a simple service is given and the processor is finished', () => {
