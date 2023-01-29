@@ -23,6 +23,7 @@ const config: JestConfigWithTsJest = {
     coveragePathIgnorePatterns: [
         "/node_modules/",
         "/test/",
+        "/spec/utils/rxtest.ts",
     ],
 };
 
