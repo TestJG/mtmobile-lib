@@ -2,7 +2,8 @@
     "extends": "./tsconfig.json",
     "compilerOptions": {
         "composite": true,
-        "types": ["jest"]
+        "noEmitHelpers": false,
+        "types": ["jest", "node"]
     },
-    "include": ["spec/**/*.ts"]
+    "include": ["index.ts", "src/**/*.ts", "spec/**/*.ts"]
 }
