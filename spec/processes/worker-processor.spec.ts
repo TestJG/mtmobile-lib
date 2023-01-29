@@ -6,9 +6,9 @@ import {
     createBackgroundWorker,
     createForegroundWorker,
     SimpleWorker,
-    TransientError
+    TransientError,
+    IProcessor
 } from '../../src/processes';
-import { IProcessor } from "../../index";
 import { timeoutWith } from "rxjs/operators";
 
 describe('Processes', () => {

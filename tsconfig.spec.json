@@ -5,5 +5,5 @@
         "noEmitHelpers": false,
         "types": ["jest", "node"]
     },
-    "include": ["index.ts", "src/**/*.ts", "spec/**/*.ts"]
+    "include": ["src/**/*.ts", "spec/**/*.ts"]
 }

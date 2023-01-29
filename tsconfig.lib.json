@@ -2,7 +2,9 @@
     "extends": "./tsconfig.json",
     "compilerOptions": {
         "composite": true,
-        "noEmitHelpers": true
+        "noEmitHelpers": true,
+        "tsBuildInfoFile": "node_modules/.cache/.tsbuildinfo",
+        "rootDir": "src"
     },
-    "include": ["index.ts", "src/**/*.ts"]
+    "include": ["src/**/*.ts"]
 }

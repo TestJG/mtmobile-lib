@@ -25,10 +25,10 @@ import {
     getAsValue,
     capString,
     id,
-    noop
+    noop,
+    isNothing
 } from './common';
 import { ObsOrFunc, getAsObs, fromObsLike } from './rxutils';
-import { isNothing } from '../../index';
 
 export const isChan = (value: any) =>
     value instanceof Object && value.constructor.name === 'Channel';
