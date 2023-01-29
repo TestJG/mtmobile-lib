@@ -36,28 +36,6 @@
     "deploy-docs": "ts-node tools/gh-pages-publish",
     "semantic-release-prepare": "ts-node tools/semantic-release-prepare"
   },
-  "jest": {
-    "transform": {
-      ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
-    },
-    "testPathIgnorePatterns": [
-      "/compiled/.*",
-      "/src/.*"
-    ],
-    "testRegex": "/spec/.*\\.(test|spec)\\.(ts|tsx|js)$",
-    "modulePathIgnorePatterns": [
-      "models"
-    ],
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js"
-    ],
-    "coveragePathIgnorePatterns": [
-      "/node_modules/",
-      "/test/"
-    ]
-  },
   "devDependencies": {
     "@angular/compiler": "~6.0.9",
     "@angular/core": "~6.0.9",
