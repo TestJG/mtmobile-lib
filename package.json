@@ -26,6 +26,7 @@
   },
   "scripts": {
     "lint": "eslint --ext .ts src",
+    "lint:fix": "eslint --fix --ext .ts src",
     "tslint": "tslint -p tsconfig.lib.json -t codeFrame 'src/**/*.ts'",
     "prebuild": "rimraf dist && rimraf compiled",
     "build:rollup": "tsc && rollup -c && rimraf compiled && typedoc --out dist/docs --target es6 --theme minimal --exclude '**/*.spec.ts' src",
