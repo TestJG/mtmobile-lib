@@ -1,15 +1,24 @@
 {
-    "eslint.enable": false,
-    "editor.tabSize": 2,
-    "editor.detectIndentation": false,
-    "prettier.tabWidth": 2,
-    "prettier.singleQuote": true,
-    "prettier.trailingComma": "es5",
-    "prettier.arrowParens": "avoid",
-    "prettier.eslintIntegration": true,
-    "editor.rulers": [
-      80
-    ],
+    "eslint.enable": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true,
+        "source.sortImports": true,
+        "source.fixAll": true,
+        "source.fixAll.eslint": true
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true,
+            "source.sortImports": true,
+            "source.fixAll": true,
+            "source.fixAll.eslint": true
+        }
+    },
+    "editor.rulers": [80],
     "files.trimTrailingWhitespace": true,
-    "typescript.tsdk": "node_modules\\typescript\\lib",
+    "typescript.tsdk": "node_modules/typescript/lib"
 }
