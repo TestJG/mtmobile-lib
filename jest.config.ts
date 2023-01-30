@@ -3,7 +3,6 @@ import { defaultsESM } from "ts-jest/presets";
 
 const transform = defaultsESM.transform;
 
-// tslint:disable-next-line: forin
 for (const key in transform) {
     const transformConfig = transform[key];
     if (typeof transformConfig === "string") {

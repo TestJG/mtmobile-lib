@@ -25,7 +25,6 @@ module.exports = {
     "plugins": [
         "@angular-eslint/eslint-plugin",
         "@typescript-eslint",
-        "@typescript-eslint/tslint"
     ],
     "extends": [
         // "eslint:recommended",
@@ -175,33 +174,6 @@ module.exports = {
                 "exceptions": [
                     "/"
                 ]
-            }
-        ],
-        "@typescript-eslint/tslint/config": [
-            "error",
-            {
-                "rules": {
-                    "import-spacing": true,
-                    "invoke-injectable": true,
-                    "no-access-missing-member": true,
-                    "rxjs-collapse-imports": true,
-                    "rxjs-no-static-observable-methods": true,
-                    "rxjs-pipeable-operators-only": true,
-                    "rxjs-proper-imports": true,
-                    "templates-use-public": true,
-                    "use-host-property-decorator": true,
-                    "use-input-property-decorator": true,
-                    "use-life-cycle-interface": true,
-                    "use-output-property-decorator": true,
-                    "whitespace": [
-                        true,
-                        "check-branch",
-                        "check-decl",
-                        "check-operator",
-                        "check-separator",
-                        "check-type"
-                    ]
-                }
             }
         ]
     }
