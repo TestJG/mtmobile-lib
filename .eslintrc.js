@@ -27,6 +27,11 @@ module.exports = {
         "@typescript-eslint",
         "@typescript-eslint/tslint"
     ],
+    "extends": [
+        // "eslint:recommended",
+        // "plugin:@typescript-eslint/recommended",
+        "plugin:prettier/recommended",
+    ],
     "root": true,
     "rules": {
         "@angular-eslint/component-class-suffix": "error",
@@ -56,20 +61,6 @@ module.exports = {
             "off",
             {
                 "accessibility": "explicit"
-            }
-        ],
-        "@typescript-eslint/indent": "error",
-        "@typescript-eslint/member-delimiter-style": [
-            "error",
-            {
-                "multiline": {
-                    "delimiter": "semi",
-                    "requireLast": true
-                },
-                "singleline": {
-                    "delimiter": "semi",
-                    "requireLast": false
-                }
             }
         ],
         "@typescript-eslint/member-ordering": "error",
@@ -107,21 +98,11 @@ module.exports = {
             "off",
             "single"
         ],
-        "@typescript-eslint/semi": [
-            "error",
-            "always"
-        ],
-        "@typescript-eslint/type-annotation-spacing": "error",
         "@typescript-eslint/unified-signatures": "error",
-        "arrow-body-style": "error",
-        "brace-style": [
-            "error",
-            "1tbs"
-        ],
+        "arrow-body-style": "warn",
         "constructor-super": "error",
         "curly": "error",
         "dot-notation": "off",
-        "eol-last": "error",
         "eqeqeq": [
             "error",
             "smart"
@@ -178,7 +159,6 @@ module.exports = {
         ],
         "no-shadow": "off",
         "no-throw-literal": "error",
-        "no-trailing-spaces": "error",
         "no-undef-init": "error",
         "no-underscore-dangle": "off",
         "no-unused-expressions": "off",
