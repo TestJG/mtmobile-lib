@@ -1,8 +1,7 @@
 import {
-    Parser,
-    numberParser,
+    decimalParser,
     integerParser,
-    decimalParser
+    numberParser
 } from '../../src/utils/parsing';
 
 describe('Utils', () => {

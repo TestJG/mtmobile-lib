@@ -1,7 +1,11 @@
+import type { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { IProcessor, IProcessorCore, TaskItem } from './processor.interfaces';
-import { Observable } from 'rxjs';
 import { capString } from '../utils/common';
+import type {
+    IProcessor,
+    IProcessorCore,
+    TaskItem
+} from './processor.interfaces';
 
 export function logProcessor(processor: IProcessor) {
     processor.onTaskStarted$.subscribe(t =>

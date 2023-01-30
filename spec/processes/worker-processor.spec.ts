@@ -1,15 +1,14 @@
 import { ReplaySubject, timer } from 'rxjs';
-import { testObs, testTaskOf } from '../utils/rxtest';
+import { timeoutWith } from 'rxjs/operators';
+import type { IProcessor, SimpleWorker } from '../../src/processes';
 import {
-    task,
-    fromServiceToDirectProcessor,
     createBackgroundWorker,
     createForegroundWorker,
-    SimpleWorker,
-    TransientError,
-    IProcessor
+    fromServiceToDirectProcessor,
+    task,
+    TransientError
 } from '../../src/processes';
-import { timeoutWith } from 'rxjs/operators';
+import { testObs, testTaskOf } from '../utils/rxtest';
 
 describe('Processes', () => {
     describe('Router Processor', () => {

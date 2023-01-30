@@ -1,9 +1,8 @@
-import * as common from '../../src/utils/common';
 import {
     coerceAll,
-    mustNotBeBelow,
+    mustBeBetween,
     mustNotBeAbove,
-    mustBeBetween
+    mustNotBeBelow
 } from '../../src/utils/coercion';
 
 describe('Utils', () => {

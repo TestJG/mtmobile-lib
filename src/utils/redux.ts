@@ -1,7 +1,7 @@
-import { map, filter } from 'rxjs/operators';
-import { Observable } from 'rxjs';
-import { Action, ActionReducer } from '@ngrx/store';
-import { objMapValues, joinStr, id, assignOrSame } from './common';
+import type { Action, ActionReducer } from '@ngrx/store';
+import type { Observable } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
+import { assignOrSame, id, joinStr, objMapValues } from './common';
 
 /**
  * An ngrx action with a typed payload property.

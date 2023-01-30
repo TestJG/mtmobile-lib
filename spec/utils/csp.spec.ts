@@ -1,44 +1,18 @@
-import { timer, of, throwError, EMPTY } from 'rxjs';
+import { chan, go, promiseChan, put, take } from 'js-csp';
+import { EMPTY, of, throwError, timer } from 'rxjs';
+import { map, take as takeObs } from 'rxjs/operators';
 import {
-    chan,
-    promiseChan,
-    go,
-    spawn,
-    timeout,
-    alts,
-    put,
-    take,
-    putAsync,
-    operations,
-    CLOSED
-} from 'js-csp';
-import { testObs } from './rxtest';
-import {
-    promiseOf,
     chanToObservable,
-    observableToChan,
     firstToChan,
     generatorToChan,
     isChan,
     isInstruction,
+    iterableToChan,
+    observableToChan,
     promiseToChan,
-    toChan,
-    toYielder,
-    startPinging,
-    startLeasing,
-    PipelineSequenceTarget,
-    toNamedTarget,
-    toIndexedTarget,
-    toOffsetTarget,
-    toCurrentTarget,
-    toNextTarget,
-    toPreviousTarget,
-    runPipelineNode,
-    runPipelineSequence,
-    iterableToChan
+    toChan
 } from '../../src/utils/csp';
-import { conditionalLog } from '../../src/utils/common';
-import { map, take as takeObs } from 'rxjs/operators';
+import { testObs } from './rxtest';
 
 describe('Utils', () => {
     describe('CSP Tests', () => {

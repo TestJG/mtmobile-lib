@@ -1,18 +1,18 @@
-import { of, timer, throwError } from 'rxjs';
-import { testObs } from './rxtest';
+import { of, throwError, timer } from 'rxjs';
+import { concat, concatMap, delay, map, take } from 'rxjs/operators';
 import { id } from '../../src/utils/common';
 import {
+    firstMap,
+    firstSwitchMap,
+    isObservableInput,
+    isSubscribable,
+    makeState,
     normalizeErrorOnCatch,
     tryTo,
     wrapFunctionStream,
-    wrapServiceStreamFromNames,
-    firstMap,
-    firstSwitchMap,
-    makeState,
-    isSubscribable,
-    isObservableInput
+    wrapServiceStreamFromNames
 } from '../../src/utils/rxutils';
-import { concatMap, delay, concat, map, take } from 'rxjs/operators';
+import { testObs } from './rxtest';
 
 describe('Utils', () => {
     describe('Reactive Utils', () => {

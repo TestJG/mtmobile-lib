@@ -1,34 +1,18 @@
-import { take as takeObs } from 'rxjs/operators';
-import { Observable, Observer } from 'rxjs';
 import {
-    chan,
-    promiseChan,
-    go,
-    spawn,
-    timeout,
     alts,
+    chan,
+    CLOSED,
+    go,
+    promiseChan,
     put,
-    take,
     putAsync,
-    mult,
-    removeInto,
-    mapInto,
-    onto,
-    CLOSED
+    timeout
 } from 'js-csp';
-import {
-    conditionalLog,
-    LogOpts,
-    Logger,
-    logTee,
-    ValueOrFunc,
-    getAsValue,
-    capString,
-    id,
-    noop,
-    isNothing
-} from './common';
-import { ObsOrFunc, getAsObs, fromObsLike } from './rxutils';
+import type { Observer } from 'rxjs';
+import { Observable } from 'rxjs';
+import { take as takeObs } from 'rxjs/operators';
+import type { Logger, LogOpts } from './common';
+import { capString, conditionalLog, id, isNothing } from './common';
 
 export const isChan = (value: any) =>
     value instanceof Object && value.constructor.name === 'Channel';

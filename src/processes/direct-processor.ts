@@ -1,9 +1,9 @@
-import { of, from, throwError, Observable, Subject, ReplaySubject } from 'rxjs';
+import { from, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
 import { assign, objMapValues } from '../utils/common';
-import { ObsLike } from '../utils/rxutils';
+import type { ObsLike } from '../utils/rxutils';
 import { TransientError } from './errors';
-import { IProcessor, TaskItem } from './processor.interfaces';
 import { makeRunTask } from './makeRunTask';
+import type { IProcessor, TaskItem } from './processor.interfaces';
 
 export interface DirectProcessorOptions {
     /**

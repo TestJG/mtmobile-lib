@@ -1,17 +1,12 @@
-import { timer, merge } from 'rxjs';
-import {
-    IProcessorCore,
-    TaskItem,
-    task
-} from '../../src/processes/processor.interfaces';
-import { testObs } from '../utils/rxtest';
+import { merge, timer } from 'rxjs';
+import { map } from 'rxjs/operators';
 import {
     fromServiceToDirectProcessor,
-    startDirectProcessor,
     startRouterProcessor,
     startRouterProxy
 } from '../../src/processes';
-import { map } from 'rxjs/operators';
+import { task } from '../../src/processes/processor.interfaces';
+import { testObs } from '../utils/rxtest';
 
 describe('Processes', () => {
     describe('Router Processor', () => {

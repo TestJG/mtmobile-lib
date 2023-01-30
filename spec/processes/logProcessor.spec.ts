@@ -1,13 +1,11 @@
 import { ArgumentOutOfRangeError } from 'rxjs';
-import { testObs } from '../utils/rxtest';
-import { assign } from '../../src/utils/common';
 import {
-    task,
+    defaultErrorFormatter,
+    defaultTaskFormatter,
+    defaultValueFormatter,
     logProcessor,
     logProcessorCore,
-    defaultTaskFormatter,
-    defaultErrorFormatter,
-    defaultValueFormatter
+    task
 } from '../../src/processes';
 
 describe('Processes', () => {

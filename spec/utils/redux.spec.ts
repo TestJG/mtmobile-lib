@@ -1,9 +1,7 @@
-// import { Observable } from 'rxjs';
-import { testObs } from './rxtest';
-import * as common from '../../src/utils/common';
-import * as rxutils from '../../src/utils/rxutils';
-import * as redux from '../../src/utils/redux';
 import { of } from 'rxjs';
+import * as common from '../../src/utils/common';
+import * as redux from '../../src/utils/redux';
+import { testObs } from './rxtest';
 
 interface Person {
     firstName: string;

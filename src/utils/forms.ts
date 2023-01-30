@@ -1,25 +1,17 @@
-import {
-    id,
-    assign,
-    assignOrSame,
-    objMapValues,
-    ValueOrFunc,
-    getAsValue
-} from './common';
 import { coerceAll } from './coercion';
-import { mergeValidators } from './validation';
-import { getFormatterFor, getParserFor } from './parsing';
-import {
-    FormItem,
-    FormFieldInit,
+import type { ValueOrFunc } from './common';
+import { assign, getAsValue } from './common';
+import type {
+    ExtraFormInfo,
     FormField,
-    FormGroupInit,
+    FormFieldInit,
     FormGroup,
     FormGroupFields,
-    FormListingInit,
+    FormGroupInit,
+    FormItem,
     FormListing,
     FormListingFields,
-    ExtraFormInfo
+    FormListingInit
 } from './forms.interfaces';
 import {
     checkPathInField,
@@ -29,12 +21,14 @@ import {
     locateInGroupOrFail,
     locateInListingOrFail,
     setGroupFieldInternal,
-    setValueInternal,
-    setInputInternal,
     setInfoInternal,
-    updateListingFieldsInternal,
-    updateFormInfoInternal
+    setInputInternal,
+    setValueInternal,
+    updateFormInfoInternal,
+    updateListingFieldsInternal
 } from './forms.utils';
+import { getFormatterFor, getParserFor } from './parsing';
+import { mergeValidators } from './validation';
 
 ////////////////////////////////////////////////////////////////
 //                                                            //

@@ -1,6 +1,11 @@
 import { switchMap, first } from 'rxjs/operators';
-import { Observable, Subject, Observer, Subscription } from 'rxjs';
-import { IProcessor, IProcessorCore, TaskItem } from './processor.interfaces';
+import type { Observer, Subscription } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import type {
+    IProcessor,
+    IProcessorCore,
+    TaskItem
+} from './processor.interfaces';
 import { uuid } from '../utils/common';
 
 export interface WorkerItem {

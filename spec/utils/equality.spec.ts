@@ -1,13 +1,14 @@
+import type { ValueOrFunc } from '../../src/utils/common';
+import { getAsValue } from '../../src/utils/common';
+import type { EqualityComparer } from '../../src/utils/equality';
 import {
     deepEqual,
-    EqualityComparer,
     deepEqualStrict,
     relaxedEqual,
     shallowEqual,
     shallowEqualStrict,
     strictEqual
 } from '../../src/utils/equality';
-import { ValueOrFunc, getAsValue } from '../../src/utils/common';
 
 function testEquivalenceClasses(
     fun: EqualityComparer<any>,

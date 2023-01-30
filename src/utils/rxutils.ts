@@ -1,38 +1,32 @@
-import {
-    merge,
-    of,
-    from,
-    throwError,
-    Observable,
-    Subscribable,
-    Observer,
-    Subscription,
+import type {
     ConnectableObservable,
-    ObservableInput
+    ObservableInput,
+    Observer,
+    Subscribable,
+    Subscription
 } from 'rxjs';
+import { from, merge, Observable, of, throwError } from 'rxjs';
 import {
-    materialize,
-    ignoreElements,
-    tap,
-    publishReplay,
-    first,
-    publishBehavior,
-    map,
     catchError,
+    first,
+    ignoreElements,
+    map,
+    materialize,
+    publishBehavior,
+    publishReplay,
     scan,
+    switchMap,
     takeUntil,
-    switchMap
+    tap
 } from 'rxjs/operators';
+import type { FuncOf, ValueOrFunc } from './common';
 import {
-    isSomething,
-    normalizeError,
-    ValueOrFunc,
-    getAsValue,
-    conditionalLog,
     capString,
+    getAsValue,
+    isPromiseLike,
+    isSomething,
     noop,
-    FuncOf,
-    isPromiseLike
+    normalizeError
 } from './common';
 
 export type ObsLike<T = any> = Subscribable<T> | PromiseLike<T> | T[] | T;

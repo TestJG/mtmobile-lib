@@ -1,9 +1,5 @@
-import { Observable, of, EMPTY } from 'rxjs';
-import {
-    fromProcessorToService,
-    IProcessorCore,
-    task
-} from '../../src/processes';
+import { EMPTY, Observable, of } from 'rxjs';
+import { fromProcessorToService, task } from '../../src/processes';
 import { testObs } from '../utils/rxtest';
 
 describe('Processes', () => {

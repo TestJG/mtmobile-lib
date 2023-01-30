@@ -1,7 +1,11 @@
-import { throwError, merge, Observable } from 'rxjs';
-import { map, last } from 'rxjs/operators';
-import { IProcessor, IProcessorCore, TaskItem } from './processor.interfaces';
+import { merge, throwError } from 'rxjs';
+import { last, map } from 'rxjs/operators';
 import { assign } from '../utils/common';
+import type {
+    IProcessor,
+    IProcessorCore,
+    TaskItem
+} from './processor.interfaces';
 
 export interface RouterProcessorOptions {
     caption: string;

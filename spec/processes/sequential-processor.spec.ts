@@ -1,13 +1,13 @@
+import { merge, of, throwError, timer } from 'rxjs';
+import { concat, flatMap, map, skip, switchMap, take } from 'rxjs/operators';
+import type { TaskItem } from '../../src/processes';
 import {
-    TaskItem,
-    task,
     makeRunTask,
     startSequentialProcessor,
+    task,
     TransientError
 } from '../../src/processes';
 import { testObs } from '../utils/rxtest';
-import { timer, of, throwError, merge } from 'rxjs';
-import { skip, concat, map, switchMap, take, flatMap } from 'rxjs/operators';
 
 describe('Processes', () => {
     describe('Sequential Processor', () => {

@@ -1,13 +1,13 @@
-import { merge, timer, of } from 'rxjs';
+import { merge, of, timer } from 'rxjs';
+import { concat, skip, switchMap } from 'rxjs/operators';
+import type { TaskItem } from '../../src/processes';
 import {
-    TaskItem,
-    task,
     fromServiceToDirectProcessor,
     startDirectProcessor,
+    task,
     TransientError
 } from '../../src/processes';
 import { testObs, testTaskOf } from '../utils/rxtest';
-import { switchMap, skip, concat } from 'rxjs/operators';
 
 describe('Processes', () => {
     describe('Direct Processor', () => {

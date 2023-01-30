@@ -1,21 +1,15 @@
+import type { Observable } from 'rxjs';
+import { Notification, of, throwError, timer } from 'rxjs';
 import {
-    Observable,
-    Notification,
-    ReplaySubject,
-    timer,
-    throwError,
-    of
-} from 'rxjs';
-import { deepEqual } from '../../src/utils/equality';
-import { joinStr, conditionalLog, ValueOrFunc, LogOpts } from '../../src/utils';
-import {
-    timeoutWith,
+    concatMap,
     materialize,
-    tap,
-    toArray,
     take,
-    concatMap
+    tap,
+    timeoutWith,
+    toArray
 } from 'rxjs/operators';
+import type { LogOpts } from '../../src/utils';
+import { conditionalLog } from '../../src/utils';
 
 export type TestObsOptions<T = any> = {
     anyValue: T;

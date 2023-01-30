@@ -1,8 +1,8 @@
 import * as _ from 'lodash';
+import type { ValueOrFunc } from './common';
 import {
     assignOrSame,
     errorToString,
-    ValueOrFunc,
     getAsValue,
     getAsValueOrError
 } from './common';

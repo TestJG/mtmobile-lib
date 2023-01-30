@@ -1,6 +1,6 @@
-import { Coerce, CoerceInit } from './coercion';
-import { Validator, ValidatorInit } from './validation';
-import { Parser, Formatter } from './parsing';
+import type { Coerce, CoerceInit } from './coercion';
+import type { Formatter, Parser } from './parsing';
+import type { Validator, ValidatorInit } from './validation';
 
 ////////////////////////////////////////////////////////////////
 //                                                            //

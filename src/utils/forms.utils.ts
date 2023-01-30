@@ -1,25 +1,25 @@
 import * as _ from 'lodash';
-import { deepEqual, shallowEqualStrict, strictEqual } from './equality';
+import type { ValueOrFunc } from './common';
 import {
     assign,
-    assignOrSame,
     assignArrayOrSame,
     assignIfMany,
-    objMapValues,
-    joinStr,
+    assignOrSame,
+    errorToString,
     getAsValue,
-    ValueOrFunc,
-    errorToString
+    joinStr,
+    objMapValues
 } from './common';
-import {
+import { deepEqual, shallowEqualStrict, strictEqual } from './equality';
+import type {
+    ExtraFormInfo,
+    FormError,
     FormField,
     FormGroup,
     FormGroupFields,
+    FormItem,
     FormListing,
     FormListingFields,
-    FormItem,
-    FormError,
-    ExtraFormInfo,
     UpdateFormItemData
 } from './forms.interfaces';
 

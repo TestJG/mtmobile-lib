@@ -1,17 +1,11 @@
-import { throwError, Subject, ReplaySubject } from 'rxjs';
-import {
-    assign,
-    errorToString,
-    getAsValue,
-    objFilter,
-    ValueOrFunc
-} from '../utils/common';
-import { ObsLike } from '../utils/rxutils';
-import { TransientError } from './errors';
-import { IProcessor, TaskItem } from './processor.interfaces';
-import { tryTo } from '../utils';
 import _ from 'lodash';
-// import { alts, chan, go, put, putAsync, spawn, take, timeout } from 'js-csp';
+import { ReplaySubject, Subject, throwError } from 'rxjs';
+import { tryTo } from '../utils';
+import type { ValueOrFunc } from '../utils/common';
+import { assign, errorToString, getAsValue } from '../utils/common';
+import type { ObsLike } from '../utils/rxutils';
+import { TransientError } from './errors';
+import type { IProcessor, TaskItem } from './processor.interfaces';
 
 interface WorkState {
     item: TaskItem;

@@ -1,6 +1,7 @@
-import { throwError, Observable } from 'rxjs';
-import { TaskItem } from './processor.interfaces';
-import { ObsLike, tryTo } from '../utils/rxutils';
+import { throwError } from 'rxjs';
+import type { ObsLike } from '../utils/rxutils';
+import { tryTo } from '../utils/rxutils';
+import type { TaskItem } from './processor.interfaces';
 
 export function makeRunTask(runners: {
     [name: string]: (payload: any) => ObsLike;

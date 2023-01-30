@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import type { Observable } from 'rxjs';
 import { toKVMap, uuid } from '../utils';
 
 export interface TaskItem {

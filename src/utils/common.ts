@@ -1,5 +1,6 @@
 import * as _ from 'lodash';
-import { EqualityComparer, shallowEqualStrict } from './equality';
+import type { EqualityComparer } from './equality';
+import { shallowEqualStrict } from './equality';
 
 export const isNothing = x => x === undefined || x === null;
 export const isSomething = x => x !== undefined && x !== null;
