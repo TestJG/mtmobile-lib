@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { of } from 'rxjs';
 import * as common from '../../src/utils/common';
 import * as redux from '../../src/utils/redux';

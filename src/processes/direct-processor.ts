@@ -61,6 +61,7 @@ export function startDirectProcessor(
     const onTaskCompletedSub = new Subject<TaskItem>();
     const onTaskCompleted$ = onTaskCompletedSub.asObservable();
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     let _isAlive = true;
     let runningCount = 0;
     const isAlive = () => _isAlive;

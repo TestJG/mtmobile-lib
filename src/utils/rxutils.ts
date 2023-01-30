@@ -139,7 +139,7 @@ export const wrapFunctionStream = <V, F extends FuncOfObs<V>>(
     stream: Observable<F>
 ): F => {
     const conn = stream.pipe(publishReplay(1)) as ConnectableObservable<F>;
-    const subs = conn.connect();
+    const _subs = conn.connect();
     return <F>((...args: any[]) =>
         conn.pipe(
             first(),
@@ -152,7 +152,7 @@ export const wrapServiceStreamFromNames = <T extends { [name: string]: any }>(
     names: (keyof T)[]
 ): T => {
     const conn = source.pipe(publishReplay(1)) as ConnectableObservable<T>;
-    const subs = conn.connect();
+    const _subs = conn.connect();
     return names.reduce(
         (prev, name) =>
             Object.assign(prev, {

@@ -1,12 +1,12 @@
-import { switchMap, first } from 'rxjs/operators';
 import type { Observer, Subscription } from 'rxjs';
 import { Observable, Subject } from 'rxjs';
+import { first, switchMap } from 'rxjs/operators';
+import { uuid } from '../utils/common';
 import type {
     IProcessor,
     IProcessorCore,
     TaskItem
 } from './processor.interfaces';
-import { uuid } from '../utils/common';
 
 export interface WorkerItem {
     kind: 'process' | 'terminate' | 'unsubscribe';
@@ -108,7 +108,7 @@ export const createForegroundWorker = (opts: {
 }): IProcessorCore => {
     const worker = opts.createWorker();
     const run = opts.run || (f => f());
-    const caption = opts.caption || 'worker';
+    const _caption = opts.caption || 'worker';
 
     let status = 'open';
     const terminateUUID = uuid();

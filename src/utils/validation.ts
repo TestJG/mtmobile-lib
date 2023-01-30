@@ -24,7 +24,8 @@ export const emptyValidator = <T>(value: T) => [];
 const defaultMessages = {
     validatorResultErrorMessage: <ValueOrFunc<string>>(
         ((result: any) =>
-            `Expected a validation result of type string[] or string. However a ${typeof result} was received.`)
+            `Expected a validation result of type string[] or string. ` +
+            `However a ${typeof result} was received.`)
     ),
 
     shouldBeAString: <ValueOrFunc<string>>'Should be a string',

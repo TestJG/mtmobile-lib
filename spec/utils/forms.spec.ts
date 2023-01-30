@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import type {
     ExtraFormInfo,
     FormError,
@@ -2079,7 +2080,7 @@ describe('Utils', () => {
 
                 const petLists = newGroup.fields.pets as FormListing<Pet[]>;
                 const fido = petLists.fields[0] as FormGroup<AgedPet>;
-                const fidosAge = fido.fields.age;
+                const _fidosAge = fido.fields.age;
 
                 // console.log('FIDO\'S AGE: ', printObj(fidosAge));
                 // console.log('FIDO: ', printObj(fido));

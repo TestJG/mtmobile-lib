@@ -31,7 +31,7 @@ export const testObsNotifications = <T = any>(
         },
         options
     );
-    const { anyValue, anyError, doneTimeout } = opts;
+    const { doneTimeout } = opts;
     const log = conditionalLog(opts, { prefix: 'TEST_OBS: ' });
 
     const toStr = (n: Notification<any>) => {

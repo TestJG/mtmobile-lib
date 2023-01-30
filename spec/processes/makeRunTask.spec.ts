@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import type { Observer } from 'rxjs';
 import { Observable } from 'rxjs';
 import { makeRunTask } from '../../src/processes';

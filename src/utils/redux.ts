@@ -179,7 +179,8 @@ export const partialReducer = <T, S = any>(
         ? undefined
         : (state: S, payload: T) => {
               const changes = p(state, payload);
-              // If false or the same state is returned, then do not alter the state
+              // If false or the same state is returned,
+              // then do not alter the state
               if (changes && changes !== state) {
                   if (changes instanceof Array) {
                       return assignOrSame(state, ...changes);
@@ -343,7 +344,7 @@ export const makeReducer =
  * state of a current module.
  * @template T The specific type of the ActionsMap
  * @param {T} actions an ActionsMap to override
- * @param {Partial<{ [P in keyof T]: PartialReducerOf<any, any> }>} [newReducers]
+ * @param {Partial<Record<keyof T, PartialReducerOf<any, any>>>} [newReducers]
  * An object containing full reducers as the values por the properties
  * representing actions you want to override their reducers.
  * @returns {T}

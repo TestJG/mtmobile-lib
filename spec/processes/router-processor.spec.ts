@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { merge, timer } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {

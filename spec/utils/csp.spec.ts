@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { chan, go, promiseChan, put, take } from 'js-csp';
 import { EMPTY, of, throwError, timer } from 'rxjs';
 import { map, take as takeObs } from 'rxjs/operators';

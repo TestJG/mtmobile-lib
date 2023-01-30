@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { merge, of, timer } from 'rxjs';
 import { concat, skip, switchMap } from 'rxjs/operators';
 import type { TaskItem } from '../../src/processes';

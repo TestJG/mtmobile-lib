@@ -43,8 +43,9 @@ export const protectChan = (name: string) => (ch: any) => {
                     return oldPut.apply(ch, args);
                 } catch (error) {
                     const value = capString(JSON.stringify(args[0]), 40);
+                    const baseMessage = 'Error putting into channel ';
                     throw new Error(
-                        `Error putting into channel ${this.name} value ${value}: ${error}`
+                        `${baseMessage}${this.name} value ${value}: ${error}`
                     );
                 }
             }
@@ -402,7 +403,7 @@ export const startPinging = (
     const finishedProm = go(function* () {
         log('Start');
 
-        let error: any;
+        let _error: any;
         let index = 0;
         try {
             while (true) {
@@ -424,7 +425,7 @@ export const startPinging = (
                 log(() => 'ping #' + index);
             }
         } catch (e) {
-            error = e;
+            _error = e;
             log('ERROR', e);
         }
         if (opts.autoClose) {
@@ -718,22 +719,19 @@ export class PipelineSequenceTarget {
 
     select<T = any>(dict: Map<string, T>, arr: T[], currentIndex: number) {
         const notFoundFn = (lastIndex: boolean) => {
+            const baseErrorMessage = 'Expected to find element ';
             if (this.name) {
-                throw new Error(
-                    `Expected to find element with name ${this.name}`
-                );
+                throw new Error(`${baseErrorMessage}with name ${this.name}`);
             } else if (typeof this.index === 'number') {
-                throw new Error(
-                    `Expected to find element at index ${this.index}`
-                );
+                throw new Error(`${baseErrorMessage}at index ${this.index}`);
             } else if (typeof this.offset === 'number') {
+                const offsetMessage = `with offset ${this.offset} `;
+                const indexMessage = `from index ${currentIndex}`;
                 throw new Error(
-                    `Expected to find element with offset ${this.offset} from index ${currentIndex}`
+                    `${baseErrorMessage}${offsetMessage}${indexMessage}`
                 );
             } else {
-                throw new Error(
-                    `Expected to find element but no index was supplied`
-                );
+                throw new Error(`${baseErrorMessage}but no index was supplied`);
             }
         };
         return this.selectWith(dict, arr, currentIndex, id, notFoundFn);
@@ -796,7 +794,7 @@ export const runPipelineSequence = (
 
     const log = conditionalLog(opts);
     log('Start');
-    const RELEASE = global.Symbol('RELEASE');
+    const _RELEASE = global.Symbol('RELEASE');
     const startedProm = promiseChan();
 
     const pipeDict = new Map<string, PipelineNodeHandler>();

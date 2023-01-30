@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { ReplaySubject, timer } from 'rxjs';
 import { timeoutWith } from 'rxjs/operators';
 import type { IProcessor, SimpleWorker } from '../../src/processes';

@@ -23,13 +23,6 @@ import type {
     UpdateFormItemData
 } from './forms.interfaces';
 
-// const log = console.log; // noop; // require('debug')('mtmobile-lib:utils:forms');
-// const logIf = (cond: boolean, ...args: any[]) => {
-//     if (cond) {
-//         log(...args);
-//     }
-// };
-
 ////////////////////////////////////////////////////////////////
 //                                                            //
 //                     Path Utilities                         //
@@ -200,8 +193,8 @@ const validateListingValue = (value: any, fields: FormListingFields) => {
     const fieldsArr = <FormItem[]>fields;
     if (valueArr.length !== fieldsArr.length) {
         throw new Error(
-            `A listing value must have the same length than the listing fields. ` +
-                `Expected fields length ${JSON.stringify(
+            `A listing value must have the same length than` +
+                ` the listing fields. Expected fields length ${JSON.stringify(
                     fieldsArr.length
                 )} but got values length ${JSON.stringify(valueArr.length)}`
         );
@@ -467,7 +460,11 @@ const updateFinalGroupFields = <T>(item: FormGroup<T>) => {
         k => item.fields[k].isTouched
     );
 
-    // log(`isDirty: ${isDirty} and isTouched: ${isTouched} \n${printObj(item.fields)}`);
+    // log(
+    //     `isDirty: ${isDirty} and isTouched: ${isTouched} \n${printObj(
+    //         item.fields
+    //     )}`
+    // );
 
     // Derived
     const isValid =

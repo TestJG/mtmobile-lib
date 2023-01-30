@@ -489,7 +489,6 @@ export const compareArray: Comparer<Array<any>> = (x, y) => {
     for (let i = 0; i < minLen; i++) {
         const a = x[i];
         const b = y[i];
-        // eslint-disable-next-line no-use-before-define,@typescript-eslint/no-use-before-define
         const comp = compareDataByType(a, b);
         if (comp !== 0) {
             return comp;

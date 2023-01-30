@@ -158,7 +158,7 @@ const recursiveEqualImplementation = <T>(
     }
 };
 
-const deepEqualImpl =
+const _deepEqualImpl =
     (eq: EqualityComparer<any>) =>
     <T>(x: T, y: T) => {
         if (strictEqual(x, y)) {
@@ -171,7 +171,7 @@ const deepEqualImpl =
                 }
                 return false;
             }
-            return recursiveEqualImplementation(x, y, deepEqualImpl(eq));
+            return recursiveEqualImplementation(x, y, _deepEqualImpl(eq));
         }
 
         return eq(x, y);

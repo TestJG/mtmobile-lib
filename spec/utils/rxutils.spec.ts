@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { of, throwError, timer } from 'rxjs';
 import { concat, concatMap, delay, map, take } from 'rxjs/operators';
 import { id } from '../../src/utils/common';
@@ -405,7 +406,7 @@ describe('Utils', () => {
                     (n: number) => n + 2,
                     (n: number) => n + 3
                 ).pipe(concatMap(f => of(f).pipe(delay(20))));
-                const [actual, subs] = makeState(1, update$);
+                const [actual, _subs] = makeState(1, update$);
                 testObs(actual, [1, 2, 4, 7], null, done);
             });
         });

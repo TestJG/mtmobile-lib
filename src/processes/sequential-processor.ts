@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import _ from 'lodash';
 import { ReplaySubject, Subject, throwError } from 'rxjs';
 import { tryTo } from '../utils';
@@ -106,8 +107,13 @@ export function startSequentialProcessor(
         }
     };
 
-    const logWork = (work: WorkState) =>
-        `(${work.item.kind} R:${work.retries} D:${work.delay}ms ID:${work.item.uid})`;
+    const logWork = (work: WorkState) => {
+        const kind = work.item.kind;
+        const retries = work.retries;
+        const delay = work.delay;
+        const uid = work.item.uid;
+        return `(${kind} R:${retries} D:${delay}ms ID:${uid})`;
+    };
 
     const onFinishedSub = new ReplaySubject<void>(1);
     const onFinished$ = onFinishedSub.asObservable();
@@ -157,7 +163,6 @@ export function startSequentialProcessor(
         const work = pickWork();
         log(() => `LOOP - PICK ${!work ? 'nothing' : logWork(work)}`);
         if (work) {
-            // eslint-disable-next-line no-use-before-define,@typescript-eslint/no-use-before-define
             runTaskOnce(work);
         } else if (!_isAlive && _retryPendingCount === 0) {
             // Only once all input and retries has been processed

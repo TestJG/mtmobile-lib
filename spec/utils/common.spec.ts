@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import type { ValueOrFunc } from '../../src/utils/common';
 import {
     assign,
@@ -868,26 +869,26 @@ describe('Utils', () => {
             it('should be a function', () =>
                 expect(compareFunction).toBeInstanceOf(Function));
 
-            const fa_1_1 = function a(p1: string) {
+            const fa11 = function a(p1: string) {
                 return;
             };
-            const fa_1_2 = function a(p2: number) {
+            const fa12 = function a(p2: number) {
                 return;
             };
-            const fa_2_1 = function a(p1: number, p2: string) {
+            const fa21 = function a(p1: number, p2: string) {
                 return;
             };
-            const fb_1_1 = function b(p1: any) {
+            const fb11 = function b(p1: any) {
                 return;
             };
 
             it('should compare functions', () => {
-                expect(compareFunction(fa_1_1, fa_1_1)).toEqual(0);
-                expect(compareFunction(fa_1_1, fa_1_2)).toEqual(0);
-                expect(compareFunction(fa_1_1, fa_2_1)).toEqual(-1);
-                expect(compareFunction(fa_1_1, fb_1_1)).toEqual(-1);
-                expect(compareFunction(fa_2_1, fa_1_1)).toEqual(1);
-                expect(compareFunction(fb_1_1, fa_1_1)).toEqual(1);
+                expect(compareFunction(fa11, fa11)).toEqual(0);
+                expect(compareFunction(fa11, fa12)).toEqual(0);
+                expect(compareFunction(fa11, fa21)).toEqual(-1);
+                expect(compareFunction(fa11, fb11)).toEqual(-1);
+                expect(compareFunction(fa21, fa11)).toEqual(1);
+                expect(compareFunction(fb11, fa11)).toEqual(1);
             });
         });
 
@@ -896,28 +897,28 @@ describe('Utils', () => {
                 expect(compareArray).toBeInstanceOf(Function));
 
             const arr0 = [];
-            const arr1_1 = ['a'];
-            const arr1_2 = ['b'];
-            const arr2_1 = ['a', 123];
-            const arr2_2 = ['b', 123];
-            const arr2_3 = ['a', 124];
-            const arr3_1 = ['a', 123, true];
+            const arr11 = ['a'];
+            const arr12 = ['b'];
+            const arr21 = ['a', 123];
+            const arr22 = ['b', 123];
+            const arr23 = ['a', 124];
+            const arr31 = ['a', 123, true];
 
             it('should compare arrays', () => {
                 expect(compareArray(arr0, [])).toEqual(0);
-                expect(compareArray(arr0, arr1_1)).toEqual(-1);
-                expect(compareArray(arr1_1, ['a'])).toEqual(0);
-                expect(compareArray(arr1_1, arr1_2)).toEqual(-1);
-                expect(compareArray(arr1_2, arr2_1)).toEqual(1);
-                expect(compareArray(arr1_2, arr2_2)).toEqual(-1);
-                expect(compareArray(arr2_1, arr2_2)).toEqual(-1);
-                expect(compareArray(arr2_1, arr2_3)).toEqual(-1);
-                expect(compareArray(arr2_2, arr2_3)).toEqual(1);
-                expect(compareArray(arr3_1, arr1_1)).toEqual(1);
-                expect(compareArray(arr3_1, arr1_2)).toEqual(-1);
-                expect(compareArray(arr3_1, arr2_1)).toEqual(1);
-                expect(compareArray(arr3_1, arr2_2)).toEqual(-1);
-                expect(compareArray(arr3_1, arr2_3)).toEqual(-1);
+                expect(compareArray(arr0, arr11)).toEqual(-1);
+                expect(compareArray(arr11, ['a'])).toEqual(0);
+                expect(compareArray(arr11, arr12)).toEqual(-1);
+                expect(compareArray(arr12, arr21)).toEqual(1);
+                expect(compareArray(arr12, arr22)).toEqual(-1);
+                expect(compareArray(arr21, arr22)).toEqual(-1);
+                expect(compareArray(arr21, arr23)).toEqual(-1);
+                expect(compareArray(arr22, arr23)).toEqual(1);
+                expect(compareArray(arr31, arr11)).toEqual(1);
+                expect(compareArray(arr31, arr12)).toEqual(-1);
+                expect(compareArray(arr31, arr21)).toEqual(1);
+                expect(compareArray(arr31, arr22)).toEqual(-1);
+                expect(compareArray(arr31, arr23)).toEqual(-1);
             });
         });
 
@@ -926,19 +927,19 @@ describe('Utils', () => {
                 expect(compareObject).toBeInstanceOf(Function));
 
             const obj0 = {};
-            const obj1_1 = { name: 'john' };
-            const obj1_2 = { name: 'jenna' };
-            const obj2_1 = { age: 40, name: 'john' };
-            const obj2_2 = { age: 28, name: 'jenna' };
+            const obj11 = { name: 'john' };
+            const obj12 = { name: 'jenna' };
+            const obj21 = { age: 40, name: 'john' };
+            const obj22 = { age: 28, name: 'jenna' };
 
             it('should compare objects', () => {
                 expect(compareObject(obj0, {})).toEqual(0);
-                expect(compareObject(obj0, obj1_1)).toEqual(-1);
-                expect(compareObject(obj1_1, { name: 'john' })).toEqual(0);
-                expect(compareObject(obj1_1, obj1_2)).toEqual(0);
-                expect(compareObject(obj1_2, obj2_1)).toEqual(1);
-                expect(compareObject(obj2_1, obj2_2)).toEqual(0);
-                expect(compareObject(obj2_1, obj1_2)).toEqual(-1);
+                expect(compareObject(obj0, obj11)).toEqual(-1);
+                expect(compareObject(obj11, { name: 'john' })).toEqual(0);
+                expect(compareObject(obj11, obj12)).toEqual(0);
+                expect(compareObject(obj12, obj21)).toEqual(1);
+                expect(compareObject(obj21, obj22)).toEqual(0);
+                expect(compareObject(obj21, obj12)).toEqual(-1);
             });
         });
 

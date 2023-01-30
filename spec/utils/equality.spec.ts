@@ -18,7 +18,8 @@ function testEquivalenceClasses(
     for (let index = 0; index < classes.length; index++) {
         const values = classes[index];
 
-        // A value should be 'EQUAL' to other values in the same equivalence class
+        // A value should be 'EQUAL' to other values in the same
+        // equivalence class
         values.map(getAsValue).forEach(copy1 =>
             values.map(getAsValue).forEach(copy2 => {
                 it(`${JSON.stringify(
@@ -29,7 +30,8 @@ function testEquivalenceClasses(
             })
         );
 
-        // A value should not be 'EQUAL' to other values in different equivalence class
+        // A value should not be 'EQUAL' to other values in different
+        // equivalence class
         for (let index2 = 0; index2 < classes.length; index2++) {
             if (index2 === index) {
                 continue;

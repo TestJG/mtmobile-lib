@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { EMPTY, Observable, of } from 'rxjs';
 import { fromProcessorToService, task } from '../../src/processes';
 import { testObs } from '../utils/rxtest';
@@ -52,12 +53,18 @@ describe('Processes', () => {
 
             describe('When a processor is wrapped as a service', () => {
                 it('it should not be undefined', () => {
-                    const [processor, service] = createInit(['taskA', 'taskB']);
+                    const [_processor, service] = createInit([
+                        'taskA',
+                        'taskB'
+                    ]);
                     expect(service).not.toBeFalsy();
                 });
 
                 it('it should have as many methods as indicated', () => {
-                    const [processor, service] = createInit(['taskA', 'taskB']);
+                    const [_processor, service] = createInit([
+                        'taskA',
+                        'taskB'
+                    ]);
                     expect(Object.keys(service)).toEqual(['taskA', 'taskB']);
                 });
 
