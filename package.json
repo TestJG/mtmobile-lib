@@ -25,8 +25,8 @@
     "node": ">=6.9.0"
   },
   "scripts": {
-    "lint": "eslint --ext .ts src",
-    "lint:fix": "eslint --fix --ext .ts src",
+    "lint": "eslint --ext .ts src spec",
+    "lint:fix": "eslint --fix --ext .ts src spec",
     "prebuild": "rimraf dist && rimraf compiled",
     "build:rollup": "tsc && rollup -c && rimraf compiled && typedoc --out dist/docs --target es6 --theme minimal --exclude '**/*.spec.ts' src",
     "build": "tsc && typedoc --out compiled/docs --target es6 --theme minimal --exclude '**/*.spec.ts' src",
