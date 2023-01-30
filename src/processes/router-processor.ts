@@ -63,19 +63,23 @@ export function startRouterProcessor(
 
     const onTaskResult$ = merge(
         ...routeKeys.map(key =>
-            routes[key].onTaskResult$.pipe(map(
-                ([item, value]) =>
-                    <[TaskItem, any]>[recoverPrefix(key)(item), value]
-            ))
+            routes[key].onTaskResult$.pipe(
+                map(
+                    ([item, value]) =>
+                        <[TaskItem, any]>[recoverPrefix(key)(item), value]
+                )
+            )
         )
     );
 
     const onTaskError$ = merge(
         ...routeKeys.map(key =>
-            routes[key].onTaskError$.pipe(map(
-                ([item, value]) =>
-                    <[TaskItem, any]>[recoverPrefix(key)(item), value]
-            ))
+            routes[key].onTaskError$.pipe(
+                map(
+                    ([item, value]) =>
+                        <[TaskItem, any]>[recoverPrefix(key)(item), value]
+                )
+            )
         )
     );
 

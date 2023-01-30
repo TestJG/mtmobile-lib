@@ -22,8 +22,10 @@ export type MessageSource = ValueOrFunc<string | string[]> | undefined;
 export const emptyValidator = <T>(value: T) => [];
 
 const defaultMessages = {
-    validatorResultErrorMessage: <ValueOrFunc<string>>((result: any) =>
-        `Expected a validation result of type string[] or string. However a ${typeof result} was received.`),
+    validatorResultErrorMessage: <ValueOrFunc<string>>(
+        ((result: any) =>
+            `Expected a validation result of type string[] or string. However a ${typeof result} was received.`)
+    ),
 
     shouldBeAString: <ValueOrFunc<string>>'Should be a string',
     shouldNotBeEmpty: <ValueOrFunc<string>>'Should not be empty',
@@ -46,8 +48,7 @@ const defaultMessages = {
         <ValueOrFunc<string>>`Should be greater than ${value}`,
     shouldBeGreaterThanOrEqualTo: (value: number) =>
         `Should be greater than or equal to ${value}`,
-    shouldBeLessThan: (value: number) =>
-        `Should be less than ${value}`,
+    shouldBeLessThan: (value: number) => `Should be less than ${value}`,
     shouldBeLessThanOrEqualTo: (value: number) =>
         `Should be less than or equal to ${value}`,
     shouldBeBetweenValues: (minValue: number, maxValue: number) =>
@@ -56,8 +57,7 @@ const defaultMessages = {
         `Should not be greater than ${value}`,
     shouldNotBeGreaterThanOrEqualTo: (value: number) =>
         `Should not be greater than or equal to ${value}`,
-    shouldNotBeLessThan: (value: number) =>
-        `Should not be less than ${value}`,
+    shouldNotBeLessThan: (value: number) => `Should not be less than ${value}`,
     shouldNotBeLessThanOrEqualTo: (value: number) =>
         `Should not be less than or equal to ${value}`,
     shouldNotBeBetweenValues: (minValue: number, maxValue: number) =>
@@ -72,8 +72,7 @@ const defaultMessages = {
     shouldNotBeAnArrayLongerThan: (length: number) =>
         `Should not be an array longer than ${length} elements`,
     shouldBeAnArrayLongerThan: (length: number) =>
-        `Should be an array longer than ${length} elements`,
-
+        `Should be an array longer than ${length} elements`
 };
 
 let validationMessages = defaultMessages;
@@ -106,7 +105,10 @@ export const makeValidator = <T>(
                 return [];
             }
         } else {
-            const msg = getAsValue(validationMessages.validatorResultErrorMessage, result);
+            const msg = getAsValue(
+                validationMessages.validatorResultErrorMessage,
+                result
+            );
             throw new Error(msg);
         }
     };
@@ -140,17 +142,19 @@ const stringFromSource = (source: MessageSource) => (args: any[]) => {
     return getAsValueOrError(source, errorToString, ...args);
 };
 
-const getMessages = (...sources: MessageSource[]) => (args: any[]) => {
-    for (const source of sources) {
-        const str = stringFromSource(source)(args);
-        if (typeof str === 'string' && !!str.trim()) {
-            return [str.trim()];
-        } else if (str instanceof Array && str.length > 0) {
-            return str;
+const getMessages =
+    (...sources: MessageSource[]) =>
+    (args: any[]) => {
+        for (const source of sources) {
+            const str = stringFromSource(source)(args);
+            if (typeof str === 'string' && !!str.trim()) {
+                return [str.trim()];
+            } else if (str instanceof Array && str.length > 0) {
+                return str;
+            }
         }
-    }
-    return [];
-};
+        return [];
+    };
 
 export const checkCondition = <T>(
     validCondition: (v: T) => boolean,

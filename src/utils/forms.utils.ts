@@ -9,7 +9,7 @@ import {
     joinStr,
     getAsValue,
     ValueOrFunc,
-    errorToString,
+    errorToString
 } from './common';
 import {
     FormField,
@@ -20,7 +20,7 @@ import {
     FormItem,
     FormError,
     ExtraFormInfo,
-    UpdateFormItemData,
+    UpdateFormItemData
 } from './forms.interfaces';
 
 // const log = console.log; // noop; // require('debug')('mtmobile-lib:utils:forms');
@@ -138,7 +138,7 @@ export const locateInGroupOrFail = <T>(
     return <[keyof T, FormItem<T[keyof T]>, string]>[
         match.step,
         child,
-        match.rest,
+        match.rest
     ];
 };
 
@@ -214,8 +214,9 @@ export const createGroupValue = (fields: FormGroupFields): any =>
 export const createGroupInitValue = (fields: FormGroupFields): any =>
     objMapValues((f: FormItem) => f.initValue)(fields);
 
-export const createListingValue = <T extends unknown[]>(fields: FormListingFields<T>) =>
-    fields.map(f => f.value) as T;
+export const createListingValue = <T extends unknown[]>(
+    fields: FormListingFields<T>
+) => fields.map(f => f.value) as T;
 
 export const createListingInitValue = <T extends unknown[]>(
     fields: FormListingFields<T>
@@ -235,7 +236,7 @@ const updateGroupFields = <T>(
     Object.keys(fields).reduce(
         (fs, key) =>
             assignOrSame(fs, <Partial<FormGroupFields<T>>>{
-                [key]: setValueInternal(fs[key], value[key], '', opts),
+                [key]: setValueInternal(fs[key], value[key], '', opts)
             }),
         fields
     );
@@ -247,7 +248,7 @@ const updateListingFields = <T extends unknown[]>(
 ) =>
     assignArrayOrSame(fields, [
         0,
-        fields.map((f, index) => setValueInternal(f, value[index], '', opts)),
+        fields.map((f, index) => setValueInternal(f, value[index], '', opts))
     ]);
 
 const setFieldFromNewValue = <T>(
@@ -270,7 +271,7 @@ const setFieldFromNewValue = <T>(
         isDirty,
         isTouched,
         isValid,
-        showErrors,
+        showErrors
     });
 
     return newItem;
@@ -313,7 +314,7 @@ const setFieldInputInternal = <T>(
                 input,
                 validInput,
                 isValidInput,
-                errors,
+                errors
             }),
             opts,
             sameValue
@@ -335,7 +336,7 @@ const setFieldInputInternal = <T>(
                 initInput,
                 input,
                 isValidInput,
-                isTouched: true,
+                isTouched: true
             }),
             opts, // assign(opts, { compareValues: false }),
             false
@@ -376,7 +377,7 @@ const setFieldValueInternal = <T>(
             input,
             validInput,
             isValidInput,
-            errors,
+            errors
         }),
         opts,
         sameValue
@@ -486,11 +487,13 @@ const updateFinalGroupFields = <T>(item: FormGroup<T>) => {
 
         // Derived
         isValid,
-        showErrors,
+        showErrors
     });
 };
 
-const updateFinalListingFields = <T extends unknown[]>(item: FormListing<T>) => {
+const updateFinalListingFields = <T extends unknown[]>(
+    item: FormListing<T>
+) => {
     const computedValue = createListingValue(item.fields);
     const computedInitValue = createListingInitValue(item.fields);
     const errors = item.validator(computedValue);
@@ -514,7 +517,7 @@ const updateFinalListingFields = <T extends unknown[]>(item: FormListing<T>) => 
 
         // Derived
         isValid,
-        showErrors,
+        showErrors
     });
 };
 
@@ -539,13 +542,13 @@ const updateGroupFieldsAux = <T>(
         // log('    Computing from new group fields.');
         return setValueInternal(
             assignOrSame(item, {
-                fields: newFields,
+                fields: newFields
             }),
             computedValue,
             '',
             assign(opts, {
                 compareValues: true,
-                initialization: true,
+                initialization: true
             })
         );
     }
@@ -573,7 +576,7 @@ const updateListingFieldsAux = <T extends unknown[]>(
             '',
             assign(opts, {
                 compareValues: true,
-                initialization: true,
+                initialization: true
             })
         ) as FormListing<T>;
     }
@@ -640,7 +643,7 @@ const updateFormItemInternalRec = (
                             relativePath: appendGroupPath(
                                 data.relativePath,
                                 name
-                            ),
+                            )
                         })
                     );
 
@@ -648,7 +651,7 @@ const updateFormItemInternalRec = (
                         // If newField is not null and not the same as previous
                         // child, then set [name] to newField
                         return assignOrSame(prevFields, <any>{
-                            [name]: newField,
+                            [name]: newField
                         });
                     } else if (!newField && child) {
                         // If newField is null and there was a previous child,
@@ -685,48 +688,45 @@ const updateFormItemInternalRec = (
                 const restOfPath = path.slice(1);
 
                 // log(`    Down to ${indexOrWildcard}`);
-                const newFields = indices.reduce(
-                    (prevFields, index) => {
-                        const child = prevFields[index];
-                        if (!child) {
-                            throw new Error(
-                                `Unexpected field index accessing this listing: ` +
-                                    JSON.stringify(index)
-                            );
-                        }
-
-                        const newField = updateFormItemInternalRec(
-                            child,
-                            restOfPath,
-                            updater,
-                            opts,
-                            assign(data, {
-                                relativePath: appendListingPath(
-                                    data.relativePath,
-                                    index
-                                ),
-                            })
+                const newFields = indices.reduce((prevFields, index) => {
+                    const child = prevFields[index];
+                    if (!child) {
+                        throw new Error(
+                            `Unexpected field index accessing this listing: ` +
+                                JSON.stringify(index)
                         );
+                    }
 
-                        if (newField) {
-                            // If newField is not null and not the same as previous
-                            // child, then set [name] to newField
-                            return assignArrayOrSame(prevFields, [
-                                index,
-                                [newField],
-                            ]);
-                        } else if (!newField) {
-                            // If newField is null and there was a previous child,
-                            // then remove child from fields
-                            return prevFields
-                                .slice(0, index)
-                                .concat(prevFields.slice(index + 1));
-                        } else {
-                            return prevFields;
-                        }
-                    },
-                    item.fields
-                );
+                    const newField = updateFormItemInternalRec(
+                        child,
+                        restOfPath,
+                        updater,
+                        opts,
+                        assign(data, {
+                            relativePath: appendListingPath(
+                                data.relativePath,
+                                index
+                            )
+                        })
+                    );
+
+                    if (newField) {
+                        // If newField is not null and not the same as previous
+                        // child, then set [name] to newField
+                        return assignArrayOrSame(prevFields, [
+                            index,
+                            [newField]
+                        ]);
+                    } else if (!newField) {
+                        // If newField is null and there was a previous child,
+                        // then remove child from fields
+                        return prevFields
+                            .slice(0, index)
+                            .concat(prevFields.slice(index + 1));
+                    } else {
+                        return prevFields;
+                    }
+                }, item.fields);
 
                 const result = updateListingFieldsAux(item, newFields, opts);
                 // log(
@@ -747,41 +747,46 @@ const updateFormItemInternalRec = (
     // }
 };
 
-const setValueUpdater = <T>(value: ValueOrFunc<T>, opts: SetValueOptions) => (
-    item: FormItem<T>,
-    data: UpdateFormItemData
-): FormItem => {
-    switch (item.type) {
-        case 'field':
-            return setFieldValueInternal(item, value, opts, data);
+const setValueUpdater =
+    <T>(value: ValueOrFunc<T>, opts: SetValueOptions) =>
+    (item: FormItem<T>, data: UpdateFormItemData): FormItem => {
+        switch (item.type) {
+            case 'field':
+                return setFieldValueInternal(item, value, opts, data);
 
-        case 'group': {
-            return updateGroupFieldsAux(
-                item,
-                createNewGroupFieldsFromDirectValue(item, value, opts, data),
-                opts
-            );
-        }
-
-        case 'listing': {
-            return updateListingFieldsAux(
-                item,
-                createNewListingFieldsFromDirectValue(
+            case 'group': {
+                return updateGroupFieldsAux(
                     item,
-                    value as ValueOrFunc<typeof item['value']>,
-                    opts,
-                    data
-                ),
-                opts
-            );
-        }
+                    createNewGroupFieldsFromDirectValue(
+                        item,
+                        value,
+                        opts,
+                        data
+                    ),
+                    opts
+                );
+            }
 
-        default:
-            throw new Error(
-                'Unknown form item type: ' + JSON.stringify((<any>item).type)
-            );
-    }
-};
+            case 'listing': {
+                return updateListingFieldsAux(
+                    item,
+                    createNewListingFieldsFromDirectValue(
+                        item,
+                        value as ValueOrFunc<(typeof item)['value']>,
+                        opts,
+                        data
+                    ),
+                    opts
+                );
+            }
+
+            default:
+                throw new Error(
+                    'Unknown form item type: ' +
+                        JSON.stringify((<any>item).type)
+                );
+        }
+    };
 
 export function setValueInternal<T extends FormItem>(
     item: T,
@@ -793,7 +798,7 @@ export function setValueInternal<T extends FormItem>(
         <SetValueOptions>{
             affectDirty: true,
             compareValues: true,
-            initialization: false,
+            initialization: false
         },
         options
     );
@@ -807,28 +812,28 @@ export function setValueInternal<T extends FormItem>(
     );
 }
 
-const setInputUpdater = (input: ValueOrFunc, opts: SetValueOptions) => (
-    item: FormItem,
-    data: UpdateFormItemData
-): FormItem => {
-    switch (item.type) {
-        case 'field':
-            return setFieldInputInternal(item, input, opts, data);
+const setInputUpdater =
+    (input: ValueOrFunc, opts: SetValueOptions) =>
+    (item: FormItem, data: UpdateFormItemData): FormItem => {
+        switch (item.type) {
+            case 'field':
+                return setFieldInputInternal(item, input, opts, data);
 
-        case 'group': {
-            throw new Error('Cannot set input value to a group');
+            case 'group': {
+                throw new Error('Cannot set input value to a group');
+            }
+
+            case 'listing': {
+                throw new Error('Cannot set input value to a listing');
+            }
+
+            default:
+                throw new Error(
+                    'Unknown form item type: ' +
+                        JSON.stringify((<any>item).type)
+                );
         }
-
-        case 'listing': {
-            throw new Error('Cannot set input value to a listing');
-        }
-
-        default:
-            throw new Error(
-                'Unknown form item type: ' + JSON.stringify((<any>item).type)
-            );
-    }
-};
+    };
 
 export function setInputInternal(
     item: FormItem,
@@ -840,7 +845,7 @@ export function setInputInternal(
         <SetValueOptions>{
             affectDirty: true,
             compareValues: true,
-            initialization: false,
+            initialization: false
         },
         options
     );
@@ -854,13 +859,12 @@ export function setInputInternal(
     );
 }
 
-const setInfoUpdater = (infoFunc: ValueOrFunc, opts: SetValueOptions) => (
-    item: FormItem,
-    data: UpdateFormItemData
-): FormItem => {
-    const theInfo = getAsValue(infoFunc, item.info, data, item);
-    return assignOrSame(item, { info: theInfo });
-};
+const setInfoUpdater =
+    (infoFunc: ValueOrFunc, opts: SetValueOptions) =>
+    (item: FormItem, data: UpdateFormItemData): FormItem => {
+        const theInfo = getAsValue(infoFunc, item.info, data, item);
+        return assignOrSame(item, { info: theInfo });
+    };
 
 export function setInfoInternal(
     item: FormItem,
@@ -872,7 +876,7 @@ export function setInfoInternal(
         <SetValueOptions>{
             affectDirty: true,
             compareValues: true,
-            initialization: false,
+            initialization: false
         },
         options
     );
@@ -886,47 +890,50 @@ export function setInfoInternal(
     );
 }
 
-const setGroupFieldUpdater = (
-    fieldName: string,
-    formItem: ValueOrFunc<FormItem>,
-    opts: SetValueOptions
-) => (item: FormItem, data: UpdateFormItemData): FormItem => {
-    switch (item.type) {
-        case 'field':
-            throw new Error('Expected to find a group but found a field');
+const setGroupFieldUpdater =
+    (
+        fieldName: string,
+        formItem: ValueOrFunc<FormItem>,
+        opts: SetValueOptions
+    ) =>
+    (item: FormItem, data: UpdateFormItemData): FormItem => {
+        switch (item.type) {
+            case 'field':
+                throw new Error('Expected to find a group but found a field');
 
-        case 'group': {
-            const child = item.fields[fieldName];
-            const newField = getAsValue(formItem, child, data);
-            let newFields: FormGroupFields = null;
-            if (newField && newField !== child) {
-                // If newField is not null and not the same as previous
-                // child, then set [fieldName] to newField
-                newFields = assignOrSame(item.fields, {
-                    [fieldName]: newField,
-                });
-            } else if (!newField && child) {
-                // If newField is null and there was a previous child,
-                // then remove child from fields
-                newFields = Object.keys(item.fields)
-                    .filter(key => key !== fieldName)
-                    .reduce(
-                        (fs, key) => Object.assign(fs, { [key]: newField }),
-                        {}
-                    );
+            case 'group': {
+                const child = item.fields[fieldName];
+                const newField = getAsValue(formItem, child, data);
+                let newFields: FormGroupFields = null;
+                if (newField && newField !== child) {
+                    // If newField is not null and not the same as previous
+                    // child, then set [fieldName] to newField
+                    newFields = assignOrSame(item.fields, {
+                        [fieldName]: newField
+                    });
+                } else if (!newField && child) {
+                    // If newField is null and there was a previous child,
+                    // then remove child from fields
+                    newFields = Object.keys(item.fields)
+                        .filter(key => key !== fieldName)
+                        .reduce(
+                            (fs, key) => Object.assign(fs, { [key]: newField }),
+                            {}
+                        );
+                }
+                return updateGroupFieldsAux(item, newFields, opts);
             }
-            return updateGroupFieldsAux(item, newFields, opts);
+
+            case 'listing':
+                throw new Error('Expected to find a group but found a listing');
+
+            default:
+                throw new Error(
+                    'Unknown form item type: ' +
+                        JSON.stringify((<any>item).type)
+                );
         }
-
-        case 'listing':
-            throw new Error('Expected to find a group but found a listing');
-
-        default:
-            throw new Error(
-                'Unknown form item type: ' + JSON.stringify((<any>item).type)
-            );
-    }
-};
+    };
 
 export const setGroupFieldInternal = (
     item: FormItem,
@@ -938,7 +945,7 @@ export const setGroupFieldInternal = (
         <SetValueOptions>{
             affectDirty: true,
             compareValues: true,
-            initialization: false,
+            initialization: false
         },
         options
     );
@@ -967,28 +974,31 @@ export const setGroupFieldInternal = (
     );
 };
 
-const updateListingFieldsUpdater = (
-    fields: ValueOrFunc<FormListingFields & Array<FormItem>>,
-    opts: SetValueOptions
-) => (item: FormItem, data: UpdateFormItemData): FormItem => {
-    switch (item.type) {
-        case 'field':
-            throw new Error('Expected to find a group but found a field');
+const updateListingFieldsUpdater =
+    (
+        fields: ValueOrFunc<FormListingFields & Array<FormItem>>,
+        opts: SetValueOptions
+    ) =>
+    (item: FormItem, data: UpdateFormItemData): FormItem => {
+        switch (item.type) {
+            case 'field':
+                throw new Error('Expected to find a group but found a field');
 
-        case 'listing': {
-            const newFields = getAsValue(fields, item.fields, data);
-            return updateListingFieldsAux(item, newFields, opts);
+            case 'listing': {
+                const newFields = getAsValue(fields, item.fields, data);
+                return updateListingFieldsAux(item, newFields, opts);
+            }
+
+            case 'group':
+                throw new Error('Expected to find a listing but found a group');
+
+            default:
+                throw new Error(
+                    'Unknown form item type: ' +
+                        JSON.stringify((<any>item).type)
+                );
         }
-
-        case 'group':
-            throw new Error('Expected to find a listing but found a group');
-
-        default:
-            throw new Error(
-                'Unknown form item type: ' + JSON.stringify((<any>item).type)
-            );
-    }
-};
+    };
 
 export const updateListingFieldsInternal = (
     item: FormItem,
@@ -1000,7 +1010,7 @@ export const updateListingFieldsInternal = (
         <SetValueOptions>{
             affectDirty: true,
             compareValues: true,
-            initialization: false,
+            initialization: false
         },
         options
     );
@@ -1049,8 +1059,7 @@ export const updateFormInfoInternal = <I extends FormItem = FormItem>(
     item: I,
     pathToFormItem: string,
     updater: ValueOrFunc<Partial<ExtraFormInfo>>
-): I => {
-    return <I>updateFormItemInternalRec(
+): I => <I>updateFormItemInternalRec(
         item,
         extractPath(pathToFormItem, true),
         (formItem: FormItem, data: UpdateFormItemData) => {
@@ -1060,7 +1069,7 @@ export const updateFormInfoInternal = <I extends FormItem = FormItem>(
                 [newInfo.caption !== undefined, { caption: newInfo.caption }],
                 [
                     newInfo.description !== undefined,
-                    { description: newInfo.description },
+                    { description: newInfo.description }
                 ],
                 [newInfo.info !== undefined, { info: newInfo.info }]
             );
@@ -1068,11 +1077,10 @@ export const updateFormInfoInternal = <I extends FormItem = FormItem>(
         {
             affectDirty: false,
             initialization: false,
-            compareValues: false,
+            compareValues: false
         },
         { relativePath: '' }
     );
-};
 
 export const getAllErrorsInternal = (item: FormItem) =>
     getAllErrorsInternalRec(item, '');

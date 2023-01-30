@@ -184,7 +184,7 @@ export const partialReducer = <T, S = any>(
                   if (changes instanceof Array) {
                       return assignOrSame(state, ...changes);
                   } else if (changes === true) {
-                    return state;
+                      return state;
                   } else {
                       return assignOrSame(state, changes);
                   }
@@ -231,7 +231,10 @@ export const action = <T = any, S = any>(
     reducer = reducer || id;
     const is = (a: Action) => a.type && a.type === type;
     const aux = (actions: Observable<Action>) =>
-        actions.pipe(filter(is), map(a => <T>(<any>a).payload));
+        actions.pipe(
+            filter(is),
+            map(a => <T>(<any>a).payload)
+        );
     const result = Object.assign(create, {
         actionName,
         type,
@@ -265,7 +268,10 @@ export const actionEmpty = <S = any>(
     const reducer: ReducerOf<S, void> = aSimpleReducer || id;
     const is = (a: Action) => a.type && a.type === type;
     const aux = (actions: Observable<Action>) =>
-        actions.pipe(filter(is), map(() => null));
+        actions.pipe(
+            filter(is),
+            map(() => null)
+        );
     const result = Object.assign(create, {
         actionName,
         type,
@@ -317,18 +323,18 @@ export const partialEmpty = <S = any>(
  * @param {S} initialState The initial state in case a previous state is
  * undefined.
  */
-export const makeReducer = <S>(initialState: S) => (
-    ...actionGroups: ActionMap[]
-): ActionReducer<S> => {
-    const byType = new Map<string, ReducerOf<S, any>>();
-    actionGroups.forEach(actions =>
-        Object.keys(actions).forEach(key =>
-            byType.set(actions[key].type, actions[key].reducer)
-        )
-    );
-    return (s: S = initialState, a: Action) =>
-        (byType.get(a.type) || id)(s, a['payload']);
-};
+export const makeReducer =
+    <S>(initialState: S) =>
+    (...actionGroups: ActionMap[]): ActionReducer<S> => {
+        const byType = new Map<string, ReducerOf<S, any>>();
+        actionGroups.forEach(actions =>
+            Object.keys(actions).forEach(key =>
+                byType.set(actions[key].type, actions[key].reducer)
+            )
+        );
+        return (s: S = initialState, a: Action) =>
+            (byType.get(a.type) || id)(s, a['payload']);
+    };
 
 /**
  * Create a new ActionMap with the same actions as the given, differing only in
@@ -345,13 +351,14 @@ export const makeReducer = <S>(initialState: S) => (
 export const overrideActions = <T extends ActionMap<S1>, S1, S2>(
     actions: T,
     newReducers?: Partial<{ [P in keyof T]: PartialReducerOf<any, S2> }>
-): ActionMap<S2> =>
-    <ActionMap<S2>>objMapValues((def: ActionDescBase<S1>, key) => {
-        const newReducer =
-            newReducers && newReducers[key] ? newReducers[key] : id;
-        return def.hasPayload
-            ? partial(def.prefix, def.actionName, newReducer)
-            : partialEmpty(def.prefix, def.actionName, s =>
-                  (newReducer as Function)(s, undefined)
-              );
-    })(actions);
+): ActionMap<S2> => <ActionMap<S2>>objMapValues(
+        (def: ActionDescBase<S1>, key) => {
+            const newReducer =
+                newReducers && newReducers[key] ? newReducers[key] : id;
+            return def.hasPayload
+                ? partial(def.prefix, def.actionName, newReducer)
+                : partialEmpty(def.prefix, def.actionName, s =>
+                      (newReducer as Function)(s, undefined)
+                  );
+        }
+    )(actions);

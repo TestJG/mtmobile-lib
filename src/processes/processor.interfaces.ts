@@ -24,11 +24,12 @@ export interface IProcessor extends IProcessorCore {
     readonly onTaskCompleted$: Observable<TaskItem>;
 }
 
-export const task = (kind: string, payload?: any, uid?: string) => <TaskItem>{
-    kind,
-    payload,
-    uid: uid || uuid(''),
-};
+export const task = (kind: string, payload?: any, uid?: string) =>
+    <TaskItem>{
+        kind,
+        payload,
+        uid: uid || uuid('')
+    };
 
 /**
  * Creates an instance of a service, from a given processor and service methods,
@@ -38,8 +39,7 @@ export const task = (kind: string, payload?: any, uid?: string) => <TaskItem>{
 export const fromProcessorToService = <T = any>(
     processor: IProcessorCore,
     methodNames: string[]
-): T =>
-    <T>toKVMap(
+): T => <T>toKVMap(
         methodNames.map(key => {
             const func = payload =>
                 processor.process({ kind: key, payload, uid: uuid() });

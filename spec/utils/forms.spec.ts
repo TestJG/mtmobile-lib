@@ -155,7 +155,7 @@ const expectConfig = <T>(
                     value
                 )}) should return ${JSON.stringify(expectedValue)}`, () =>
                     expect((item as FormField<T>).coerce(value)).toEqual(
-                      expectedValue
+                        expectedValue
                     ));
             }
         }
@@ -300,8 +300,14 @@ describe('Utils', () => {
                     input: '',
                     validInput: '',
                     isValidInput: true,
-                    coerce: [['', ''], ['abc', 'abc']],
-                    validator: [['', []], ['abc', []]],
+                    coerce: [
+                        ['', ''],
+                        ['abc', 'abc']
+                    ],
+                    validator: [
+                        ['', []],
+                        ['abc', []]
+                    ],
                     value: '',
                     isDirty: false,
                     isTouched: false,
@@ -324,8 +330,14 @@ describe('Utils', () => {
                     input: '10',
                     validInput: '10',
                     isValidInput: true,
-                    coerce: [[0, 0], [20, 20]],
-                    validator: [[0, []], [20, []]],
+                    coerce: [
+                        [0, 0],
+                        [20, 20]
+                    ],
+                    validator: [
+                        [0, []],
+                        [20, []]
+                    ],
                     value: 10,
                     isDirty: false,
                     isTouched: false,
@@ -354,7 +366,12 @@ describe('Utils', () => {
 
                 expectConfig(ageField, {
                     initValue: 24,
-                    coerce: [[0, 18], [18, 18], [19, 19], [30, 30]],
+                    coerce: [
+                        [0, 18],
+                        [18, 18],
+                        [19, 19],
+                        [30, 30]
+                    ],
                     value: 24
                 });
             });
@@ -380,7 +397,13 @@ describe('Utils', () => {
 
                 expectConfig(ageField, {
                     initValue: 20,
-                    coerce: [[0, 18], [18, 18], [19, 19], [20, 20], [30, 20]],
+                    coerce: [
+                        [0, 18],
+                        [18, 18],
+                        [19, 19],
+                        [20, 20],
+                        [30, 20]
+                    ],
                     value: 20,
                     isDirty: false,
                     isTouched: false,
@@ -469,7 +492,10 @@ describe('Utils', () => {
                     isDirty: false,
                     isTouched: false,
                     parser: [['0', 0], ['20', 20], ['abc']],
-                    formatter: [[0, '0'], [20, '20']],
+                    formatter: [
+                        [0, '0'],
+                        [20, '20']
+                    ],
                     errors: [],
                     isValid: true,
                     showErrors: false
@@ -495,8 +521,17 @@ describe('Utils', () => {
                     caption: '',
                     description: '',
                     initValue: {},
-                    coerce: [[{}, {}], [{ x: 1, y: 2 }, { x: 1, y: 2 }]],
-                    validator: [[{}, []], [{ x: 1, y: 2 }, []]],
+                    coerce: [
+                        [{}, {}],
+                        [
+                            { x: 1, y: 2 },
+                            { x: 1, y: 2 }
+                        ]
+                    ],
+                    validator: [
+                        [{}, []],
+                        [{ x: 1, y: 2 }, []]
+                    ],
                     value: {},
                     isDirty: false,
                     isTouched: false,
@@ -536,8 +571,17 @@ describe('Utils', () => {
                     caption: '',
                     description: '',
                     initValue: newPers('', '', 20),
-                    coerce: [[{}, {}], [{ x: 1, y: 2 }, { x: 1, y: 2 }]],
-                    validator: [[{}, []], [{ x: 1, y: 2 }, []]],
+                    coerce: [
+                        [{}, {}],
+                        [
+                            { x: 1, y: 2 },
+                            { x: 1, y: 2 }
+                        ]
+                    ],
+                    validator: [
+                        [{}, []],
+                        [{ x: 1, y: 2 }, []]
+                    ],
                     value: newPers('', '', 20),
                     isDirty: false,
                     isTouched: false,
@@ -777,8 +821,17 @@ describe('Utils', () => {
                     caption: '',
                     description: '',
                     initValue: [],
-                    coerce: [[[], []], [[1, 2], [1, 2]]],
-                    validator: [[[], []], [[1, 2], []]],
+                    coerce: [
+                        [[], []],
+                        [
+                            [1, 2],
+                            [1, 2]
+                        ]
+                    ],
+                    validator: [
+                        [[], []],
+                        [[1, 2], []]
+                    ],
                     value: [],
                     isDirty: false,
                     isTouched: false,
@@ -813,8 +866,17 @@ describe('Utils', () => {
 
                 expectConfig(aListing, {
                     initValue: ['', '', 20],
-                    coerce: [[[], []], [[1, 2], [1, 2]]],
-                    validator: [[[], []], [[1, 2], []]],
+                    coerce: [
+                        [[], []],
+                        [
+                            [1, 2],
+                            [1, 2]
+                        ]
+                    ],
+                    validator: [
+                        [[], []],
+                        [[1, 2], []]
+                    ],
                     value: ['', '', 20],
                     isDirty: false,
                     isTouched: false,
@@ -1641,14 +1703,18 @@ describe('Utils', () => {
                     expect(aForm).toEqual(aGroupCopy));
 
                 expectConfig(newGroup, {
-                    initValue: <any>newPersPets('', '', 20, [
-                        newPet('fido', 'dog'),
-                        newPet('garfield', 'cat')
-                    ]),
-                    value: <any>newPersPets('', '', 20, [
-                        newPet('FIDO', 'dog'),
-                        newPet('garfield', 'cat')
-                    ]),
+                    initValue: <any>(
+                        newPersPets('', '', 20, [
+                            newPet('fido', 'dog'),
+                            newPet('garfield', 'cat')
+                        ])
+                    ),
+                    value: <any>(
+                        newPersPets('', '', 20, [
+                            newPet('FIDO', 'dog'),
+                            newPet('garfield', 'cat')
+                        ])
+                    ),
                     isDirty: true,
                     isTouched: true
                 });
@@ -1690,14 +1756,18 @@ describe('Utils', () => {
                     expect(aForm).toEqual(aGroupCopy));
 
                 expectConfig(newGroup, {
-                    initValue: <any>newPersPets('', '', 20, [
-                        newPet('fido', 'dog'),
-                        newPet('garfield', 'cat')
-                    ]),
-                    value: <any>newPersPets('', '', 20, [
-                        newPet('FIDO', 'dog'),
-                        newPet('garfield', 'cat')
-                    ]),
+                    initValue: <any>(
+                        newPersPets('', '', 20, [
+                            newPet('fido', 'dog'),
+                            newPet('garfield', 'cat')
+                        ])
+                    ),
+                    value: <any>(
+                        newPersPets('', '', 20, [
+                            newPet('FIDO', 'dog'),
+                            newPet('garfield', 'cat')
+                        ])
+                    ),
                     isDirty: false,
                     isTouched: false
                 });
@@ -1740,27 +1810,35 @@ describe('Utils', () => {
                     expect(aForm).toEqual(aGroupCopy));
 
                 expectConfig(newGroupDirty, {
-                    initValue: <any>newPersPets('', '', 20, [
-                        newPet('fido', 'dog'),
-                        newPet('garfield', 'cat')
-                    ]),
-                    value: <any>newPersPets('', '', 20, [
-                        newPet('FIDO', 'dog'),
-                        newPet('garfield', 'cat')
-                    ]),
+                    initValue: <any>(
+                        newPersPets('', '', 20, [
+                            newPet('fido', 'dog'),
+                            newPet('garfield', 'cat')
+                        ])
+                    ),
+                    value: <any>(
+                        newPersPets('', '', 20, [
+                            newPet('FIDO', 'dog'),
+                            newPet('garfield', 'cat')
+                        ])
+                    ),
                     isDirty: true,
                     isTouched: true
                 });
 
                 expectConfig(newGroup, {
-                    initValue: <any>newPersPets('', '', 20, [
-                        newPet('fido', 'dog'),
-                        newPet('garfield', 'cat')
-                    ]),
-                    value: <any>newPersPets('', '', 20, [
-                        newPet('fido', 'dog'),
-                        newPet('garfield', 'cat')
-                    ]),
+                    initValue: <any>(
+                        newPersPets('', '', 20, [
+                            newPet('fido', 'dog'),
+                            newPet('garfield', 'cat')
+                        ])
+                    ),
+                    value: <any>(
+                        newPersPets('', '', 20, [
+                            newPet('fido', 'dog'),
+                            newPet('garfield', 'cat')
+                        ])
+                    ),
                     isDirty: false,
                     isTouched: false
                 });
@@ -1796,14 +1874,18 @@ describe('Utils', () => {
                 );
 
                 expectConfig(newGroup, {
-                    initValue: <any>newPersPets('', '', 20, [
-                        newPet('fido', 'dog'),
-                        newPet('garfield', 'cat')
-                    ]),
-                    value: <any>newPersPets('', '', 20, [
-                        newPet('FIDO/pets[0].name', 'DOG/pets[0].kind'),
-                        newPet('GARFIELD/pets[1].name', 'CAT/pets[1].kind')
-                    ]),
+                    initValue: <any>(
+                        newPersPets('', '', 20, [
+                            newPet('fido', 'dog'),
+                            newPet('garfield', 'cat')
+                        ])
+                    ),
+                    value: <any>(
+                        newPersPets('', '', 20, [
+                            newPet('FIDO/pets[0].name', 'DOG/pets[0].kind'),
+                            newPet('GARFIELD/pets[1].name', 'CAT/pets[1].kind')
+                        ])
+                    ),
                     isDirty: true,
                     isTouched: true
                 });
@@ -1889,186 +1971,163 @@ describe('Utils', () => {
                 });
             });
 
-                describe(
-                    'When a group is created and an input value is assigned to one of its fields',
-                    () => {
-                        const aForm =
-                            group({
-                                    name: field(''),
-                                    kind: field(''),
-                                    age: field(0, {
-                                        parser: numberParser,
-                                        formatter: numberFormatter
-                                    })
-                                },
-                                {
-                                    initValue: newAgedPet(
-                                        'fido',
-                                        'dog',
-                                        5
-                                    )
-                                }
-                            );
-                        const fidosAge = aForm.fields.age;
-                        const aGroupCopy = Object.assign({}, aForm);
-                        const newGroup = setInput(
-                            aForm,
-                            '.',
-                            'age'
-                        );
-                        const dirtyFidosAge = newGroup.fields.age;
-
-                        it('the new form should be distinct from the original one', () =>
-                            expect(newGroup).not.toBe(aForm));
-
-                        it('the new form fields should be distinct from the original one', () =>
-                            expect(dirtyFidosAge).not.toBe(fidosAge));
-
-                        it('the original form should no be changed in place', () =>
-                            expect(aForm).toEqual(aGroupCopy));
-
-
-                        // console.log('FIDO\'S AGE: ', printObj(fidosAge));
-                        // console.log('FORM: ', printObj(newGroup));
-
-                        // expectConfig(dirtyFidosAge, {
-                        //     initValue: 5,
-                        //     initInput: null,
-                        //     input: '.',
-                        //     validInput: '5',
-                        //     isValidInput: false,
-                        //     value: 5,
-                        //     isDirty: true,
-                        //     isTouched: true,
-                        //     isValid: false,
-                        //     errors: ['Should be a number'],
-                        //     showErrors: true
-                        // });
-
-                        // expectConfig(newGroup, {
-                        //     initValue: newAgedPet('fido', 'dog', 5),
-                        //     value: newAgedPet('fido', 'dog', 5),
-                        //     isDirty: true,
-                        //     isTouched: true,
-                        //     isValid: false,
-                        // });
+            describe('When a group is created and an input value is assigned to one of its fields', () => {
+                const aForm = group(
+                    {
+                        name: field(''),
+                        kind: field(''),
+                        age: field(0, {
+                            parser: numberParser,
+                            formatter: numberFormatter
+                        })
+                    },
+                    {
+                        initValue: newAgedPet('fido', 'dog', 5)
                     }
                 );
+                const fidosAge = aForm.fields.age;
+                const aGroupCopy = Object.assign({}, aForm);
+                const newGroup = setInput(aForm, '.', 'age');
+                const dirtyFidosAge = newGroup.fields.age;
 
-            describe(
-                'When a form is created and an input value is assigned to one of its fields',
-                () => {
-                    const aForm = group(
-                        {
-                            firstName: field(''),
-                            lastName: field(''),
-                            age: field(20, {
-                                parser: numberParser,
-                                formatter: numberFormatter
-                            }),
-                            pets: listing(
-                                [
-                                    group(
-                                        {
-                                            name: field(''),
-                                            kind: field(''),
-                                            age: field(0, {
-                                                parser: numberParser,
-                                                formatter: numberFormatter
-                                            })
-                                        },
-                                        {
-                                            initValue: newAgedPet(
-                                                'fido',
-                                                'dog',
-                                                5
-                                            )
-                                        }
-                                    ),
-                                    group(
-                                        {
-                                            name: field(''),
-                                            kind: field(''),
-                                            age: field(0, {
-                                                parser: numberParser,
-                                                formatter: numberFormatter
-                                            })
-                                        },
-                                        {
-                                            initValue: newAgedPet(
-                                                'garfield',
-                                                'cat',
-                                                8
-                                            )
-                                        }
-                                    )
-                                ],
-                                { initValue: <Pet[]>undefined }
-                            )
-                        },
-                        { initValue: <Person & { pets: Pet[] }>undefined }
-                    );
-                    const aGroupCopy = Object.assign({}, aForm);
-                    const newGroup = setInput(
-                        aForm,
-                        '.',
-                        'pets[0].age'
-                    );
+                it('the new form should be distinct from the original one', () =>
+                    expect(newGroup).not.toBe(aForm));
 
-                    it('the new form should be distinct from the original one', () =>
-                        expect(newGroup).not.toBe(aForm));
+                it('the new form fields should be distinct from the original one', () =>
+                    expect(dirtyFidosAge).not.toBe(fidosAge));
 
-                    it('the original form should no be changed in place', () =>
-                        expect(aForm).toEqual(aGroupCopy));
+                it('the original form should no be changed in place', () =>
+                    expect(aForm).toEqual(aGroupCopy));
 
-                    const petLists = newGroup.fields.pets as FormListing<Pet[]>;
-                    const fido = petLists.fields[0] as FormGroup<AgedPet>;
-                    const fidosAge = fido.fields.age;
+                // console.log('FIDO\'S AGE: ', printObj(fidosAge));
+                // console.log('FORM: ', printObj(newGroup));
 
-                    // console.log('FIDO\'S AGE: ', printObj(fidosAge));
-                    // console.log('FIDO: ', printObj(fido));
-                    // console.log('FORM: ', printObj(newGroup));
+                // expectConfig(dirtyFidosAge, {
+                //     initValue: 5,
+                //     initInput: null,
+                //     input: '.',
+                //     validInput: '5',
+                //     isValidInput: false,
+                //     value: 5,
+                //     isDirty: true,
+                //     isTouched: true,
+                //     isValid: false,
+                //     errors: ['Should be a number'],
+                //     showErrors: true
+                // });
 
-                    // expectConfig(fidosAge, {
-                    //     initValue: 5,
-                    //     initInput: null,
-                    //     input: '.',
-                    //     validInput: '5',
-                    //     isValidInput: false,
-                    //     value: 5,
-                    //     isDirty: true,
-                    //     isTouched: true,
-                    //     isValid: false,
-                    //     errors: ['Should be a number'],
-                    //     showErrors: true
-                    // });
+                // expectConfig(newGroup, {
+                //     initValue: newAgedPet('fido', 'dog', 5),
+                //     value: newAgedPet('fido', 'dog', 5),
+                //     isDirty: true,
+                //     isTouched: true,
+                //     isValid: false,
+                // });
+            });
 
-                    // expectConfig(fido, {
-                    //     initValue: newAgedPet('', '', 0),
-                    //     initInput: null,
-                    //     value: newAgedPet('', '', 0),
-                    //     isDirty: true,
-                    //     isTouched: true,
-                    //     isValid: false,
-                    //     errors: ['Should be a number'],
-                    //     showErrors: true
-                    // });
+            describe('When a form is created and an input value is assigned to one of its fields', () => {
+                const aForm = group(
+                    {
+                        firstName: field(''),
+                        lastName: field(''),
+                        age: field(20, {
+                            parser: numberParser,
+                            formatter: numberFormatter
+                        }),
+                        pets: listing(
+                            [
+                                group(
+                                    {
+                                        name: field(''),
+                                        kind: field(''),
+                                        age: field(0, {
+                                            parser: numberParser,
+                                            formatter: numberFormatter
+                                        })
+                                    },
+                                    {
+                                        initValue: newAgedPet('fido', 'dog', 5)
+                                    }
+                                ),
+                                group(
+                                    {
+                                        name: field(''),
+                                        kind: field(''),
+                                        age: field(0, {
+                                            parser: numberParser,
+                                            formatter: numberFormatter
+                                        })
+                                    },
+                                    {
+                                        initValue: newAgedPet(
+                                            'garfield',
+                                            'cat',
+                                            8
+                                        )
+                                    }
+                                )
+                            ],
+                            { initValue: <Pet[]>undefined }
+                        )
+                    },
+                    { initValue: <Person & { pets: Pet[] }>undefined }
+                );
+                const aGroupCopy = Object.assign({}, aForm);
+                const newGroup = setInput(aForm, '.', 'pets[0].age');
 
-                    // expectConfig(newGroup, {
-                    //     initValue: <any>newPersPets('', '', 20, [
-                    //         newAgedPet('fido', 'dog', 5),
-                    //         newAgedPet('garfield', 'cat', 8)
-                    //     ]),
-                    //     value: <any>newPersPets('', '', 20, [
-                    //         newAgedPet('fido', 'dog', 5),
-                    //         newAgedPet('garfield', 'cat', 8)
-                    //     ]),
-                    //     isDirty: true,
-                    //     isTouched: true,
-                    //     isValid: false,
-                    // });
-                }
-            );
+                it('the new form should be distinct from the original one', () =>
+                    expect(newGroup).not.toBe(aForm));
+
+                it('the original form should no be changed in place', () =>
+                    expect(aForm).toEqual(aGroupCopy));
+
+                const petLists = newGroup.fields.pets as FormListing<Pet[]>;
+                const fido = petLists.fields[0] as FormGroup<AgedPet>;
+                const fidosAge = fido.fields.age;
+
+                // console.log('FIDO\'S AGE: ', printObj(fidosAge));
+                // console.log('FIDO: ', printObj(fido));
+                // console.log('FORM: ', printObj(newGroup));
+
+                // expectConfig(fidosAge, {
+                //     initValue: 5,
+                //     initInput: null,
+                //     input: '.',
+                //     validInput: '5',
+                //     isValidInput: false,
+                //     value: 5,
+                //     isDirty: true,
+                //     isTouched: true,
+                //     isValid: false,
+                //     errors: ['Should be a number'],
+                //     showErrors: true
+                // });
+
+                // expectConfig(fido, {
+                //     initValue: newAgedPet('', '', 0),
+                //     initInput: null,
+                //     value: newAgedPet('', '', 0),
+                //     isDirty: true,
+                //     isTouched: true,
+                //     isValid: false,
+                //     errors: ['Should be a number'],
+                //     showErrors: true
+                // });
+
+                // expectConfig(newGroup, {
+                //     initValue: <any>newPersPets('', '', 20, [
+                //         newAgedPet('fido', 'dog', 5),
+                //         newAgedPet('garfield', 'cat', 8)
+                //     ]),
+                //     value: <any>newPersPets('', '', 20, [
+                //         newAgedPet('fido', 'dog', 5),
+                //         newAgedPet('garfield', 'cat', 8)
+                //     ]),
+                //     isDirty: true,
+                //     isTouched: true,
+                //     isValid: false,
+                // });
+            });
         });
 
         describe('setInfo', () => {
@@ -2235,10 +2294,12 @@ describe('Utils', () => {
 
                 it("with path empty it should return the form's value", () =>
                     expect(getValue(aForm)).toEqual(
-                        <any>newPersPets('John', 'Smith', 20, [
-                            newPet('fido', 'dog'),
-                            newPet('garfield', 'cat')
-                        ])
+                        <any>(
+                            newPersPets('John', 'Smith', 20, [
+                                newPet('fido', 'dog'),
+                                newPet('garfield', 'cat')
+                            ])
+                        )
                     ));
 
                 it('with simple path it should return the field value', () =>
@@ -2328,17 +2389,17 @@ describe('Utils', () => {
 
             describe('When a field is passed', () => {
                 it('should return a field', () =>
-                    expect(getFormField(aField).type).toBe("field"));
+                    expect(getFormField(aField).type).toBe('field'));
             });
 
             describe('When a group is passed', () => {
-                it('should throw', () => expect(() =>
-                    getFormField(aGroup)).toThrowError());
+                it('should throw', () =>
+                    expect(() => getFormField(aGroup)).toThrowError());
             });
 
             describe('When a listing is passed', () => {
-                it('should throw', () => expect(() =>
-                    getFormField(aListing)).toThrowError());
+                it('should throw', () =>
+                    expect(() => getFormField(aListing)).toThrowError());
             });
         });
 
@@ -2348,17 +2409,17 @@ describe('Utils', () => {
 
             describe('When a group is passed', () => {
                 it('should return a group', () =>
-                    expect(getFormGroup(aGroup).type).toBe("group"));
+                    expect(getFormGroup(aGroup).type).toBe('group'));
             });
 
             describe('When a field is passed', () => {
-                it('should throw', () => expect(() =>
-                    getFormGroup(aField)).toThrowError());
+                it('should throw', () =>
+                    expect(() => getFormGroup(aField)).toThrowError());
             });
 
             describe('When a listing is passed', () => {
-                it('should throw', () => expect(() =>
-                    getFormGroup(aListing)).toThrowError());
+                it('should throw', () =>
+                    expect(() => getFormGroup(aListing)).toThrowError());
             });
         });
 
@@ -2368,17 +2429,17 @@ describe('Utils', () => {
 
             describe('When a listing is passed', () => {
                 it('should return a listing', () =>
-                    expect(getFormListing(aListing).type).toBe("listing"));
+                    expect(getFormListing(aListing).type).toBe('listing'));
             });
 
             describe('When a field is passed', () => {
-                it('should throw', () => expect(() =>
-                    getFormListing(aField)).toThrowError());
+                it('should throw', () =>
+                    expect(() => getFormListing(aField)).toThrowError());
             });
 
             describe('When a group is passed', () => {
-                it('should throw', () => expect(() =>
-                    getFormListing(aGroup)).toThrowError());
+                it('should throw', () =>
+                    expect(() => getFormListing(aGroup)).toThrowError());
             });
         });
     });
@@ -2503,16 +2564,20 @@ describe('Utils', () => {
                 const newForm = setGroupField(aForm, 'pets[1].age', field(3));
 
                 expectConfig(newForm, {
-                    initValue: <any>newPersPets('John', 'Smith', 20, [
-                        newPet('fido', 'dog'),
-                        Object.assign(newPet('garfield', 'cat'), { age: 3 })
-                    ]),
+                    initValue: <any>(
+                        newPersPets('John', 'Smith', 20, [
+                            newPet('fido', 'dog'),
+                            Object.assign(newPet('garfield', 'cat'), { age: 3 })
+                        ])
+                    ),
                     coerce: aForm.coerce,
                     validator: aForm.validator,
-                    value: <any>newPersPets('John', 'Smith', 20, [
-                        newPet('fido', 'dog'),
-                        Object.assign(newPet('garfield', 'cat'), { age: 3 })
-                    ]),
+                    value: <any>(
+                        newPersPets('John', 'Smith', 20, [
+                            newPet('fido', 'dog'),
+                            Object.assign(newPet('garfield', 'cat'), { age: 3 })
+                        ])
+                    ),
                     isDirty: false,
                     isTouched: false,
                     errors: [],
@@ -2881,30 +2946,28 @@ describe('Utils', () => {
                 );
 
                 it('getAllErrors should return all errors in the group', () =>
-                    expect(getAllErrors(aGroup)).toEqual(
-                        <FormError[]>[
-                            {
-                                path: '',
-                                item: aGroup,
-                                errors: ['weird']
-                            },
-                            {
-                                path: 'firstName',
-                                item: aGroup.fields.firstName,
-                                errors: ['not blank']
-                            },
-                            {
-                                path: 'lastName',
-                                item: aGroup.fields.lastName,
-                                errors: ['not blank', 'too short']
-                            },
-                            {
-                                path: 'age',
-                                item: aGroup.fields.age,
-                                errors: ['outside']
-                            }
-                        ]
-                    ));
+                    expect(getAllErrors(aGroup)).toEqual(<FormError[]>[
+                        {
+                            path: '',
+                            item: aGroup,
+                            errors: ['weird']
+                        },
+                        {
+                            path: 'firstName',
+                            item: aGroup.fields.firstName,
+                            errors: ['not blank']
+                        },
+                        {
+                            path: 'lastName',
+                            item: aGroup.fields.lastName,
+                            errors: ['not blank', 'too short']
+                        },
+                        {
+                            path: 'age',
+                            item: aGroup.fields.age,
+                            errors: ['outside']
+                        }
+                    ]));
             });
 
             describe('When a form with valid fields is created', () => {
@@ -3019,10 +3082,7 @@ describe('Utils', () => {
                     {
                         initValue: undefined,
                         validations: [
-                            shouldBe(
-                                p => p.firstName.length >= p.age,
-                                'weird'
-                            )
+                            shouldBe(p => p.firstName.length >= p.age, 'weird')
                         ]
                     }
                 );
@@ -3030,40 +3090,38 @@ describe('Utils', () => {
                 const petList = aGroup.fields.pets as FormListing<Pet[]>;
                 const petListGroup = petList.fields[0] as FormGroup<Pet>;
                 it('getAllErrors should return all errors in the form', () =>
-                    expect(getAllErrors(aGroup)).toEqual(
-                        <FormError[]>[
-                            {
-                                path: '',
-                                item: aGroup,
-                                errors: ['weird']
-                            },
-                            {
-                                path: 'firstName',
-                                item: aGroup.fields.firstName,
-                                errors: ['not blank']
-                            },
-                            {
-                                path: 'lastName',
-                                item: aGroup.fields.lastName,
-                                errors: ['not blank', 'too short']
-                            },
-                            {
-                                path: 'age',
-                                item: aGroup.fields.age,
-                                errors: ['outside']
-                            },
-                            {
-                                path: 'pets',
-                                item: aGroup.fields.pets,
-                                errors: ['Should have exactly one pet']
-                            },
-                            {
-                                path: 'pets[0].name',
-                                item: petListGroup.fields.name,
-                                errors: ['Should not be blank']
-                            }
-                        ]
-                    ));
+                    expect(getAllErrors(aGroup)).toEqual(<FormError[]>[
+                        {
+                            path: '',
+                            item: aGroup,
+                            errors: ['weird']
+                        },
+                        {
+                            path: 'firstName',
+                            item: aGroup.fields.firstName,
+                            errors: ['not blank']
+                        },
+                        {
+                            path: 'lastName',
+                            item: aGroup.fields.lastName,
+                            errors: ['not blank', 'too short']
+                        },
+                        {
+                            path: 'age',
+                            item: aGroup.fields.age,
+                            errors: ['outside']
+                        },
+                        {
+                            path: 'pets',
+                            item: aGroup.fields.pets,
+                            errors: ['Should have exactly one pet']
+                        },
+                        {
+                            path: 'pets[0].name',
+                            item: petListGroup.fields.name,
+                            errors: ['Should not be blank']
+                        }
+                    ]));
             });
         });
     });

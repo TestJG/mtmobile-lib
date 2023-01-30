@@ -1,5 +1,11 @@
 import { throwError, Subject, ReplaySubject } from 'rxjs';
-import { assign, errorToString, getAsValue, objFilter, ValueOrFunc } from '../utils/common';
+import {
+    assign,
+    errorToString,
+    getAsValue,
+    objFilter,
+    ValueOrFunc
+} from '../utils/common';
 import { ObsLike } from '../utils/rxutils';
 import { TransientError } from './errors';
 import { IProcessor, TaskItem } from './processor.interfaces';
@@ -107,9 +113,7 @@ export function startSequentialProcessor(
     };
 
     const logWork = (work: WorkState) =>
-        `(${work.item.kind} R:${work.retries} D:${work.delay}ms ID:${
-            work.item.uid
-        })`;
+        `(${work.item.kind} R:${work.retries} D:${work.delay}ms ID:${work.item.uid})`;
 
     const onFinishedSub = new ReplaySubject<void>(1);
     const onFinished$ = onFinishedSub.asObservable();
@@ -156,45 +160,45 @@ export function startSequentialProcessor(
     };
 
     const loop = () => {
-      const work = pickWork();
-      log(() => `LOOP - PICK ${!work ? 'nothing' : logWork(work)}`);
-      if (work) {
-          // eslint-disable-next-line no-use-before-define,@typescript-eslint/no-use-before-define
-          runTaskOnce(work);
-      } else if (!_isAlive && _retryPendingCount === 0) {
-          // Only once all input and retries has been processed
-          _isActive = false;
-          finishSub.next();
-          finishSub.complete();
-          onFinishedSub.next(null);
-          onFinishedSub.complete();
-          onTaskStartedSub.complete();
-          onTaskReStartedSub.complete();
-          onTaskResultSub.complete();
-          onTaskErrorSub.complete();
-          onTaskCompletedSub.complete();
-          log('LOOP - CLOSED');
-      } else {
-          _isActive = false;
-          log('LOOP - DEACTIVATED');
-      }
+        const work = pickWork();
+        log(() => `LOOP - PICK ${!work ? 'nothing' : logWork(work)}`);
+        if (work) {
+            // eslint-disable-next-line no-use-before-define,@typescript-eslint/no-use-before-define
+            runTaskOnce(work);
+        } else if (!_isAlive && _retryPendingCount === 0) {
+            // Only once all input and retries has been processed
+            _isActive = false;
+            finishSub.next();
+            finishSub.complete();
+            onFinishedSub.next(null);
+            onFinishedSub.complete();
+            onTaskStartedSub.complete();
+            onTaskReStartedSub.complete();
+            onTaskResultSub.complete();
+            onTaskErrorSub.complete();
+            onTaskCompletedSub.complete();
+            log('LOOP - CLOSED');
+        } else {
+            _isActive = false;
+            log('LOOP - DEACTIVATED');
+        }
     };
 
     const pushWorkItem = (work: WorkState) => {
-      if (work.retries === 0) {
-          inputCh.push(work);
-          log(() => 'PUSH - INPUT ' + logWork(work));
-      } else {
-          _retryPendingCount--;
-          retriesCh.push(work);
-          log(() => 'PUSH - RETRY ' + logWork(work));
-      }
+        if (work.retries === 0) {
+            inputCh.push(work);
+            log(() => 'PUSH - INPUT ' + logWork(work));
+        } else {
+            _retryPendingCount--;
+            retriesCh.push(work);
+            log(() => 'PUSH - RETRY ' + logWork(work));
+        }
 
-      if (!_isActive) {
-          _isActive = true;
-          setTimeout(loop, 1);
-          log('PUSH - REACTIVATE');
-      }
+        if (!_isActive) {
+            _isActive = true;
+            setTimeout(loop, 1);
+            log('PUSH - REACTIVATE');
+        }
     };
 
     const runTaskOnce = (work: WorkState) => {

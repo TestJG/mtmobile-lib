@@ -4,7 +4,7 @@ import {
     assignOrSame,
     objMapValues,
     ValueOrFunc,
-    getAsValue,
+    getAsValue
 } from './common';
 import { coerceAll } from './coercion';
 import { mergeValidators } from './validation';
@@ -19,7 +19,7 @@ import {
     FormListingInit,
     FormListing,
     FormListingFields,
-    ExtraFormInfo,
+    ExtraFormInfo
 } from './forms.interfaces';
 import {
     checkPathInField,
@@ -33,7 +33,7 @@ import {
     setInputInternal,
     setInfoInternal,
     updateListingFieldsInternal,
-    updateFormInfoInternal,
+    updateFormInfoInternal
 } from './forms.utils';
 
 ////////////////////////////////////////////////////////////////
@@ -55,7 +55,7 @@ export const field = <T = any>(
         initInput,
         parser: parserInit,
         formatter: formatterInit,
-        parserErrorText,
+        parserErrorText
     } = assign(
         <FormFieldInit<T>>{
             caption: '',
@@ -66,7 +66,7 @@ export const field = <T = any>(
             initInput: null,
             parser: undefined,
             formatter: undefined,
-            parserErrorText: undefined,
+            parserErrorText: undefined
         },
         options
     );
@@ -103,20 +103,20 @@ export const field = <T = any>(
 
         // Derived
         isValid: true,
-        showErrors: false,
+        showErrors: false
     };
 
     if (initInput !== null) {
         return <FormField<T>>setInputInternal(result, initInput, '', {
             affectDirty: false,
             compareValues: false,
-            initialization: true,
+            initialization: true
         });
     } else {
         return <FormField<T>>setValueInternal(result, initValue, '', {
             affectDirty: false,
             compareValues: false,
-            initialization: true,
+            initialization: true
         });
     }
 };
@@ -135,7 +135,7 @@ export const group = <T = any>(
         info,
         coerce: coerceInit,
         validations: validatorInit,
-        initValue,
+        initValue
     } = assign(
         <FormGroupInit<T>>{
             caption: '',
@@ -143,7 +143,7 @@ export const group = <T = any>(
             info: undefined,
             coerce: undefined,
             validations: undefined,
-            initValue: undefined,
+            initValue: undefined
         },
         options
     );
@@ -175,13 +175,13 @@ export const group = <T = any>(
         isValid: true,
         showErrors: false,
 
-        fields: theFields,
+        fields: theFields
     };
 
     return <FormGroup<T>>setValueInternal(result, theInitValue, '', {
         affectDirty: false,
         compareValues: false,
-        initialization: true,
+        initialization: true
     });
 };
 
@@ -199,7 +199,7 @@ export const listing = <T extends unknown[] = any>(
         info,
         coerce: coerceInit,
         validations: validatorInit,
-        initValue,
+        initValue
     } = assign(
         <FormListingInit<T>>{
             caption: '',
@@ -207,7 +207,7 @@ export const listing = <T extends unknown[] = any>(
             info: undefined,
             coerce: undefined,
             validations: undefined,
-            initValue: undefined,
+            initValue: undefined
         },
         options
     );
@@ -239,12 +239,12 @@ export const listing = <T extends unknown[] = any>(
         isValid: true,
         showErrors: false,
 
-        fields: theFields,
+        fields: theFields
     };
     return setValueInternal(result, theInitValue, '', {
         affectDirty: false,
         compareValues: false,
-        initialization: true,
+        initialization: true
     });
 };
 
@@ -262,36 +262,36 @@ const throwUnexpectedFormType = (
 };
 
 export const getFormItem = <T extends FormItem = FormItem>(
-  item: FormItem,
-  path: string = ''
+    item: FormItem,
+    path: string = ''
 ): T => {
-  switch (item.type) {
-      case 'field': {
-          checkPathInField(path);
-          return item as T;
-      }
+    switch (item.type) {
+        case 'field': {
+            checkPathInField(path);
+            return item as T;
+        }
 
-      case 'group': {
-          if (!path) {
-              return item as T;
-          }
+        case 'group': {
+            if (!path) {
+                return item as T;
+            }
 
-          const [_, child, restOfPath] = locateInGroupOrFail(item, path);
-          return getFormItem(child, restOfPath);
-      }
+            const [_, child, restOfPath] = locateInGroupOrFail(item, path);
+            return getFormItem(child, restOfPath);
+        }
 
-      case 'listing': {
-          if (!path) {
-              return item as T;
-          }
+        case 'listing': {
+            if (!path) {
+                return item as T;
+            }
 
-          const [_, child, restOfPath] = locateInListingOrFail(item, path);
-          return getFormItem(child, restOfPath);
-      }
+            const [_, child, restOfPath] = locateInListingOrFail(item, path);
+            return getFormItem(child, restOfPath);
+        }
 
-      default:
-          throw new Error('getFormItem: Not implemented');
-  }
+        default:
+            throw new Error('getFormItem: Not implemented');
+    }
 };
 
 export const getFormField = <T = any>(item: FormItem, path: string = '') => {
@@ -348,7 +348,7 @@ export const setValueDoNotTouch = <I extends FormItem = FormItem>(
     value: ValueOrFunc,
     pathToField: string = ''
 ): I => <I>setValueInternal(item, value, pathToField, {
-        affectDirty: false,
+        affectDirty: false
     });
 
 export const setInput = <I extends FormItem = FormItem>(
@@ -362,7 +362,7 @@ export const setInputDoNotTouch = <I extends FormItem = FormItem>(
     input: ValueOrFunc,
     pathToField: string = ''
 ): I => <I>setInputInternal(item, input, pathToField, {
-        affectDirty: false,
+        affectDirty: false
     });
 
 export const resetValue = <I extends FormItem = FormItem>(
@@ -371,7 +371,7 @@ export const resetValue = <I extends FormItem = FormItem>(
     value: ValueOrFunc = undefined
 ): I => <I>setValueInternal(item, value, pathToField, {
         initialization: true,
-        compareValues: false,
+        compareValues: false
     });
 
 export const setGroupField = <I extends FormItem = FormItem>(
@@ -385,8 +385,8 @@ export const insertListingFields = <I extends FormItem = FormItem>(
     pathToListing: string,
     newFields: ValueOrFunc<FormItem | FormItem[]>,
     atPosition?: number
-): I => {
-    return <I>(
+): I =>
+    <I>(
         updateListingFieldsInternal(
             item,
             pathToListing,
@@ -414,26 +414,23 @@ export const insertListingFields = <I extends FormItem = FormItem>(
             }
         )
     );
-};
 
 export const removeListingFields = <I extends FormItem = FormItem>(
     item: I,
     pathToListing: string,
     atPosition: number,
     count: number = 1
-): I => {
-    return <I>(
+): I =>
+    <I>(
         updateListingFieldsInternal(
             item,
             pathToListing,
-            (fields: FormListingFields & Array<FormItem>) => {
-                return fields
+            (fields: FormListingFields & Array<FormItem>) =>
+                fields
                     .slice(0, atPosition)
-                    .concat(fields.slice(atPosition + count));
-            }
+                    .concat(fields.slice(atPosition + count))
         )
     );
-};
 
 export const updateFormInfo = <I extends FormItem = FormItem>(
     item: I,

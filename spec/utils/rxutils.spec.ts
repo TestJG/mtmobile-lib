@@ -10,7 +10,7 @@ import {
     firstSwitchMap,
     makeState,
     isSubscribable,
-    isObservableInput,
+    isObservableInput
 } from '../../src/utils/rxutils';
 import { concatMap, delay, concat, map, take } from 'rxjs/operators';
 
@@ -61,7 +61,7 @@ describe('Utils', () => {
             it('on an object with message should return an Error with given message', done => {
                 testObs(
                     normalizeErrorOnCatch({
-                        message: 'some random error',
+                        message: 'some random error'
                     }),
                     [],
                     new Error('some random error'),
@@ -79,75 +79,79 @@ describe('Utils', () => {
         });
 
         describe('isSubscribable', () => {
-          it('should be a function', () => {
-            expect(isSubscribable).toBeInstanceOf(Function);
-          });
-          it('should return true when an object is with a subscribe function is passed in as an argument', () => {
-            expect(isSubscribable({subscribe: () => {}})).toBe(true);
-          });
-          it('should return false when null is passed as an argument', () => {
-            expect(isSubscribable(null)).toBe(false);
-          });
-          it('should return false when undefined string is passed as an argument', () => {
-            expect(isSubscribable(undefined)).toBe(false);
-          });
-          it('should return false when an empty string is passed as an argument', () => {
-            expect(isSubscribable("")).toBe(false);
-          });
-          it('should return false when a 0 is passed as an argument', () => {
-            expect(isSubscribable(0)).toBe(false);
-          });
-          it('should return false when a function is passed as an argument', () => {
-            expect(isSubscribable(() => null)).toBe(false);
-          });
-          it('should return false when an object is passed as an argument', () => {
-            expect(isSubscribable({})).toBe(false);
-          });
-          it('should return false when a Symbol is passed as an argument', () => {
-            expect(isSubscribable(Symbol(''))).toBe(false);
-          });
+            it('should be a function', () => {
+                expect(isSubscribable).toBeInstanceOf(Function);
+            });
+            it('should return true when an object is with a subscribe function is passed in as an argument', () => {
+                expect(isSubscribable({ subscribe: () => {} })).toBe(true);
+            });
+            it('should return false when null is passed as an argument', () => {
+                expect(isSubscribable(null)).toBe(false);
+            });
+            it('should return false when undefined string is passed as an argument', () => {
+                expect(isSubscribable(undefined)).toBe(false);
+            });
+            it('should return false when an empty string is passed as an argument', () => {
+                expect(isSubscribable('')).toBe(false);
+            });
+            it('should return false when a 0 is passed as an argument', () => {
+                expect(isSubscribable(0)).toBe(false);
+            });
+            it('should return false when a function is passed as an argument', () => {
+                expect(isSubscribable(() => null)).toBe(false);
+            });
+            it('should return false when an object is passed as an argument', () => {
+                expect(isSubscribable({})).toBe(false);
+            });
+            it('should return false when a Symbol is passed as an argument', () => {
+                expect(isSubscribable(Symbol(''))).toBe(false);
+            });
         });
 
         describe('isObservableInput', () => {
-          it('should return true when an iterator is passed as an argument', () => {
-            expect(isObservableInput({[Symbol.iterator]: () => {}})).toBe(true);
-          });
-          it('should return true when a custom Subscribable is passed as an argument', () => {
-            expect(isObservableInput({subscribe: () => {}})).toBe(true);
-          });
-          it('should return true when a custom InterOpObservable is passed as an argument', () => {
-            expect(isObservableInput({[Symbol.observable]: () => {}})).toBe(true);
-          });
-          it('should return true when an observable is passed as an argument', () => {
-            expect(isObservableInput(of([]))).toBe(true);
-          });
-          it('should return true when an array is passed as an argument', () => {
-            expect(isObservableInput([])).toBe(true);
-          });
-          it('should return true when a promise is passed as an argument', () => {
-            expect(isObservableInput(Promise.resolve())).toBe(true);
-          });
-          it('should return true when an empty string is passed as an argument', () => {
-            expect(isObservableInput("")).toBe(true);
-          });
-          it('should return false when null is passed as an argument', () => {
-            expect(isObservableInput(null)).toBe(false);
-          });
-          it('should return false when undefined string is passed as an argument', () => {
-            expect(isObservableInput(undefined)).toBe(false);
-          });
-          it('should return false when a 0 is passed as an argument', () => {
-            expect(isObservableInput(0)).toBe(false);
-          });
-          it('should return false when a function is passed as an argument', () => {
-            expect(isObservableInput(() => null)).toBe(false);
-          });
-          it('should return false when an object is passed as an argument', () => {
-            expect(isObservableInput({})).toBe(false);
-          });
-          it('should return false when a Symbol is passed as an argument', () => {
-            expect(isObservableInput(Symbol(''))).toBe(false);
-          });
+            it('should return true when an iterator is passed as an argument', () => {
+                expect(isObservableInput({ [Symbol.iterator]: () => {} })).toBe(
+                    true
+                );
+            });
+            it('should return true when a custom Subscribable is passed as an argument', () => {
+                expect(isObservableInput({ subscribe: () => {} })).toBe(true);
+            });
+            it('should return true when a custom InterOpObservable is passed as an argument', () => {
+                expect(
+                    isObservableInput({ [Symbol.observable]: () => {} })
+                ).toBe(true);
+            });
+            it('should return true when an observable is passed as an argument', () => {
+                expect(isObservableInput(of([]))).toBe(true);
+            });
+            it('should return true when an array is passed as an argument', () => {
+                expect(isObservableInput([])).toBe(true);
+            });
+            it('should return true when a promise is passed as an argument', () => {
+                expect(isObservableInput(Promise.resolve())).toBe(true);
+            });
+            it('should return true when an empty string is passed as an argument', () => {
+                expect(isObservableInput('')).toBe(true);
+            });
+            it('should return false when null is passed as an argument', () => {
+                expect(isObservableInput(null)).toBe(false);
+            });
+            it('should return false when undefined string is passed as an argument', () => {
+                expect(isObservableInput(undefined)).toBe(false);
+            });
+            it('should return false when a 0 is passed as an argument', () => {
+                expect(isObservableInput(0)).toBe(false);
+            });
+            it('should return false when a function is passed as an argument', () => {
+                expect(isObservableInput(() => null)).toBe(false);
+            });
+            it('should return false when an object is passed as an argument', () => {
+                expect(isObservableInput({})).toBe(false);
+            });
+            it('should return false when a Symbol is passed as an argument', () => {
+                expect(isObservableInput(Symbol(''))).toBe(false);
+            });
         });
 
         describe('tryTo', () => {
@@ -156,7 +160,12 @@ describe('Utils', () => {
             });
 
             it('on a single value should return an observable returning that single value', done => {
-                testObs(tryTo(() => 'a value'), ['a value'], null, done);
+                testObs(
+                    tryTo(() => 'a value'),
+                    ['a value'],
+                    null,
+                    done
+                );
             });
 
             it('on an array value should return an observable returning that array as a whole', done => {
@@ -228,7 +237,7 @@ describe('Utils', () => {
                             expect(defer1).toHaveBeenCalledTimes(1);
                             expect(defer2).toHaveBeenCalledTimes(1);
                             done();
-                        }),
+                        })
                 });
             });
 
@@ -254,7 +263,7 @@ describe('Utils', () => {
                             expect(defer1).toHaveBeenCalledTimes(1);
                             expect(defer2).toHaveBeenCalledTimes(1);
                             done();
-                        }),
+                        })
                 });
             });
         });
@@ -284,7 +293,7 @@ describe('Utils', () => {
                 const functions = [
                     (v: number) => of(v * 2, v * 3, v * 4),
                     (v: number) => of(v * 20, v * 30, v * 40),
-                    (v: number) => of(v * 50, v * 60, v * 70),
+                    (v: number) => of(v * 50, v * 60, v * 70)
                 ];
                 const fun$ = timer(10, 5).pipe(
                     take(3),
@@ -311,11 +320,11 @@ describe('Utils', () => {
                     of(v * 2 * factor, v * 3 * factor, v * 4 * factor);
                 const obj$ = of({
                     factor1: fun$(1),
-                    factor2: fun$(2),
+                    factor2: fun$(2)
                 }).pipe(delay(10));
                 const actual = wrapServiceStreamFromNames(obj$, [
                     'factor1',
-                    'factor2',
+                    'factor2'
                 ]);
                 expect(typeof actual).toEqual('object');
                 expect(actual.factor1).toBeInstanceOf(Function);
@@ -334,7 +343,12 @@ describe('Utils', () => {
             });
 
             it('should map the values', done => {
-                testObs(firstMap(of(1, 2, 3))(n => 10 * n), [10], null, done);
+                testObs(
+                    firstMap(of(1, 2, 3))(n => 10 * n),
+                    [10],
+                    null,
+                    done
+                );
             });
 
             it('should normalize errors', done => {

@@ -132,13 +132,17 @@ export interface FormGroup<T extends Object = any> extends FormPart<T> {
 
 // type ArrayItem<T extends any[]> = T[keyof T];
 
-export type FormListingFields<T extends unknown[] = any> = FormItem<T[number]>[];
+export type FormListingFields<T extends unknown[] = any> = FormItem<
+    T[number]
+>[];
 
-export interface FormListingInit<T extends unknown[] = any> extends FormPartInit<T> {
+export interface FormListingInit<T extends unknown[] = any>
+    extends FormPartInit<T> {
     initValue: T;
 }
 
-export interface FormListingConfig<T extends unknown[] = any> extends FormPartConfig<T> {
+export interface FormListingConfig<T extends unknown[] = any>
+    extends FormPartConfig<T> {
     type: 'listing';
 }
 

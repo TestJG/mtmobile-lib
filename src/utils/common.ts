@@ -5,9 +5,9 @@ export const isNothing = x => x === undefined || x === null;
 export const isSomething = x => x !== undefined && x !== null;
 
 export const isPromiseLike = <T>(prom: unknown): prom is PromiseLike<T> =>
-  isSomething(prom) &&
-  typeof prom['then'] === 'function' &&
-  Promise.resolve(prom) === prom;
+    isSomething(prom) &&
+    typeof prom['then'] === 'function' &&
+    Promise.resolve(prom) === prom;
 
 export const assign = <T>(s: T, ...u: Partial<T>[]): T =>
     Object.assign({}, s, ...u);
@@ -146,7 +146,9 @@ export const joinStr = (sep: string, strs: string[]) =>
 
 export function uuid(separator: string = '-'): string {
     const s4 = () =>
-        Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+        Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
 
     return joinStr(separator || '', [
         s4() + s4(),
@@ -182,18 +184,18 @@ export const toKVMap = (kvs: KeyValuePairs): KeyValuePairsMap => {
     return kvs;
 };
 
-export const objFlatMap = (
-    mapper: (keyValue: [string, any]) => KeyValuePairs
-) => (source: KeyValuePairs): KeyValuePairsMap => {
-    if (typeof source !== 'object') {
-        throw new Error('Must be an object');
-    }
-    return toKVMap(
-        _.flatMap(Object.keys(toKVMap(source)), key =>
-            toKVArray(mapper([key, source[key]]))
-        )
-    );
-};
+export const objFlatMap =
+    (mapper: (keyValue: [string, any]) => KeyValuePairs) =>
+    (source: KeyValuePairs): KeyValuePairsMap => {
+        if (typeof source !== 'object') {
+            throw new Error('Must be an object');
+        }
+        return toKVMap(
+            _.flatMap(Object.keys(toKVMap(source)), key =>
+                toKVArray(mapper([key, source[key]]))
+            )
+        );
+    };
 
 export const objMap = (mapper: (keyValue: [string, any]) => [string, any]) =>
     objFlatMap(kv => [mapper(kv)]);
@@ -201,23 +203,23 @@ export const objMap = (mapper: (keyValue: [string, any]) => [string, any]) =>
 export const objMapValues = (mapper: (value: any, key: string) => any) =>
     objMap(([k, v]) => [k, mapper(v, k)]);
 
-export const objFilter = (filter: (keyValue: [string, any]) => boolean) => (
-    source: KeyValuePairs
-): KeyValuePairsMap => {
-    if (typeof source !== 'object') {
-        throw new Error('Must be an object');
-    }
-    const original = toKVMap(source);
-    return toKVMap(
-        Object.keys(original).reduce((obj, key) => {
-            if (filter([key, original[key]])) {
-                return Object.assign(obj, { [key]: original[key] });
-            } else {
-                return obj;
-            }
-        }, {})
-    );
-};
+export const objFilter =
+    (filter: (keyValue: [string, any]) => boolean) =>
+    (source: KeyValuePairs): KeyValuePairsMap => {
+        if (typeof source !== 'object') {
+            throw new Error('Must be an object');
+        }
+        const original = toKVMap(source);
+        return toKVMap(
+            Object.keys(original).reduce((obj, key) => {
+                if (filter([key, original[key]])) {
+                    return Object.assign(obj, { [key]: original[key] });
+                } else {
+                    return obj;
+                }
+            }, {})
+        );
+    };
 
 export const normalizeError = (err: any) => {
     if (!err) {
@@ -450,15 +452,17 @@ export const compareNumber: Comparer<number> = (x, y) => {
     }
 };
 
-export const compareBy = <T = any>(...comparers: Comparer<T>[]): Comparer<T> => (x, y) => {
-  for (let i = 0; i < comparers.length; i++) {
-      const comp = comparers[i](x, y);
-      if (comp !== 0) {
-          return comp;
-      }
-  }
-  return 0;
-};
+export const compareBy =
+    <T = any>(...comparers: Comparer<T>[]): Comparer<T> =>
+    (x, y) => {
+        for (let i = 0; i < comparers.length; i++) {
+            const comp = comparers[i](x, y);
+            if (comp !== 0) {
+                return comp;
+            }
+        }
+        return 0;
+    };
 
 export const compareFunction: Comparer<Function> = (x, y) => {
     if (typeof x !== 'function' || typeof y !== 'function') {
@@ -469,7 +473,7 @@ export const compareFunction: Comparer<Function> = (x, y) => {
     }
     return compareBy<Function>(
         (a, b) => compareSameType(a.name, b.name),
-        (a, b) => compareNumber(a.length, b.length),
+        (a, b) => compareNumber(a.length, b.length)
     )(x, y);
 };
 
@@ -591,7 +595,10 @@ export function printData(
                     (value.stack ? `\n${value.stack}` : '')
                 );
             } else {
-                const name = !value.constructor || value.constructor === Object ? '' : value.constructor.name + ' ';
+                const name =
+                    !value.constructor || value.constructor === Object
+                        ? ''
+                        : value.constructor.name + ' ';
                 const keys = Object.keys(value);
                 if (keys.length === 0) {
                     return `${name}{}`;
@@ -724,15 +731,12 @@ export const oldPrintObj = (
             }
         } else {
             append(
-                printData(
-                    value,
-                    {
-                        maxLength: opts.maxValueLength,
-                        ellipsis: opts.ellipsis,
-                        backChars: opts.backChars,
-                        showStacktrace: opts.showStacktrace
-                    }
-                ) + ender
+                printData(value, {
+                    maxLength: opts.maxValueLength,
+                    ellipsis: opts.ellipsis,
+                    backChars: opts.backChars,
+                    showStacktrace: opts.showStacktrace
+                }) + ender
             );
         }
     };
@@ -749,26 +753,34 @@ export const printObj = (
     options: Partial<PrintObjOptions> = defaultPrintObjOptions
 ) => {
     const opts = Object.assign({}, defaultPrintObjOptions, options);
-    const excludeTypes = typeof opts.excludeTypes === 'function'
-        ? opts.excludeTypes
-        : ((x: string) => (<string[]>opts.excludeTypes).indexOf(x) >= 0);
-    const excludeConstructors = typeof opts.excludeConstructors === 'function'
-        ? opts.excludeConstructors
-        : ((x: Function) => (<Function[]>opts.excludeConstructors).indexOf(x) >= 0);
+    const excludeTypes =
+        typeof opts.excludeTypes === 'function'
+            ? opts.excludeTypes
+            : (x: string) => (<string[]>opts.excludeTypes).indexOf(x) >= 0;
+    const excludeConstructors =
+        typeof opts.excludeConstructors === 'function'
+            ? opts.excludeConstructors
+            : (x: Function) =>
+                  (<Function[]>opts.excludeConstructors).indexOf(x) >= 0;
     const past = new Map<any, string>();
     const indentations = ['', opts.indentChars];
     const ind = (depth: number) => {
         while (depth >= indentations.length) {
-            indentations.push(indentations[indentations.length - 1] + opts.indentChars);
+            indentations.push(
+                indentations[indentations.length - 1] + opts.indentChars
+            );
         }
         return indentations[depth];
     };
-    const isExcluded = v => excludeTypes(typeof v) || (!!v && excludeConstructors(v.constructor));
-    const propertyComparer = opts.propertyOrder === 'byTypeAndName'
-        ? compareBy<[string, string, any]>(
-            (a, b) => compareTypes(typeof a[2], typeof b[2]),
-            (a, b) => compareSameType(a[0], b[0]))
-        : (a, b) => compareSameType(a[0], b[0]);
+    const isExcluded = v =>
+        excludeTypes(typeof v) || (!!v && excludeConstructors(v.constructor));
+    const propertyComparer =
+        opts.propertyOrder === 'byTypeAndName'
+            ? compareBy<[string, string, any]>(
+                  (a, b) => compareTypes(typeof a[2], typeof b[2]),
+                  (a, b) => compareSameType(a[0], b[0])
+              )
+            : (a, b) => compareSameType(a[0], b[0]);
 
     const loop = (value: any, depth: number, path: string): string => {
         if (depth < opts.maxDepth && value instanceof Array) {
@@ -781,17 +793,25 @@ export const printObj = (
                 const values = value
                     .filter(v => !isExcluded(v))
                     .map((v, i) => loop(v, depth + 1, `${path}[${i}]`));
-                const totalLength =
-                    values.reduce((x, s) => x + s.length + 2, 0);
-                if (totalLength > opts.maxValueLength || values.some(s => hasNewLine(s))) {
-                    const valuesShort = values.length <= opts.maxValuesPerArray
-                        ? values : values.slice(0, opts.maxValuesPerArray);
+                const totalLength = values.reduce(
+                    (x, s) => x + s.length + 2,
+                    0
+                );
+                if (
+                    totalLength > opts.maxValueLength ||
+                    values.some(s => hasNewLine(s))
+                ) {
+                    const valuesShort =
+                        values.length <= opts.maxValuesPerArray
+                            ? values
+                            : values.slice(0, opts.maxValuesPerArray);
                     const str = valuesShort
                         .map(v => v.replace(/^|(\r?\n)/g, `$&${ind(1)}`))
                         .join(',\n');
                     if (value.length > opts.maxValuesPerArray) {
-                        return `[\n${str}\n${ind(1)}// ... ${value.length -
-                            opts.maxValuesPerArray} more elements\n]`;
+                        return `[\n${str}\n${ind(1)}// ... ${
+                            value.length - opts.maxValuesPerArray
+                        } more elements\n]`;
                     }
                     return `[\n${str}\n]`;
                 } else {
@@ -815,26 +835,46 @@ export const printObj = (
                     return '{}';
                 }
                 const props = propNames
-                    .map(n => <[string, string, any]>[n, loop(value[n], depth + 1, `${path}.${n}`), value[n]])
+                    .map(
+                        n =>
+                            <[string, string, any]>[
+                                n,
+                                loop(value[n], depth + 1, `${path}.${n}`),
+                                value[n]
+                            ]
+                    )
                     .filter(p => !isExcluded(p[2]));
                 props.sort(propertyComparer);
-                const totalLength =
-                    props.reduce((x, p) => x + p[0].length + p[1].length + 4, 0);
+                const totalLength = props.reduce(
+                    (x, p) => x + p[0].length + p[1].length + 4,
+                    0
+                );
 
-                if (totalLength > opts.maxValueLength || props.some(p => hasNewLine(p[1]))) {
-                    const propsShort = props.length <= opts.maxPropertiesPerObject
-                        ? props
-                        : props.slice(0, opts.maxPropertiesPerObject);
+                if (
+                    totalLength > opts.maxValueLength ||
+                    props.some(p => hasNewLine(p[1]))
+                ) {
+                    const propsShort =
+                        props.length <= opts.maxPropertiesPerObject
+                            ? props
+                            : props.slice(0, opts.maxPropertiesPerObject);
                     const str = propsShort
-                        .map(p => `${ind(1)}${p[0]}: ${p[1].replace(/(\r?\n)/g, `$&${ind(1)}`)}`)
+                        .map(
+                            p =>
+                                `${ind(1)}${p[0]}: ${p[1].replace(
+                                    /(\r?\n)/g,
+                                    `$&${ind(1)}`
+                                )}`
+                        )
                         .join(',\n');
                     if (propNames.length > opts.maxPropertiesPerObject) {
-                        return `{\n${str}\n${ind(1)}// ... ${propNames.length -
-                            opts.maxPropertiesPerObject} more properties\n]`;
+                        return `{\n${str}\n${ind(1)}// ... ${
+                            propNames.length - opts.maxPropertiesPerObject
+                        } more properties\n]`;
                     }
                     return `{\n${str}\n}`;
                 } else {
-                    const str =  props.map(p => `${p[0]}: ${p[1]}`).join(', ');
+                    const str = props.map(p => `${p[0]}: ${p[1]}`).join(', ');
                     return `{ ${str} }`;
                 }
             }

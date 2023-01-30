@@ -4,7 +4,7 @@ import {
     ReplaySubject,
     timer,
     throwError,
-    of,
+    of
 } from 'rxjs';
 import { deepEqual } from '../../src/utils/equality';
 import { joinStr, conditionalLog, ValueOrFunc, LogOpts } from '../../src/utils';
@@ -14,7 +14,7 @@ import {
     tap,
     toArray,
     take,
-    concatMap,
+    concatMap
 } from 'rxjs/operators';
 
 export type TestObsOptions<T = any> = {
@@ -33,7 +33,7 @@ export const testObsNotifications = <T = any>(
         <TestObsOptions<T>>{
             anyValue: undefined,
             anyError: undefined,
-            doneTimeout: 500,
+            doneTimeout: 500
         },
         options
     );
@@ -74,7 +74,7 @@ export const testObsNotifications = <T = any>(
             next: actArr =>
                 expect(actArr.map(toStr)).toEqual(expected.map(toStr)),
             error: e => done(e),
-            complete: () => done(),
+            complete: () => done()
         });
 };
 
@@ -111,17 +111,18 @@ export const testObsValues = <T = any>(
         options
     );
 
-export const testTaskOf = (due: number, period: number = 0) => (
-    ...args: any[]
-) => (p?: any) =>
-    timer(due, period).pipe(
-        take(args.length),
-        concatMap(i => {
-            const elem = args[i];
-            if (i === args.length - 1 && elem instanceof Error) {
-                return throwError(elem);
-            } else {
-                return of(elem);
-            }
-        })
-    );
+export const testTaskOf =
+    (due: number, period: number = 0) =>
+    (...args: any[]) =>
+    (p?: any) =>
+        timer(due, period).pipe(
+            take(args.length),
+            concatMap(i => {
+                const elem = args[i];
+                if (i === args.length - 1 && elem instanceof Error) {
+                    return throwError(elem);
+                } else {
+                    return of(elem);
+                }
+            })
+        );

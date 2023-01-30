@@ -2,14 +2,14 @@ import { timer, merge } from 'rxjs';
 import {
     IProcessorCore,
     TaskItem,
-    task,
+    task
 } from '../../src/processes/processor.interfaces';
 import { testObs } from '../utils/rxtest';
 import {
     fromServiceToDirectProcessor,
     startDirectProcessor,
     startRouterProcessor,
-    startRouterProxy,
+    startRouterProxy
 } from '../../src/processes';
 import { map } from 'rxjs/operators';
 
@@ -23,7 +23,7 @@ describe('Processes', () => {
                 const dummy = ms => p => timer(ms).pipe(map(() => p));
                 const service = (msa, msb) => ({
                     taskA: dummy(msa),
-                    taskB: dummy(msb),
+                    taskB: dummy(msb)
                 });
                 const proc1 = fromServiceToDirectProcessor(
                     service(5, 20),
@@ -64,7 +64,7 @@ describe('Processes', () => {
                 const dummy = ms => p => timer(ms).pipe(map(() => p));
                 const service = (msa, msb) => ({
                     taskA: dummy(msa),
-                    taskB: dummy(msb),
+                    taskB: dummy(msb)
                 });
                 const proc1 = fromServiceToDirectProcessor(
                     service(5, 20),
@@ -79,10 +79,10 @@ describe('Processes', () => {
                     { caption: 'Proc', routeSeparator: '/' }
                 );
                 const proxy1 = startRouterProxy(proc, 'svc1', {
-                    routeSeparator: '/',
+                    routeSeparator: '/'
                 });
                 const proxy2 = startRouterProxy(proc, 'svc2', {
-                    routeSeparator: '/',
+                    routeSeparator: '/'
                 });
 
                 it('it should process task returning the well behaved result', done => {

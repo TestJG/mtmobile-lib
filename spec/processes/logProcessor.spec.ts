@@ -7,7 +7,7 @@ import {
     logProcessorCore,
     defaultTaskFormatter,
     defaultErrorFormatter,
-    defaultValueFormatter,
+    defaultValueFormatter
 } from '../../src/processes';
 
 describe('Processes', () => {

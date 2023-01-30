@@ -31,47 +31,51 @@ export const numberParser: Parser<number> = source => {
     return result;
 };
 
-export const integerParser = (radix: number): Parser<number> => text => {
-    if (isNothing(text) || text === '') {
-        return null;
-    }
-    const result = parseInt(text, radix);
-    if (isNaN(result) || !isFinite(result)) {
-        // throw new Error('Should be a number');
-        return null;
-    }
-    return result;
-};
+export const integerParser =
+    (radix: number): Parser<number> =>
+    text => {
+        if (isNothing(text) || text === '') {
+            return null;
+        }
+        const result = parseInt(text, radix);
+        if (isNaN(result) || !isFinite(result)) {
+            // throw new Error('Should be a number');
+            return null;
+        }
+        return result;
+    };
 
 export const decimalParser = integerParser(10);
 
-export const numberRadixFormatter = (
-    radix?: number
-): Formatter<number> => value =>
-    typeof value === 'number' ? value.toString(radix) : '';
+export const numberRadixFormatter =
+    (radix?: number): Formatter<number> =>
+    value =>
+        typeof value === 'number' ? value.toString(radix) : '';
 
 export const numberFormatter = numberRadixFormatter(10);
 
-export const numberPrecisionFormatter = (
-    precision?: number
-): Formatter<number> => value =>
-    typeof value === 'number' ? value.toPrecision(precision) : '';
+export const numberPrecisionFormatter =
+    (precision?: number): Formatter<number> =>
+    value =>
+        typeof value === 'number' ? value.toPrecision(precision) : '';
 
-export const numberFixedFormatter = (
-    digits?: number
-): Formatter<number> => value =>
-    typeof value === 'number' ? value.toFixed(digits) : '';
+export const numberFixedFormatter =
+    (digits?: number): Formatter<number> =>
+    value =>
+        typeof value === 'number' ? value.toFixed(digits) : '';
 
-export const numberExponentialFormatter = (
-    fractionDigits?: number
-): Formatter<number> => value =>
-    typeof value === 'number' ? value.toExponential(fractionDigits) : '';
+export const numberExponentialFormatter =
+    (fractionDigits?: number): Formatter<number> =>
+    value =>
+        typeof value === 'number' ? value.toExponential(fractionDigits) : '';
 
-export const numberLocaleFormatter = (
-    locales?: string | string[],
-    options?: Intl.NumberFormatOptions
-): Formatter<number> => value =>
-    typeof value === 'number' ? value.toLocaleString(locales, options) : '';
+export const numberLocaleFormatter =
+    (
+        locales?: string | string[],
+        options?: Intl.NumberFormatOptions
+    ): Formatter<number> =>
+    value =>
+        typeof value === 'number' ? value.toLocaleString(locales, options) : '';
 
 export const decimalFormatter = numberFixedFormatter(0);
 

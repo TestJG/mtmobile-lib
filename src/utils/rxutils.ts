@@ -1,7 +1,28 @@
-import { merge, of, from, throwError,  Observable, Subscribable,  Observer,  Subscription, ConnectableObservable, ObservableInput } from 'rxjs';
+import {
+    merge,
+    of,
+    from,
+    throwError,
+    Observable,
+    Subscribable,
+    Observer,
+    Subscription,
+    ConnectableObservable,
+    ObservableInput
+} from 'rxjs';
 import {
     materialize,
-    ignoreElements, tap, publishReplay, first, publishBehavior, map, catchError, scan, takeUntil, switchMap } from 'rxjs/operators';
+    ignoreElements,
+    tap,
+    publishReplay,
+    first,
+    publishBehavior,
+    map,
+    catchError,
+    scan,
+    takeUntil,
+    switchMap
+} from 'rxjs/operators';
 import {
     isSomething,
     normalizeError,
@@ -21,31 +42,47 @@ export const normalizeErrorOnCatch = <T>(err: any): Observable<T> =>
     throwError(normalizeError(err));
 
 export const isSubscribable = <T>(subs: unknown): subs is Subscribable<T> =>
-  isSomething(subs) && typeof subs['subscribe'] === 'function';
+    isSomething(subs) && typeof subs['subscribe'] === 'function';
 
 export const isObservableInput = <T>(
-  obs: unknown
+    obs: unknown
 ): obs is ObservableInput<T> => {
-    if (!isSomething(obs)) { return false; }
+    if (!isSomething(obs)) {
+        return false;
+    }
 
     // Observable
-    if (obs instanceof Observable) { return true; }
+    if (obs instanceof Observable) {
+        return true;
+    }
     // InteropObservable
-    if (typeof obs[Symbol.observable] === 'function') { return true; }
+    if (typeof obs[Symbol.observable] === 'function') {
+        return true;
+    }
     // PromiseLike
-    if (isPromiseLike(obs)) { return true; }
+    if (isPromiseLike(obs)) {
+        return true;
+    }
     // Subscribable
-    if (isSubscribable(obs)) { return true; }
+    if (isSubscribable(obs)) {
+        return true;
+    }
     // Array
-    if (Array.isArray(obs)) { return true; }
+    if (Array.isArray(obs)) {
+        return true;
+    }
     // ArrayLike
     if (
-      typeof obs !== 'function' &&
-      typeof obs['length'] === 'number' &&
-      obs['length'] > -1
-    ) { return true; }
+        typeof obs !== 'function' &&
+        typeof obs['length'] === 'number' &&
+        obs['length'] > -1
+    ) {
+        return true;
+    }
     // Iterable
-    if (typeof obs[Symbol.iterator] === 'function') { return true; }
+    if (typeof obs[Symbol.iterator] === 'function') {
+        return true;
+    }
 
     return false;
 };
@@ -58,8 +95,8 @@ export const fromObsLike = <T>(
     // and current behavior is not to treat it as an observable.
     if (
         isPromiseLike(source) ||
-            isSubscribable(source) ||
-            (!treatArraysAsValues && source instanceof Array)
+        isSubscribable(source) ||
+        (!treatArraysAsValues && source instanceof Array)
     ) {
         return from(source);
     } else {
@@ -68,12 +105,12 @@ export const fromObsLike = <T>(
 };
 
 export const tryTo = <T>(
-    thunk: (defer: ((action: (() => void)) => void)) => ObsLike<T>,
+    thunk: (defer: (action: () => void) => void) => ObsLike<T>,
     treatArraysAsValues = true
 ): Observable<T> => {
     const defers: (() => void)[] = [];
     let finishing = false;
-    const defer = (action: (() => void)) => {
+    const defer = (action: () => void) => {
         if (finishing) {
             throw new Error(
                 'Already finishing, this is not the time to defer.'
@@ -109,7 +146,11 @@ export const wrapFunctionStream = <V, F extends FuncOfObs<V>>(
 ): F => {
     const conn = stream.pipe(publishReplay(1)) as ConnectableObservable<F>;
     const subs = conn.connect();
-    return <F>((...args: any[]) => conn.pipe(first(), switchMap(f => f(...args))));
+    return <F>((...args: any[]) =>
+        conn.pipe(
+            first(),
+            switchMap(f => f(...args))
+        ));
 };
 
 export const wrapServiceStreamFromNames = <T extends { [name: string]: any }>(
@@ -127,17 +168,23 @@ export const wrapServiceStreamFromNames = <T extends { [name: string]: any }>(
     );
 };
 
-export const firstMap = <S>(source: Observable<S>) => <T>(
-    mapper: (s: S) => T
-) => <Observable<T>>source.pipe(first(), map(mapper), catchError(normalizeErrorOnCatch));
+export const firstMap =
+    <S>(source: Observable<S>) =>
+    <T>(mapper: (s: S) => T) =>
+        <Observable<T>>(
+            source.pipe(first(), map(mapper), catchError(normalizeErrorOnCatch))
+        );
 
-export const firstSwitchMap = <S>(source: Observable<S>) => <T>(
-    mapper: (db: S) => Observable<T>
-) =>
-    <Observable<T>>source.pipe(
-        first(),
-        switchMap(mapper),
-        catchError(normalizeErrorOnCatch));
+export const firstSwitchMap =
+    <S>(source: Observable<S>) =>
+    <T>(mapper: (db: S) => Observable<T>) =>
+        <Observable<T>>(
+            source.pipe(
+                first(),
+                switchMap(mapper),
+                catchError(normalizeErrorOnCatch)
+            )
+        );
 
 export const getAsObs = <T = any>(source: ObsOrFunc<T>) =>
     tryTo(() => getAsValue(source));
@@ -148,7 +195,8 @@ export function makeState<TState>(
 ): [Observable<TState>, Subscription] {
     const state$ = updates$.pipe(
         scan((prev: TState, up: (state: TState) => TState) => up(prev), init),
-        publishBehavior(init)) as ConnectableObservable<TState>;
+        publishBehavior(init)
+    ) as ConnectableObservable<TState>;
     const connection = state$.connect();
     return [state$, connection];
 }
@@ -159,7 +207,10 @@ export function mapUntilCancelled<T>(
 ) {
     return merge(
         observable.pipe(takeUntil(cancel)),
-        cancel.pipe(first(), takeUntil(observable.pipe(ignoreElements(), materialize())))
+        cancel.pipe(
+            first(),
+            takeUntil(observable.pipe(ignoreElements(), materialize()))
+        )
     );
 }
 

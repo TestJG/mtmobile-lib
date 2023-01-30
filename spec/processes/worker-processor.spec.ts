@@ -9,7 +9,7 @@ import {
     TransientError,
     IProcessor
 } from '../../src/processes';
-import { timeoutWith } from "rxjs/operators";
+import { timeoutWith } from 'rxjs/operators';
 
 describe('Processes', () => {
     describe('Router Processor', () => {
@@ -19,13 +19,15 @@ describe('Processes', () => {
 
             describe('When a background worker is created from a well behaved processor', () => {
                 const procSubj = new ReplaySubject<IProcessor>(1);
-                procSubj.next(fromServiceToDirectProcessor(
-                    {
-                        taskA: testTaskOf(5)(1, 2, 3),
-                        taskB: testTaskOf(5)(10, 20, 30)
-                    },
-                    'Proc'
-                ));
+                procSubj.next(
+                    fromServiceToDirectProcessor(
+                        {
+                            taskA: testTaskOf(5)(1, 2, 3),
+                            taskB: testTaskOf(5)(10, 20, 30)
+                        },
+                        'Proc'
+                    )
+                );
                 const postMessageSpy = jest.fn();
                 const terminateSpy = jest.fn();
                 const worker = createBackgroundWorker({
@@ -75,14 +77,20 @@ describe('Processes', () => {
 
             describe('When a background worker is created from a bad behaved processor', () => {
                 const procSubj = new ReplaySubject<IProcessor>(1);
-                procSubj.next(fromServiceToDirectProcessor(
-                    {
-                        taskA: testTaskOf(5)(1, 2, new TransientError('transient')),
-                        taskB: testTaskOf(5)(10, 20, 30)
-                    },
-                    'Proc',
-                    { maxRetries: 2, maxDelay: 5 }
-                ));
+                procSubj.next(
+                    fromServiceToDirectProcessor(
+                        {
+                            taskA: testTaskOf(5)(
+                                1,
+                                2,
+                                new TransientError('transient')
+                            ),
+                            taskB: testTaskOf(5)(10, 20, 30)
+                        },
+                        'Proc',
+                        { maxRetries: 2, maxDelay: 5 }
+                    )
+                );
                 const postMessageSpy = jest.fn();
                 const terminateSpy = jest.fn();
                 const worker = createBackgroundWorker({
@@ -302,9 +310,9 @@ describe('Processes', () => {
                 it("the worker's postMessage should have been called", done => {
                     const theTask = task('inc');
                     const subscription = testObs(
-                        foreWorker.process(theTask).pipe(
-                          timeoutWith(20, ['timeout-signal'])
-                        ),
+                        foreWorker
+                            .process(theTask)
+                            .pipe(timeoutWith(20, ['timeout-signal'])),
                         [1, 2, 'timeout-signal'],
                         null,
                         done

@@ -4,7 +4,7 @@ import {
     task,
     fromServiceToDirectProcessor,
     startDirectProcessor,
-    TransientError,
+    TransientError
 } from '../../src/processes';
 import { testObs, testTaskOf } from '../utils/rxtest';
 import { switchMap, skip, concat } from 'rxjs/operators';
@@ -20,12 +20,7 @@ describe('Processes', () => {
                 const proc = startDirectProcessor(runner);
 
                 it('it should process task returning the well behaved result', done => {
-                    testObs(
-                        proc.process(task('taskA')),
-                        [1, 2, 3],
-                        null,
-                        done
-                    );
+                    testObs(proc.process(task('taskA')), [1, 2, 3], null, done);
                 });
             });
 
@@ -34,7 +29,7 @@ describe('Processes', () => {
                     testTaskOf(5)(1, 2, 3, new TransientError('transient'))();
                 const proc = startDirectProcessor(runner, {
                     maxRetries: 3,
-                    nextDelay: d => d,
+                    nextDelay: d => d
                 });
 
                 it('it should process task returning the bad behaved result after retrying 3 times', done => {
@@ -61,7 +56,7 @@ describe('Processes', () => {
                 };
                 const proc = startDirectProcessor(runner, {
                     maxRetries: 5,
-                    nextDelay: d => d,
+                    nextDelay: d => d
                 });
 
                 it('it should process task returning the well behaved result after the error is resolved', done => {
@@ -82,7 +77,7 @@ describe('Processes', () => {
             describe('When a simple service is given', () => {
                 const service = {
                     taskA: testTaskOf(5)(42),
-                    taskB: testTaskOf(15)(60),
+                    taskB: testTaskOf(15)(60)
                 };
                 const processor = fromServiceToDirectProcessor(service);
 
@@ -90,12 +85,7 @@ describe('Processes', () => {
                     expect(processor).not.toBeUndefined());
 
                 it("calling taskA should return the same results as service's taskA", done => {
-                    testObs(
-                        processor.process(task('taskA')),
-                        [42],
-                        null,
-                        done
-                    );
+                    testObs(processor.process(task('taskA')), [42], null, done);
                 });
 
                 it("calling taskB with payload should return the same results as service's taskB", done => {
@@ -126,16 +116,9 @@ describe('Processes', () => {
 
             describe('When a simple service is given and the processor is finished', () => {
                 const service = {
-                    taskA: () =>
-                        timer(5).pipe(
-                            skip(1),
-                            concat(of('A'))
-                        ),
+                    taskA: () => timer(5).pipe(skip(1), concat(of('A'))),
                     taskB: (p: number) =>
-                        timer(p).pipe(
-                            skip(1),
-                            concat(of('B' + p))
-                        ),
+                        timer(p).pipe(skip(1), concat(of('B' + p)))
                 };
                 const processor = fromServiceToDirectProcessor(service);
 

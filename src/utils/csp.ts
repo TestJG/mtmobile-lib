@@ -54,21 +54,20 @@ export const protectChan = (name: string) => (ch: any) => {
         name: { writable: false, value: name },
         put: {
             writable: false,
-            value: function(...args: any[]) {
+            value: function (...args: any[]) {
                 try {
                     return oldPut.apply(ch, args);
                 } catch (error) {
                     const value = capString(JSON.stringify(args[0]), 40);
                     throw new Error(
-                        `Error putting into channel ${this
-                            .name} value ${value}: ${error}`
+                        `Error putting into channel ${this.name} value ${value}: ${error}`
                     );
                 }
             }
         },
         take: {
             writable: false,
-            value: function(...args: any[]) {
+            value: function (...args: any[]) {
                 try {
                     return oldTake.apply(ch, args);
                 } catch (error) {
@@ -80,7 +79,7 @@ export const protectChan = (name: string) => (ch: any) => {
         },
         close: {
             writable: false,
-            value: function(...args: any[]) {
+            value: function (...args: any[]) {
                 try {
                     return oldClose.apply(ch, args);
                 } catch (error) {
@@ -161,7 +160,7 @@ export const bufferedObserver = (
         finish();
     };
 
-    go(function*() {
+    go(function* () {
         while (true) {
             if (data.buffer.length === 0) {
                 if (data.isClosed) {
@@ -209,7 +208,7 @@ export const generatorToChan = (gen, options?: Partial<ToChanOptions>) => {
     );
     const log = conditionalLog(opts, { prefix: 'GEN-CHAN: ' });
     const ch = chan(opts.bufferOrN, opts.transducer, opts.exHandler);
-    go(function*() {
+    go(function* () {
         while (true) {
             try {
                 const { done, value } = gen.next();
@@ -272,13 +271,13 @@ export const promiseToChan = (
     try {
         promise
             .then(value => {
-                go(function*() {
+                go(function* () {
                     yield put(ch, value);
                     finish();
                 });
             })
             .catch(error => {
-                go(function*() {
+                go(function* () {
                     if (opts.includeErrors) {
                         yield put(ch, error);
                     }
@@ -286,7 +285,7 @@ export const promiseToChan = (
                 });
             });
     } catch (error) {
-        go(function*() {
+        go(function* () {
             if (opts.includeErrors) {
                 yield put(ch, error);
             }
@@ -297,12 +296,12 @@ export const promiseToChan = (
 };
 
 export const observableToChan = (
-  obs: Observable<any>,
-  options?: Partial<ToChanOptions>
+    obs: Observable<any>,
+    options?: Partial<ToChanOptions>
 ): any => {
-  const observer = bufferedObserver(options);
-  obs.subscribe(observer);
-  return observer.channel;
+    const observer = bufferedObserver(options);
+    obs.subscribe(observer);
+    return observer.channel;
 };
 
 export const firstToChan = (
@@ -369,7 +368,7 @@ export const chanToObservable = <T>(
     const obsResult = <Observable<T>>Observable.create((o: Observer<T>) => {
         log('Start');
         const cancelCh = promiseChan();
-        go(function*() {
+        go(function* () {
             while (true) {
                 const result = yield alts([ch, cancelCh], { priority: true });
                 if (result.channel === cancelCh || result.value === CLOSED) {
@@ -416,7 +415,7 @@ export const startPinging = (
     const releaseCh = promiseChan();
     const log = conditionalLog(opts, { prefix: 'PINGER: ' });
 
-    const finishedProm = go(function*() {
+    const finishedProm = go(function* () {
         log('Start');
 
         let error: any;
@@ -451,7 +450,7 @@ export const startPinging = (
     });
 
     const release = () =>
-        go(function*() {
+        go(function* () {
             yield put(releaseCh, true);
         });
 
@@ -523,7 +522,7 @@ export const startLeasing = (
 
     const onePing = () => {
         const resultCh = promiseChan();
-        go(function*() {
+        go(function* () {
             const endTime = new Date().getTime() + timeoutSecs * 1000;
             let pingCalled = false;
             while (true) {
@@ -553,7 +552,7 @@ export const startLeasing = (
         return resultCh;
     };
 
-    const finishedProm = go(function*() {
+    const finishedProm = go(function* () {
         let firstTime = true;
         while (true) {
             const leaseGranted = yield toYielder(leaseFn(leaseTimeoutSecs));
@@ -588,7 +587,7 @@ export const startLeasing = (
     });
 
     const release = () =>
-        go(function*() {
+        go(function* () {
             yield put(releaseCh, true);
         });
 
@@ -621,9 +620,11 @@ export const runPipelineNode = (
     const inputCh =
         typeof opts.inputCh === 'number'
             ? chan(opts.inputCh)
-            : opts.inputCh ? opts.inputCh : chan();
+            : opts.inputCh
+            ? opts.inputCh
+            : chan();
 
-    const finishedProm = go(function*() {
+    const finishedProm = go(function* () {
         yield put(startedProm, true);
         let index = 0;
         while (true) {
@@ -645,7 +646,7 @@ export const runPipelineNode = (
     });
 
     if (opts.initialValues) {
-        go(function*() {
+        go(function* () {
             let index = 0;
             const initCh = toChan(opts.initialValues);
             while (true) {
@@ -722,8 +723,8 @@ export class PipelineSequenceTarget {
                 typeof this.index === 'number'
                     ? this.index
                     : typeof this.offset === 'number'
-                      ? currentIndex + this.offset
-                      : currentIndex;
+                    ? currentIndex + this.offset
+                    : currentIndex;
             if (index < 0 || index >= arr.length) {
                 return notFoundFn(index === arr.length);
             }
@@ -743,8 +744,7 @@ export class PipelineSequenceTarget {
                 );
             } else if (typeof this.offset === 'number') {
                 throw new Error(
-                    `Expected to find element with offset ${this
-                        .offset} from index ${currentIndex}`
+                    `Expected to find element with offset ${this.offset} from index ${currentIndex}`
                 );
             } else {
                 throw new Error(
@@ -823,7 +823,7 @@ export const runPipelineSequence = (
             const nodeInit = opts.nodes[i];
             const index = i;
             const process = (value: any) =>
-                go(function*() {
+                go(function* () {
                     const proc = nodeInit.process(value);
                     if (isInstruction(proc)) {
                         yield proc;
@@ -872,7 +872,7 @@ export const runPipelineSequence = (
         }
 
         // Return a process that finishes when all nodes finish
-        return go(function*() {
+        return go(function* () {
             for (let i = 0; i < pipeArr.length; i++) {
                 yield pipeArr[i].finishedProm;
                 log('Finished node #' + i);
@@ -883,7 +883,7 @@ export const runPipelineSequence = (
         });
     };
 
-    const finishedProm = go(function*() {
+    const finishedProm = go(function* () {
         yield put(startedProm, true);
         yield startPipeline();
     });
@@ -891,7 +891,8 @@ export const runPipelineSequence = (
     const input = (index: string | number, value: any) =>
         (typeof index === 'number'
             ? toIndexedTarget(value, index)
-            : toNamedTarget(value, index))
+            : toNamedTarget(value, index)
+        )
             .select(pipeDict, pipeArr, 0)
             .input(value);
     const release = () => pipeArr[0].release();

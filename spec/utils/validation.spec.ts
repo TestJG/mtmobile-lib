@@ -32,7 +32,7 @@ import {
     shouldNotBeAnArrayShorterThan,
     shouldBeAnArrayShorterThan,
     shouldNotBeAnArrayLongerThan,
-    shouldBeAnArrayLongerThan,
+    shouldBeAnArrayLongerThan
 } from '../../src/utils/validation';
 
 function expectErrors(
@@ -1001,50 +1001,58 @@ describe('Utils', () => {
 
         describe('shouldNotBeGreaterThanOrEqualTo', () => {
             it('should be a function', () =>
-                expect(shouldNotBeGreaterThanOrEqualTo).toBeInstanceOf(Function));
+                expect(shouldNotBeGreaterThanOrEqualTo).toBeInstanceOf(
+                    Function
+                ));
 
             it('should return a function', () =>
-                expect(shouldNotBeGreaterThanOrEqualTo(5)).toBeInstanceOf(Function));
+                expect(shouldNotBeGreaterThanOrEqualTo(5)).toBeInstanceOf(
+                    Function
+                ));
 
-            expectParamErrors(shouldNotBeGreaterThanOrEqualTo, 'shouldNotBeGreaterThanOrEqualTo', [
-                {
-                    value: 3,
-                    params: [5]
-                },
-                {
-                    value: 4,
-                    params: [5]
-                },
-                {
-                    value: 'hello',
-                    params: [5],
-                    paramStr: [],
-                    errors: ['Should be a number']
-                },
-                {
-                    value: 10,
-                    params: [5],
-                    paramStr: [],
-                    errors: ['Should not be greater than or equal to 5']
-                },
-                {
-                    value: 10,
-                    params: [5, 'mistake'],
-                    paramStr: [],
-                    errors: ['mistake']
-                },
-                {
-                    value: 10,
-                    params: [
-                        5,
-                        (a, b, len, v) => `${a} + ${b} + ${len} = ${v}`,
-                        '123',
-                        '456'
-                    ],
-                    paramStr: [null, 'custom message'],
-                    errors: ['123 + 456 + 5 = 10']
-                }
-            ]);
+            expectParamErrors(
+                shouldNotBeGreaterThanOrEqualTo,
+                'shouldNotBeGreaterThanOrEqualTo',
+                [
+                    {
+                        value: 3,
+                        params: [5]
+                    },
+                    {
+                        value: 4,
+                        params: [5]
+                    },
+                    {
+                        value: 'hello',
+                        params: [5],
+                        paramStr: [],
+                        errors: ['Should be a number']
+                    },
+                    {
+                        value: 10,
+                        params: [5],
+                        paramStr: [],
+                        errors: ['Should not be greater than or equal to 5']
+                    },
+                    {
+                        value: 10,
+                        params: [5, 'mistake'],
+                        paramStr: [],
+                        errors: ['mistake']
+                    },
+                    {
+                        value: 10,
+                        params: [
+                            5,
+                            (a, b, len, v) => `${a} + ${b} + ${len} = ${v}`,
+                            '123',
+                            '456'
+                        ],
+                        paramStr: [null, 'custom message'],
+                        errors: ['123 + 456 + 5 = 10']
+                    }
+                ]
+            );
         });
 
         describe('shouldNotBeGreaterThan', () => {
@@ -1054,45 +1062,49 @@ describe('Utils', () => {
             it('should return a function', () =>
                 expect(shouldNotBeGreaterThan(5)).toBeInstanceOf(Function));
 
-            expectParamErrors(shouldNotBeGreaterThan, 'shouldNotBeGreaterThan', [
-                {
-                    value: 3,
-                    params: [5]
-                },
-                {
-                    value: 4,
-                    params: [5]
-                },
-                {
-                    value: 'hello',
-                    params: [5],
-                    paramStr: [],
-                    errors: ['Should be a number']
-                },
-                {
-                    value: 10,
-                    params: [5],
-                    paramStr: [],
-                    errors: ['Should not be greater than 5']
-                },
-                {
-                    value: 10,
-                    params: [5, 'mistake'],
-                    paramStr: [],
-                    errors: ['mistake']
-                },
-                {
-                    value: 10,
-                    params: [
-                        5,
-                        (a, b, len, v) => `${a} + ${b} + ${len} = ${v}`,
-                        '123',
-                        '456'
-                    ],
-                    paramStr: [null, 'custom message'],
-                    errors: ['123 + 456 + 5 = 10']
-                }
-            ]);
+            expectParamErrors(
+                shouldNotBeGreaterThan,
+                'shouldNotBeGreaterThan',
+                [
+                    {
+                        value: 3,
+                        params: [5]
+                    },
+                    {
+                        value: 4,
+                        params: [5]
+                    },
+                    {
+                        value: 'hello',
+                        params: [5],
+                        paramStr: [],
+                        errors: ['Should be a number']
+                    },
+                    {
+                        value: 10,
+                        params: [5],
+                        paramStr: [],
+                        errors: ['Should not be greater than 5']
+                    },
+                    {
+                        value: 10,
+                        params: [5, 'mistake'],
+                        paramStr: [],
+                        errors: ['mistake']
+                    },
+                    {
+                        value: 10,
+                        params: [
+                            5,
+                            (a, b, len, v) => `${a} + ${b} + ${len} = ${v}`,
+                            '123',
+                            '456'
+                        ],
+                        paramStr: [null, 'custom message'],
+                        errors: ['123 + 456 + 5 = 10']
+                    }
+                ]
+            );
         });
 
         describe('shouldBeLessThanOrEqualTo', () => {
@@ -1102,45 +1114,49 @@ describe('Utils', () => {
             it('should return a function', () =>
                 expect(shouldBeLessThanOrEqualTo(5)).toBeInstanceOf(Function));
 
-            expectParamErrors(shouldBeLessThanOrEqualTo, 'shouldBeLessThanOrEqualTo', [
-                {
-                    value: 3,
-                    params: [5]
-                },
-                {
-                    value: 4,
-                    params: [5]
-                },
-                {
-                    value: 'hello',
-                    params: [5],
-                    paramStr: [],
-                    errors: ['Should be a number']
-                },
-                {
-                    value: 10,
-                    params: [5],
-                    paramStr: [],
-                    errors: ['Should be less than or equal to 5']
-                },
-                {
-                    value: 10,
-                    params: [5, 'mistake'],
-                    paramStr: [],
-                    errors: ['mistake']
-                },
-                {
-                    value: 10,
-                    params: [
-                        5,
-                        (a, b, len, v) => `${a} + ${b} + ${len} = ${v}`,
-                        '123',
-                        '456'
-                    ],
-                    paramStr: [null, 'custom message'],
-                    errors: ['123 + 456 + 5 = 10']
-                }
-            ]);
+            expectParamErrors(
+                shouldBeLessThanOrEqualTo,
+                'shouldBeLessThanOrEqualTo',
+                [
+                    {
+                        value: 3,
+                        params: [5]
+                    },
+                    {
+                        value: 4,
+                        params: [5]
+                    },
+                    {
+                        value: 'hello',
+                        params: [5],
+                        paramStr: [],
+                        errors: ['Should be a number']
+                    },
+                    {
+                        value: 10,
+                        params: [5],
+                        paramStr: [],
+                        errors: ['Should be less than or equal to 5']
+                    },
+                    {
+                        value: 10,
+                        params: [5, 'mistake'],
+                        paramStr: [],
+                        errors: ['mistake']
+                    },
+                    {
+                        value: 10,
+                        params: [
+                            5,
+                            (a, b, len, v) => `${a} + ${b} + ${len} = ${v}`,
+                            '123',
+                            '456'
+                        ],
+                        paramStr: [null, 'custom message'],
+                        errors: ['123 + 456 + 5 = 10']
+                    }
+                ]
+            );
         });
 
         describe('shouldBeBetweenValues', () => {
@@ -1190,8 +1206,10 @@ describe('Utils', () => {
                 {
                     value: 20,
                     params: [
-                        5, 10,
-                        (a, b, min, max, v) => `${a} + ${b} + ${min} + ${max} = ${v}`,
+                        5,
+                        10,
+                        (a, b, min, max, v) =>
+                            `${a} + ${b} + ${min} + ${max} = ${v}`,
                         '123',
                         '456'
                     ],
@@ -1206,59 +1224,67 @@ describe('Utils', () => {
                 expect(shouldNotBeBetweenValues).toBeInstanceOf(Function));
 
             it('should return a function', () =>
-                expect(shouldNotBeBetweenValues(5, 10)).toBeInstanceOf(Function));
+                expect(shouldNotBeBetweenValues(5, 10)).toBeInstanceOf(
+                    Function
+                ));
 
-            expectParamErrors(shouldNotBeBetweenValues, 'shouldNotBeBetweenValues', [
-                {
-                    value: 4,
-                    params: [5, 10]
-                },
-                {
-                    value: 11,
-                    params: [5, 10]
-                },
-                {
-                    value: 'hello',
-                    params: [5, 10],
-                    paramStr: [],
-                    errors: ['Should be a number']
-                },
-                {
-                    value: 5,
-                    params: [5, 10],
-                    paramStr: [],
-                    errors: ['Should not be between 5 and 10']
-                },
-                {
-                    value: 8,
-                    params: [5, 10],
-                    paramStr: [],
-                    errors: ['Should not be between 5 and 10']
-                },
-                {
-                    value: 10,
-                    params: [5, 10],
-                    paramStr: [],
-                    errors: ['Should not be between 5 and 10']
-                },
-                {
-                    value: 8,
-                    params: [5, 10, 'mistake'],
-                    paramStr: [],
-                    errors: ['mistake']
-                },
-                {
-                    value: 8,
-                    params: [
-                        5, 10,
-                        (a, b, min, max, v) => `${a} + ${b} + ${min} + ${max} = ${v}`,
-                        '123',
-                        '456'
-                    ],
-                    paramStr: [null, 'custom message'],
-                    errors: ['123 + 456 + 5 + 10 = 8']
-                }
-            ]);
+            expectParamErrors(
+                shouldNotBeBetweenValues,
+                'shouldNotBeBetweenValues',
+                [
+                    {
+                        value: 4,
+                        params: [5, 10]
+                    },
+                    {
+                        value: 11,
+                        params: [5, 10]
+                    },
+                    {
+                        value: 'hello',
+                        params: [5, 10],
+                        paramStr: [],
+                        errors: ['Should be a number']
+                    },
+                    {
+                        value: 5,
+                        params: [5, 10],
+                        paramStr: [],
+                        errors: ['Should not be between 5 and 10']
+                    },
+                    {
+                        value: 8,
+                        params: [5, 10],
+                        paramStr: [],
+                        errors: ['Should not be between 5 and 10']
+                    },
+                    {
+                        value: 10,
+                        params: [5, 10],
+                        paramStr: [],
+                        errors: ['Should not be between 5 and 10']
+                    },
+                    {
+                        value: 8,
+                        params: [5, 10, 'mistake'],
+                        paramStr: [],
+                        errors: ['mistake']
+                    },
+                    {
+                        value: 8,
+                        params: [
+                            5,
+                            10,
+                            (a, b, min, max, v) =>
+                                `${a} + ${b} + ${min} + ${max} = ${v}`,
+                            '123',
+                            '456'
+                        ],
+                        paramStr: [null, 'custom message'],
+                        errors: ['123 + 456 + 5 + 10 = 8']
+                    }
+                ]
+            );
         });
     });
 });

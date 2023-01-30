@@ -46,9 +46,7 @@ describe('Processes', () => {
 
             const createInit = <T>(names: string[]) => {
                 const processor = {
-                    process: jest.fn(item =>
-                            of(item.kind + item.payload)
-                        ),
+                    process: jest.fn(item => of(item.kind + item.payload)),
                     isAlive: jest.fn(() => true),
                     finish: jest.fn(() => EMPTY)
                 };

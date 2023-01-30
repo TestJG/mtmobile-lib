@@ -10,7 +10,7 @@ import {
     take,
     putAsync,
     operations,
-    CLOSED,
+    CLOSED
 } from 'js-csp';
 import { testObs } from './rxtest';
 import {
@@ -35,7 +35,7 @@ import {
     toPreviousTarget,
     runPipelineNode,
     runPipelineSequence,
-    iterableToChan,
+    iterableToChan
 } from '../../src/utils/csp';
 import { conditionalLog } from '../../src/utils/common';
 import { map, take as takeObs } from 'rxjs/operators';
@@ -77,7 +77,7 @@ describe('Utils', () => {
             it('with values in the channel and closing afterwards it should produce the values and complete', done => {
                 const ch = chan();
                 testObs(chanToObservable(ch), [1, 2, 3, 4, 5], null, done);
-                go(function*() {
+                go(function* () {
                     for (let i = 0; i < 5; i++) {
                         yield put(ch, i + 1);
                     }
@@ -94,7 +94,7 @@ describe('Utils', () => {
                     done,
                     { doneTimeout: 100 }
                 );
-                go(function*() {
+                go(function* () {
                     for (let i = 0; i < 5; i++) {
                         yield put(ch, i + 1);
                     }
@@ -125,7 +125,7 @@ describe('Utils', () => {
 
             it('with a real iterator it should produce the values in the channel', done => {
                 const it = {};
-                it[Symbol.iterator] = function*() {
+                it[Symbol.iterator] = function* () {
                     yield 10;
                     yield 20;
                     yield 30;
@@ -136,7 +136,7 @@ describe('Utils', () => {
 
             it('with a failing iterator it should produce the values in the channel', done => {
                 const it = {};
-                it[Symbol.iterator] = function*() {
+                it[Symbol.iterator] = function* () {
                     yield 10;
                     yield 20;
                     throw new Error('unexpected');
@@ -152,7 +152,7 @@ describe('Utils', () => {
 
             it('with a failing iterator and not including errors it should produce the values in the channel', done => {
                 const it = {};
-                it[Symbol.iterator] = function*() {
+                it[Symbol.iterator] = function* () {
                     yield 10;
                     yield 20;
                     throw new Error('unexpected');
@@ -169,7 +169,7 @@ describe('Utils', () => {
                     [
                         new TypeError(
                             'iterable[Symbol.iterator] is not a function'
-                        ),
+                        )
                     ],
                     null,
                     done
@@ -182,7 +182,7 @@ describe('Utils', () => {
                 expect(generatorToChan).toBeInstanceOf(Function));
 
             it('with a real generator it should produce the values in the channel', done => {
-                const gen = function*() {
+                const gen = function* () {
                     yield 10;
                     yield 20;
                     yield 30;
@@ -192,7 +192,7 @@ describe('Utils', () => {
             });
 
             it('with keepOpen it should produce the values and leave the channel open', done => {
-                const gen = function*() {
+                const gen = function* () {
                     yield 10;
                     yield 20;
                     yield 30;
@@ -207,7 +207,7 @@ describe('Utils', () => {
             });
 
             it('with a failing generator it should produce the values in the channel', done => {
-                const gen = function*() {
+                const gen = function* () {
                     yield 10;
                     yield 20;
                     throw new Error('unexpected');
@@ -222,7 +222,7 @@ describe('Utils', () => {
             });
 
             it('with a failing generator and not including errors it should produce the values in the channel', done => {
-                const gen = function*() {
+                const gen = function* () {
                     yield 10;
                     yield 20;
                     throw new Error('unexpected');
@@ -331,7 +331,7 @@ describe('Utils', () => {
                 const obs = timer(10).pipe(map(() => 42));
                 const ch = firstToChan(obs, { keepOpen: true });
                 testObs(chanToObservable(ch), [42, 'TIMEOUT'], null, done, {
-                    doneTimeout: 100,
+                    doneTimeout: 100
                 });
             });
         });
@@ -371,7 +371,7 @@ describe('Utils', () => {
                 const obs = timer(10).pipe(map(() => 42));
                 const ch = observableToChan(obs, { keepOpen: true });
                 testObs(chanToObservable(ch), [42, 'TIMEOUT'], null, done, {
-                    doneTimeout: 100,
+                    doneTimeout: 100
                 });
             });
         });
@@ -382,7 +382,7 @@ describe('Utils', () => {
 
             it('with an iterator it should produce the values in the channel', done => {
                 const it = {};
-                it[Symbol.iterator] = function*() {
+                it[Symbol.iterator] = function* () {
                     yield 10;
                     yield 20;
                     yield 30;
@@ -392,7 +392,7 @@ describe('Utils', () => {
             });
 
             it('with a generator it should produce the values in the channel', done => {
-                const gen = function*() {
+                const gen = function* () {
                     yield 10;
                     yield 20;
                     yield 30;

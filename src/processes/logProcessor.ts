@@ -38,47 +38,49 @@ export interface LogProcessorCoreOptions {
     errorFormatter: (error: any, item: TaskItem) => string;
 }
 
-export const defaultTaskFormatter = (
-    maxPayloadLength: number = 60,
-    maxTaskIdLength: number = undefined
-) => (item: TaskItem, showPayload: boolean) => {
-    let payload =
-        showPayload && item.payload && maxPayloadLength
-            ? JSON.stringify(item.payload)
-            : '';
-    if (maxPayloadLength && payload) {
-        payload = capString(payload, maxPayloadLength);
-    }
-    if (payload) {
-        payload = ` ${payload}`;
-    }
-
-    let taskId = item.uid;
-    if (maxTaskIdLength && taskId) {
-        taskId = capString(taskId, maxTaskIdLength, '');
-    }
-    if (taskId) {
-        taskId = ` [${taskId}]`;
-    }
-    return `${item.kind}${taskId}${payload}`;
-};
-
-export const defaultValueFormatter = (maxValueLength = 60) => (value: any) =>
-    capString(JSON.stringify(value), maxValueLength);
-
-export const defaultErrorFormatter = (showStack: boolean = true) => (
-    error: any
-) => {
-    if (error instanceof Error) {
-        let result = `${error.name || 'Error'}: ${error.message ||
-            '(no message)'}`;
-        if (error.stack && showStack) {
-            result = result + '\n' + error.stack;
+export const defaultTaskFormatter =
+    (maxPayloadLength: number = 60, maxTaskIdLength: number = undefined) =>
+    (item: TaskItem, showPayload: boolean) => {
+        let payload =
+            showPayload && item.payload && maxPayloadLength
+                ? JSON.stringify(item.payload)
+                : '';
+        if (maxPayloadLength && payload) {
+            payload = capString(payload, maxPayloadLength);
         }
-        return result;
-    }
-    return undefined;
-};
+        if (payload) {
+            payload = ` ${payload}`;
+        }
+
+        let taskId = item.uid;
+        if (maxTaskIdLength && taskId) {
+            taskId = capString(taskId, maxTaskIdLength, '');
+        }
+        if (taskId) {
+            taskId = ` [${taskId}]`;
+        }
+        return `${item.kind}${taskId}${payload}`;
+    };
+
+export const defaultValueFormatter =
+    (maxValueLength = 60) =>
+    (value: any) =>
+        capString(JSON.stringify(value), maxValueLength);
+
+export const defaultErrorFormatter =
+    (showStack: boolean = true) =>
+    (error: any) => {
+        if (error instanceof Error) {
+            let result = `${error.name || 'Error'}: ${
+                error.message || '(no message)'
+            }`;
+            if (error.stack && showStack) {
+                result = result + '\n' + error.stack;
+            }
+            return result;
+        }
+        return undefined;
+    };
 
 export function logProcessorCore<T extends IProcessorCore>(
     processor: T,
@@ -115,18 +117,25 @@ export function logProcessorCore<T extends IProcessorCore>(
             console.log(`${print('START')}`);
             let result = processor.process(item);
             if (!opts.basicProcessLog) {
-                result = result.pipe(tap({
-                    next: x =>
-                        console.log(
-                            `${print('NEXT ')} VAL: ${opts.valueFormatter(x, item)}`
-                        ),
-                    error: x =>
-                        console.log(
-                            `${print('ERROR')} ERR: ${opts.errorFormatter(x, item) ||
-                                opts.valueFormatter(x, item)}`
-                        ),
-                    complete: () => console.log(`${print('COMPL')}`)
-                }));
+                result = result.pipe(
+                    tap({
+                        next: x =>
+                            console.log(
+                                `${print('NEXT ')} VAL: ${opts.valueFormatter(
+                                    x,
+                                    item
+                                )}`
+                            ),
+                        error: x =>
+                            console.log(
+                                `${print('ERROR')} ERR: ${
+                                    opts.errorFormatter(x, item) ||
+                                    opts.valueFormatter(x, item)
+                                }`
+                            ),
+                        complete: () => console.log(`${print('COMPL')}`)
+                    })
+                );
             }
             return result;
         }
@@ -153,15 +162,19 @@ export function logProcessorCore<T extends IProcessorCore>(
             console.log(print('START'));
             let result = processor.finish();
             if (!opts.basicProcessLog) {
-                result = result.pipe(tap({
-                    next: () => console.log(print('NEXT')),
-                    error: x =>
-                        console.log(
-                            `${print('ERROR')} ${opts.errorFormatter(x, undefined) ||
-                                opts.valueFormatter(x, undefined)}`
-                        ),
-                    complete: () => console.log(print('COMPLETE'))
-                }));
+                result = result.pipe(
+                    tap({
+                        next: () => console.log(print('NEXT')),
+                        error: x =>
+                            console.log(
+                                `${print('ERROR')} ${
+                                    opts.errorFormatter(x, undefined) ||
+                                    opts.valueFormatter(x, undefined)
+                                }`
+                            ),
+                        complete: () => console.log(print('COMPLETE'))
+                    })
+                );
             }
             return result;
         }

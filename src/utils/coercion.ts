@@ -2,9 +2,7 @@ export type Coerce<T> = (value: T) => T;
 
 export type CoerceInit<T> = Coerce<T> | Coerce<T>[];
 
-export const coerceAll = <T>(
-    list?: CoerceInit<T>
-): Coerce<T> => {
+export const coerceAll = <T>(list?: CoerceInit<T>): Coerce<T> => {
     if (!list) {
         list = [];
     }

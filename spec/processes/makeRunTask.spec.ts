@@ -64,7 +64,7 @@ describe('Processes', () => {
                         setTimeout(() => {
                             obs.error(new Error('error'));
                         }, 10);
-                    }),
+                    })
             });
 
             it('calling it with null taskItem should return an observable error', done => {

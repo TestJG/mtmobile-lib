@@ -3,7 +3,7 @@ import { testObs } from './rxtest';
 import * as common from '../../src/utils/common';
 import * as rxutils from '../../src/utils/rxutils';
 import * as redux from '../../src/utils/redux';
-import { of } from "rxjs";
+import { of } from 'rxjs';
 
 interface Person {
     firstName: string;
@@ -144,11 +144,7 @@ describe('Utils', () => {
                 it("function 'filter' should filter out non-corresponding actions", done => {
                     testObs(
                         setAge.filter(
-                            of(
-                                setAge(42),
-                                { type: 'other action' },
-                                setAge(15)
-                            )
+                            of(setAge(42), { type: 'other action' }, setAge(15))
                         ),
                         [42, 15],
                         null,
@@ -220,11 +216,7 @@ describe('Utils', () => {
                 it("function 'filter' should filter out non-corresponding actions", done => {
                     testObs(
                         incAge.filter(
-                            of(
-                                incAge(),
-                                { type: 'other action' },
-                                incAge()
-                            )
+                            of(incAge(), { type: 'other action' }, incAge())
                         ),
                         [null, null],
                         null,
@@ -294,11 +286,7 @@ describe('Utils', () => {
                 it("function 'filter' should filter out non-corresponding actions", done => {
                     testObs(
                         setAge.filter(
-                            of(
-                                setAge(42),
-                                { type: 'other action' },
-                                setAge(15)
-                            )
+                            of(setAge(42), { type: 'other action' }, setAge(15))
                         ),
                         [42, 15],
                         null,
@@ -355,11 +343,7 @@ describe('Utils', () => {
                 it("function 'filter' should filter out non-corresponding actions", done => {
                     testObs(
                         incAge.filter(
-                            of(
-                                incAge(),
-                                { type: 'other action' },
-                                incAge()
-                            )
+                            of(incAge(), { type: 'other action' }, incAge())
                         ),
                         [null, null],
                         null,
@@ -470,18 +454,18 @@ describe('Utils', () => {
                     )
                 };
                 const overriden = redux.overrideActions(actions, {
-                    doNothing: (u: User, what: string) => ({ doing: what }),
+                    doNothing: (u: User, what: string) => ({ doing: what })
                 });
                 expect(typeof overriden).toEqual('object');
 
-                const aUser = {doing: ''};
+                const aUser = { doing: '' };
                 const reducer = redux.makeReducer<User>(aUser)(overriden);
                 const state1 = reducer(aUser, actions.incAge());
                 expect(state1).toBe(aUser);
                 const state2 = reducer(state1, actions.setAge(45));
                 expect(state2).toBe(aUser);
                 const state3 = reducer(state2, actions.doNothing('stuff'));
-                expect(state3).toEqual({...aUser, doing: 'stuff'});
+                expect(state3).toEqual({ ...aUser, doing: 'stuff' });
             });
         });
     });

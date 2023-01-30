@@ -31,36 +31,32 @@ export const createBackgroundWorker = (opts: {
     const process = (item: WorkerItem) => {
         switch (item.kind) {
             case 'process': {
-                const subs = opts.processor.pipe(
-                    first(),
-                    switchMap(p => p.process(item.task)))
+                const subs = opts.processor
+                    .pipe(
+                        first(),
+                        switchMap(p => p.process(item.task))
+                    )
                     .subscribe({
                         next: v =>
-                            opts.postMessage(
-                                <WorkerItemResponse>{
-                                    kind: 'N',
-                                    uid: item.uid,
-                                    valueOrError: v
-                                }
-                            ),
+                            opts.postMessage(<WorkerItemResponse>{
+                                kind: 'N',
+                                uid: item.uid,
+                                valueOrError: v
+                            }),
                         error: err => {
                             subscriptions.delete(item.uid);
-                            opts.postMessage(
-                                <WorkerItemResponse>{
-                                    kind: 'E',
-                                    uid: item.uid,
-                                    valueOrError: err
-                                }
-                            );
+                            opts.postMessage(<WorkerItemResponse>{
+                                kind: 'E',
+                                uid: item.uid,
+                                valueOrError: err
+                            });
                         },
                         complete: () => {
                             subscriptions.delete(item.uid);
-                            opts.postMessage(
-                                <WorkerItemResponse>{
-                                    kind: 'C',
-                                    uid: item.uid
-                                }
-                            );
+                            opts.postMessage(<WorkerItemResponse>{
+                                kind: 'C',
+                                uid: item.uid
+                            });
                         }
                     });
                 subscriptions.set(item.uid, subs);
@@ -77,7 +73,12 @@ export const createBackgroundWorker = (opts: {
             }
 
             case 'terminate': {
-                opts.processor.pipe(first(), switchMap(p => p.finish())).subscribe();
+                opts.processor
+                    .pipe(
+                        first(),
+                        switchMap(p => p.finish())
+                    )
+                    .subscribe();
                 break;
             }
 
@@ -123,36 +124,34 @@ export const createForegroundWorker = (opts: {
     const finish = () => {
         if (status === 'open') {
             status = 'closing';
-            worker.postMessage(
-                <WorkerItem>{
-                    kind: 'terminate',
-                    uid: terminateUUID
-                }
-            );
+            worker.postMessage(<WorkerItem>{
+                kind: 'terminate',
+                uid: terminateUUID
+            });
         }
         return terminate$;
     };
 
     const process = (task: TaskItem): Observable<any> => {
-        const result = <Observable<
-            any
-        >>Observable.create((o: Observer<any>) => {
-            const id = uuid();
-            const sub = new Subject<any>();
-            const obs$ = sub.asObservable();
-            observers.set(id, sub);
-            worker.postMessage({ kind: 'process', uid: id, task });
-            const subs = obs$.subscribe({
-                next: x => o.next(x),
-                error: e => o.error(e),
-                complete: () => o.complete()
-            });
+        const result = <Observable<any>>Observable.create(
+            (o: Observer<any>) => {
+                const id = uuid();
+                const sub = new Subject<any>();
+                const obs$ = sub.asObservable();
+                observers.set(id, sub);
+                worker.postMessage({ kind: 'process', uid: id, task });
+                const subs = obs$.subscribe({
+                    next: x => o.next(x),
+                    error: e => o.error(e),
+                    complete: () => o.complete()
+                });
 
-            return () => {
-                subs.unsubscribe();
-                worker.postMessage({ kind: 'unsubscribe', uid: id });
-            };
-        });
+                return () => {
+                    subs.unsubscribe();
+                    worker.postMessage({ kind: 'unsubscribe', uid: id });
+                };
+            }
+        );
         return result;
     };
 

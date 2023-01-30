@@ -85,7 +85,7 @@ export function startDirectProcessor(
         return onFinished$;
     };
 
-    const runOneTask = function(item: TaskItem, sub: Subject<any>) {
+    const runOneTask = function (item: TaskItem, sub: Subject<any>) {
         const runOnce = (retries: number) => {
             let obs: Observable<any> = null;
             if (retries === 1) {
@@ -183,9 +183,7 @@ export const fromServiceToDirectProcessor = (
 ): IProcessor =>
     startDirectProcessor(
         makeRunTask(
-            objMapValues(f => payload => (!!payload ? f(payload) : f()))(
-                service
-            )
+            objMapValues(f => payload => !!payload ? f(payload) : f())(service)
         ),
         Object.assign({ caption }, options)
     );

@@ -11,50 +11,47 @@ export const relaxedEqual = <T>(x: T, y: T) =>
     x == y ||
     (typeof x === 'number' && typeof y === 'number' && isNaN(x) && isNaN(y));
 
-export const errorEqualFact: EqualityComparerFactory = (
-    childComparer: EqualityComparer
-) => (x: Error, y: Error) =>
-    childComparer(x.name, y.name) && childComparer(x.message, y.message);
+export const errorEqualFact: EqualityComparerFactory =
+    (childComparer: EqualityComparer) => (x: Error, y: Error) =>
+        childComparer(x.name, y.name) && childComparer(x.message, y.message);
 
-export const dateEqualFact: EqualityComparerFactory = (
-    childComparer: EqualityComparer
-) => (x: Date, y: Date) => x.getTime() === y.getTime();
+export const dateEqualFact: EqualityComparerFactory =
+    (childComparer: EqualityComparer) => (x: Date, y: Date) =>
+        x.getTime() === y.getTime();
 
-export const arrayEqualFact: EqualityComparerFactory = (
-    childComparer: EqualityComparer
-) => (x: Array<any>, y: Array<any>) =>
-    x.length === y.length && x.every((xv, i) => childComparer(xv, y[i]));
+export const arrayEqualFact: EqualityComparerFactory =
+    (childComparer: EqualityComparer) => (x: Array<any>, y: Array<any>) =>
+        x.length === y.length && x.every((xv, i) => childComparer(xv, y[i]));
 
-export const objectEqualFact: EqualityComparerFactory = (
-    childComparer: EqualityComparer
-) => (x: Object, y: Object) => {
-    let xProps = Object.getOwnPropertyNames(x);
-    let yProps = Object.getOwnPropertyNames(y);
-    // Not the same number of properties?
-    if (xProps.length !== yProps.length) {
-        return false;
-    }
-    xProps = xProps.sort();
-    yProps = yProps.sort();
-
-    // Not the same properties?
-    for (let index = 0; index < xProps.length; index++) {
-        if (xProps[index] !== yProps[index]) {
+export const objectEqualFact: EqualityComparerFactory =
+    (childComparer: EqualityComparer) => (x: Object, y: Object) => {
+        let xProps = Object.getOwnPropertyNames(x);
+        let yProps = Object.getOwnPropertyNames(y);
+        // Not the same number of properties?
+        if (xProps.length !== yProps.length) {
             return false;
         }
-    }
-    // Not the same values?
-    for (let index = 0; index < xProps.length; index++) {
-        const prop = xProps[index];
-        if (!childComparer(x[prop], y[prop])) {
-            return false;
+        xProps = xProps.sort();
+        yProps = yProps.sort();
+
+        // Not the same properties?
+        for (let index = 0; index < xProps.length; index++) {
+            if (xProps[index] !== yProps[index]) {
+                return false;
+            }
         }
-    }
-    return true;
-};
+        // Not the same values?
+        for (let index = 0; index < xProps.length; index++) {
+            const prop = xProps[index];
+            if (!childComparer(x[prop], y[prop])) {
+                return false;
+            }
+        }
+        return true;
+    };
 
 export const defaultEqualityFactories: [
-    (string | Function | undefined),
+    string | Function | undefined,
     boolean,
     EqualityComparerFactory
 ][] = [
@@ -64,16 +61,17 @@ export const defaultEqualityFactories: [
     [Object, true, objectEqualFact]
 ];
 
-export const createEqualityComparer = (
-    childComparer: () => EqualityComparer,
-    fallbackComparer: EqualityComparer,
-    factories: [
-        (string | Function | undefined),
-        boolean,
-        EqualityComparerFactory
-    ][]
-): EqualityComparer => {
-    return (x, y) => {
+export const createEqualityComparer =
+    (
+        childComparer: () => EqualityComparer,
+        fallbackComparer: EqualityComparer,
+        factories: [
+            string | Function | undefined,
+            boolean,
+            EqualityComparerFactory
+        ][]
+    ): EqualityComparer =>
+    (x, y) => {
         for (let index = 0; index < factories.length; index++) {
             const [key, strict, factory] = factories[index];
             const isMatch =
@@ -94,7 +92,6 @@ export const createEqualityComparer = (
         }
         return fallbackComparer(x, y);
     };
-};
 
 const recursiveEqualImplementation = <T>(
     x: T,
@@ -161,22 +158,24 @@ const recursiveEqualImplementation = <T>(
     }
 };
 
-const deepEqualImpl = (eq: EqualityComparer<any>) => <T>(x: T, y: T) => {
-    if (strictEqual(x, y)) {
-        return true;
-    }
-    if (typeof x === 'object' && typeof y === 'object') {
-        if (x === null || y === null) {
-            if (x === null && y === null) {
-                return eq(x, y);
-            }
-            return false;
+const deepEqualImpl =
+    (eq: EqualityComparer<any>) =>
+    <T>(x: T, y: T) => {
+        if (strictEqual(x, y)) {
+            return true;
         }
-        return recursiveEqualImplementation(x, y, deepEqualImpl(eq));
-    }
+        if (typeof x === 'object' && typeof y === 'object') {
+            if (x === null || y === null) {
+                if (x === null && y === null) {
+                    return eq(x, y);
+                }
+                return false;
+            }
+            return recursiveEqualImplementation(x, y, deepEqualImpl(eq));
+        }
 
-    return eq(x, y);
-};
+        return eq(x, y);
+    };
 
 export const deepEqual = createEqualityComparer(
     () => deepEqual,
