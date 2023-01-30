@@ -55,6 +55,8 @@ module.exports = {
         "@angular-eslint/no-output-rename": "error",
         "@angular-eslint/use-pipe-transform-interface": "error",
         "@typescript-eslint/consistent-type-definitions": "error",
+        '@typescript-eslint/consistent-type-exports': 'error',
+        '@typescript-eslint/consistent-type-imports': 'error',
         "@typescript-eslint/dot-notation": "off",
         "@typescript-eslint/explicit-member-accessibility": [
             "off",
