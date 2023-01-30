@@ -7,7 +7,7 @@ export const strictEqual = <T>(x: T, y: T) =>
     x === y ||
     (typeof x === 'number' && typeof y === 'number' && isNaN(x) && isNaN(y));
 export const relaxedEqual = <T>(x: T, y: T) =>
-    // tslint:disable-next-line:triple-equals
+    // eslint-disable-next-line eqeqeq
     x == y ||
     (typeof x === 'number' && typeof y === 'number' && isNaN(x) && isNaN(y));
 

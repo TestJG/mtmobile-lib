@@ -159,7 +159,7 @@ export function startSequentialProcessor(
       const work = pickWork();
       log(() => `LOOP - PICK ${!work ? 'nothing' : logWork(work)}`);
       if (work) {
-          // tslint:disable-next-line:no-use-before-declare
+          // eslint-disable-next-line no-use-before-define,@typescript-eslint/no-use-before-define
           runTaskOnce(work);
       } else if (!_isAlive && _retryPendingCount === 0) {
           // Only once all input and retries has been processed
