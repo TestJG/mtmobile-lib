@@ -32,6 +32,13 @@ module.exports = {
         "plugin:prettier/recommended",
     ],
     "root": true,
+    "ignorePatterns": [
+        "/compiled/*",
+        "/dist/*",
+        "rollup.config.js",
+        "jest.config.ts",
+        ".eslintrc.js"
+    ],
     "rules": {
         "@angular-eslint/component-class-suffix": "error",
         "@angular-eslint/component-selector": [
