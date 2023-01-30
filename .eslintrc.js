@@ -75,6 +75,12 @@ module.exports = {
                 ],
                 "leadingUnderscore": "forbid",
                 "trailingUnderscore": "forbid"
+            },
+            {
+                "selector": "variable",
+                "modifiers": ["unused"],
+                "format": null,
+                "leadingUnderscore": "require"
             }
         ],
         "@typescript-eslint/no-empty-function": "off",
