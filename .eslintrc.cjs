@@ -34,7 +34,7 @@ module.exports = {
         '/dist/*',
         'rollup.config.js',
         'jest.config.ts',
-        '.eslintrc.js'
+        '.eslintrc.cjs'
     ],
     rules: {
         '@angular-eslint/component-class-suffix': 'error',
