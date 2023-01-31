@@ -62,11 +62,11 @@ jobs:
 
       - run: pnpm dlx changelogen@latest --release
 
-      - run: git push
-
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+
+      - run: git push
 
   # Single deploy job since we're just deploying
   deploy:
