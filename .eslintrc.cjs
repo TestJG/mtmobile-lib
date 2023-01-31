@@ -11,7 +11,7 @@ https://github.com/typescript-eslint/tslint-to-eslint-config/blob/master/docs/FA
 
 Happy linting! 💖
 */
-export default {
+module.exports = {
     env: {
         browser: true,
         es6: true,
