@@ -38,8 +38,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
-
       - run: pnpm install
+
       - run: pnpm lint
       - run: pnpm test -- --coverage
 
@@ -55,10 +55,9 @@ jobs:
         with:
           cache: 'pnpm'
 
+      - run: pnpm install
       - name: Build
         run: pnpm build
-
-      - run: ls -lisa
 
       - run: pnpm dlx changelogen@latest --release
 
@@ -83,6 +82,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           cache: 'pnpm'
+      - run: pnpm install
 
       - run: pnpm run docs
 
