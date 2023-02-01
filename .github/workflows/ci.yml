@@ -62,7 +62,7 @@ jobs:
 
       - run: pnpm dlx changelogen@latest --release
 
-      - run: npm publish
+      - run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
 
