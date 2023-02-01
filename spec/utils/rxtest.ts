@@ -1,5 +1,5 @@
 import type { Observable } from 'rxjs';
-import { Notification, of, throwError, timer } from 'rxjs';
+import { of, throwError, timer } from 'rxjs';
 import {
     concatMap,
     materialize,
@@ -17,9 +17,22 @@ export type TestObsOptions<T = any> = {
     doneTimeout: number;
 } & LogOpts;
 
+type RxNotification<T> =
+    | {
+          kind: 'N';
+          value: T;
+      }
+    | {
+          kind: 'E';
+          error: unknown;
+      }
+    | {
+          kind: 'C';
+      };
+
 export const testObsNotifications = <T = any>(
     actual: Observable<T>,
-    expected: Notification<T>[],
+    expected: RxNotification<T>[],
     done: jest.DoneCallback,
     options?: Partial<TestObsOptions<T>>
 ) => {
@@ -34,7 +47,7 @@ export const testObsNotifications = <T = any>(
     const { doneTimeout } = opts;
     const log = conditionalLog(opts, { prefix: 'TEST_OBS: ' });
 
-    const toStr = (n: Notification<any>) => {
+    const toStr = (n: RxNotification<any>) => {
         switch (n.kind) {
             case 'N': {
                 const str =
@@ -52,8 +65,6 @@ export const testObsNotifications = <T = any>(
             }
             case 'C':
                 return `a COMPLETE`;
-            default:
-                return `an unknown notification of kind: ${n.kind}`;
         }
     };
 
@@ -72,6 +83,15 @@ export const testObsNotifications = <T = any>(
         });
 };
 
+const createNextNotification = <T>(value: T) => ({ kind: 'N' as const, value });
+
+const createErrorNotification = (error: unknown) => ({
+    kind: 'E' as const,
+    error
+});
+
+const createCompleteNotification = () => ({ kind: 'C' as const });
+
 export const testObs = <T = any>(
     actual: Observable<T>,
     expectedValues: T[],
@@ -82,11 +102,11 @@ export const testObs = <T = any>(
     testObsNotifications(
         actual,
         expectedValues
-            .map(v => Notification.createNext(v))
+            .map<RxNotification<T>>(createNextNotification)
             .concat(
                 !!expectedError
-                    ? [Notification.createError(expectedError)]
-                    : [Notification.createComplete()]
+                    ? createErrorNotification(expectedError)
+                    : createCompleteNotification()
             ),
         done,
         options
@@ -100,7 +120,7 @@ export const testObsValues = <T = any>(
 ) =>
     testObsNotifications(
         actual,
-        expected.map(v => Notification.createNext(v)),
+        expected.map(createNextNotification),
         done,
         options
     );
