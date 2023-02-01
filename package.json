@@ -37,9 +37,9 @@
     "docs": "typedoc --out compiled/docs src/index.ts",
     "build": "rollup -c",
     "dev": "npm run test:watch",
-    "test": "jest --verbose --all",
+    "test": "jest --all",
     "test:watch": "jest --watch --onlyChanged",
-    "test:prod": "npm run lint && npm run test -- --coverage --no-cache",
+    "test:prod": "npm run test -- --coverage --no-cache",
     "deploy-docs": "ts-node tools/gh-pages-publish",
     "semantic-release-prepare": "ts-node tools/semantic-release-prepare"
   },
