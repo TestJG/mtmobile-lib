@@ -39,7 +39,8 @@
     "dev": "npm run test:watch",
     "test": "jest --all",
     "test:watch": "jest --watch --onlyChanged",
-    "test:prod": "npm run test -- --coverage --no-cache"
+    "test:prod": "npm run test -- --coverage --no-cache",
+    "release": "bumpp --commit --push --tag"
   },
   "devDependencies": {
     "@angular-eslint/eslint-plugin": "^15.2.0",
@@ -51,6 +52,7 @@
     "@types/node": "^8.10.66",
     "@typescript-eslint/eslint-plugin": "^5.49.0",
     "@typescript-eslint/parser": "^5.49.0",
+    "bumpp": "^8.2.1",
     "colors": "^1.4.0",
     "esbuild": "^0.17.5",
     "eslint": "^8.33.0",
