@@ -61,12 +61,16 @@ jobs:
       - run: pnpm build
 
       - run: pnpm dlx changelogen@latest --release
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
       - run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
 
-      - run: git push
+      - run: git push --follow-tags
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
   # Single deploy job since we're just deploying
   deploy:
