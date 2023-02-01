@@ -96,12 +96,13 @@ export const fromObsLike = <T>(
     source: ObsLike<T>,
     treatArraysAsValues = true
 ): Observable<T> => {
-    // Current behavior is not to treat it as an observable.
+    // Current behavior is not to treat a string as an observable.
     if (
-        (isObservableInput(source) && typeof source !== 'string') ||
-        (!treatArraysAsValues && source instanceof Array)
+        typeof source !== 'string' &&
+        isObservableInput(source) &&
+        (treatArraysAsValues ? !Array.isArray(source) : Array.isArray(source))
     ) {
-        return from(source);
+        return from(source as ObservableInput<T>);
     } else {
         return of(source as T);
     }
@@ -110,7 +111,7 @@ export const fromObsLike = <T>(
 export const tryTo = <T>(
     thunk: (defer: (action: () => void) => void) => ObsLike<T>,
     treatArraysAsValues = true
-): Observable<T> => {
+) => {
     const defers: (() => void)[] = [];
     let finishing = false;
     const defer = (action: () => void) => {
