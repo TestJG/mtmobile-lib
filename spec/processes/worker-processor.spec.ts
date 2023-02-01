@@ -110,27 +110,27 @@ describe('Processes', () => {
                     setTimeout(() => {
                         try {
                             expect(postMessageSpy).toHaveBeenCalledTimes(5);
-                            expect(postMessageSpy).toHaveBeenCalledWith({
+                            expect(postMessageSpy).toHaveBeenNthCalledWith(1, {
                                 kind: 'N',
                                 uid: '123',
                                 valueOrError: 1
                             });
-                            expect(postMessageSpy).toHaveBeenCalledWith({
+                            expect(postMessageSpy).toHaveBeenNthCalledWith(2, {
                                 kind: 'N',
                                 uid: '123',
                                 valueOrError: 2
                             });
-                            expect(postMessageSpy).toHaveBeenCalledWith({
+                            expect(postMessageSpy).toHaveBeenNthCalledWith(3, {
                                 kind: 'N',
                                 uid: '123',
                                 valueOrError: 1
                             });
-                            expect(postMessageSpy).toHaveBeenCalledWith({
+                            expect(postMessageSpy).toHaveBeenNthCalledWith(4, {
                                 kind: 'N',
                                 uid: '123',
                                 valueOrError: 2
                             });
-                            expect(postMessageSpy).toHaveBeenCalledWith({
+                            expect(postMessageSpy).toHaveBeenNthCalledWith(5, {
                                 kind: 'E',
                                 uid: '123',
                                 valueOrError: new TransientError('transient')
