@@ -115,8 +115,8 @@ describe('Utils', () => {
                     true
                 );
             });
-            it('should return true when a custom Subscribable is passed as an argument', () => {
-                expect(isObservableInput({ subscribe: () => {} })).toBe(true);
+            it('should return false when a custom Subscribable is passed as an argument', () => {
+                expect(isObservableInput({ subscribe: () => {} })).toBe(false);
             });
             it('should return true when a custom InterOpObservable is passed as an argument', () => {
                 expect(
