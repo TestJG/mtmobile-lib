@@ -39,9 +39,7 @@
     "dev": "npm run test:watch",
     "test": "jest --all",
     "test:watch": "jest --watch --onlyChanged",
-    "test:prod": "npm run test -- --coverage --no-cache",
-    "deploy-docs": "ts-node tools/gh-pages-publish",
-    "semantic-release-prepare": "ts-node tools/semantic-release-prepare"
+    "test:prod": "npm run test -- --coverage --no-cache"
   },
   "devDependencies": {
     "@angular-eslint/eslint-plugin": "^15.2.0",
