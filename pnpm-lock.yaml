@@ -24,7 +24,7 @@ specifiers:
   rollup: ^3.12.0
   rollup-plugin-dts: ^5.1.1
   rollup-plugin-esbuild: ^5.0.0
-  rxjs: ^6.6.7
+  rxjs: ^7.8.0
   ts-jest: ^29.0.5
   ts-node: ^10.9.1
   tsc-watch: ^1.1.39
@@ -35,8 +35,8 @@ specifiers:
 devDependencies:
   '@angular-eslint/eslint-plugin': 15.2.0_zkdaqh7it7uc4cvz2haft7rc6u
   '@angular/compiler': 6.0.9
-  '@angular/core': 6.0.9_rxjs@6.6.7+zone.js@0.8.29
-  '@ngrx/store': 6.1.2_elrrlwa5kg3mjz67yxsnybzrba
+  '@angular/core': 6.0.9_rxjs@7.8.0+zone.js@0.8.29
+  '@ngrx/store': 6.1.2_eciiiomv4zfqu36f5fpdgdkh2a
   '@types/jest': 29.4.0
   '@types/lodash': 4.14.191
   '@types/node': 8.10.66
@@ -56,7 +56,7 @@ devDependencies:
   rollup: 3.12.0
   rollup-plugin-dts: 5.1.1_tkwgik6422u3whqaozmypsnvni
   rollup-plugin-esbuild: 5.0.0_xh5ziip2kh75funlguo4husgu4
-  rxjs: 6.6.7
+  rxjs: 7.8.0
   ts-jest: 29.0.5_f3sikf76vpzmjb4j5j2goxj7wi
   ts-node: 10.9.1_xt5hb5pymrmtxudrjo6bjznbby
   tsc-watch: 1.1.39_typescript@4.9.4
@@ -112,13 +112,13 @@ packages:
       tslib: 1.14.1
     dev: true
 
-  /@angular/core/6.0.9_rxjs@6.6.7+zone.js@0.8.29:
+  /@angular/core/6.0.9_rxjs@7.8.0+zone.js@0.8.29:
     resolution: {integrity: sha512-NeEUgymsR/tLvWeEAA4mGEX/S4hHbIo/2uwPGGAQAvzlk+pL7xqPoFSMKeqQahdTnWSmYa/2+X33OdJgXKKXyg==}
     peerDependencies:
       rxjs: ^6.0.0
       zone.js: ~0.8.26
     dependencies:
-      rxjs: 6.6.7
+      rxjs: 7.8.0
       tslib: 1.14.1
       zone.js: 0.8.29
     dev: true
@@ -981,14 +981,14 @@ packages:
       type-detect: 4.0.8
     dev: true
 
-  /@ngrx/store/6.1.2_elrrlwa5kg3mjz67yxsnybzrba:
+  /@ngrx/store/6.1.2_eciiiomv4zfqu36f5fpdgdkh2a:
     resolution: {integrity: sha512-W9MbXrwhIRmN1BlINF9BT+rHR046e1HNk7GqykcDJrK9wW74PJW3aE5iuPb2sTPipBMjPHsXzc73E4U/+OTAyw==}
     peerDependencies:
       '@angular/core': ^6.0.0
       rxjs: ^5.6.0-forward-compat.0 || ^6.0.0
     dependencies:
-      '@angular/core': 6.0.9_rxjs@6.6.7+zone.js@0.8.29
-      rxjs: 6.6.7
+      '@angular/core': 6.0.9_rxjs@7.8.0+zone.js@0.8.29
+      rxjs: 7.8.0
     dev: true
 
   /@nodelib/fs.scandir/2.1.5:
@@ -3339,11 +3339,10 @@ packages:
       queue-microtask: 1.2.3
     dev: true
 
-  /rxjs/6.6.7:
-    resolution: {integrity: sha512-hTdwr+7yYNIT5n4AMYp85KA6yw2Va0FLa3Rguvbpa4W3I5xynaBZo41cM3XM+4Q6fRMj3sBYIR1VAmZMXYJvRQ==}
-    engines: {npm: '>=2.0.0'}
+  /rxjs/7.8.0:
+    resolution: {integrity: sha512-F2+gxDshqmIub1KdvZkaEfGDwLNpPvk9Fs6LD/MyQxNgMds/WH9OdDDXOmxUZpME+iSK3rQCctkL0DYyytUqMg==}
     dependencies:
-      tslib: 1.14.1
+      tslib: 2.5.0
     dev: true
 
   /semver/6.3.0:
@@ -3635,6 +3634,10 @@ packages:
 
   /tslib/1.14.1:
     resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
+    dev: true
+
+  /tslib/2.5.0:
+    resolution: {integrity: sha512-336iVw3rtn2BUK7ORdIAHTyxHGRIHVReokCR3XjbckJMK7ms8FysBfhLR8IXnAgy7T0PTPNBWKiH514FOW/WSg==}
     dev: true
 
   /tsutils/3.21.0_typescript@4.9.4:
