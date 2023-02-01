@@ -44,7 +44,6 @@ export const isObservableInput = <T>(
     if (!isSomething(obs)) {
         return false;
     }
-
     // Observable
     if (obs instanceof Observable) {
         return true;
@@ -71,6 +70,14 @@ export const isObservableInput = <T>(
     }
     // Iterable
     if (typeof obs[Symbol.iterator] === 'function') {
+        return true;
+    }
+    // AsyncIterable
+    if (typeof obs[Symbol.asyncIterator] === 'function') {
+        return true;
+    }
+    // ReadableStreamLike
+    if (typeof obs['getReader'] === 'function') {
         return true;
     }
 
