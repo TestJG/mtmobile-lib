@@ -1,1 +1,1 @@
-yarn run lint
+pnpm lint
