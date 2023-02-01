@@ -140,7 +140,7 @@ describe('Processes', () => {
                         } catch (e) {
                             done(e);
                         }
-                    }, 100);
+                    }, 500);
                 });
             });
         });
