@@ -22,7 +22,11 @@ module.exports = {
         project: 'tsconfig.spec.json',
         sourceType: 'module'
     },
-    plugins: ['@angular-eslint/eslint-plugin', '@typescript-eslint'],
+    plugins: [
+        '@angular-eslint/eslint-plugin',
+        '@typescript-eslint',
+        'deprecation'
+    ],
     extends: [
         // "eslint:recommended",
         // "plugin:@typescript-eslint/recommended",
@@ -37,6 +41,7 @@ module.exports = {
         '.eslintrc.cjs'
     ],
     rules: {
+        'deprecation/deprecation': 'warn', // or "error" to have stricter rule
         '@angular-eslint/component-class-suffix': 'error',
         '@angular-eslint/component-selector': [
             'error',
