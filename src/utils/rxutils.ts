@@ -57,10 +57,6 @@ export const isObservableInput = <T>(
     if (isPromiseLike(obs)) {
         return true;
     }
-    // Subscribable
-    if (isSubscribable(obs)) {
-        return true;
-    }
     // Array
     if (Array.isArray(obs)) {
         return true;
@@ -81,15 +77,21 @@ export const isObservableInput = <T>(
     return false;
 };
 
+/**
+ * FromObsLike gets a value and returns an observable. If source is an
+ * @ObservableInput - If a string is passed is treated as a value.
+ * it's considered as a single value
+ * @param source Something to turn into an observable
+ * @param treatArraysAsValues @default true
+ * @returns Observable
+ */
 export const fromObsLike = <T>(
     source: ObsLike<T>,
     treatArraysAsValues = true
 ): Observable<T> => {
-    // Can't use isObservableInput because string qualifies as ObservableInput
-    // and current behavior is not to treat it as an observable.
+    // Current behavior is not to treat it as an observable.
     if (
-        isPromiseLike(source) ||
-        isSubscribable(source) ||
+        (isObservableInput(source) && typeof source !== 'string') ||
         (!treatArraysAsValues && source instanceof Array)
     ) {
         return from(source);
