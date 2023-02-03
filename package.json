@@ -1,7 +1,7 @@
 {
   "name": "@testjg/mtmobile-lib",
   "version": "0.1.17",
-  "description": "",
+  "description": "Set of utils used by MantTestMobile",
   "keywords": [],
   "author": "isierra <isierra@jgingenieros.es>",
   "repository": {
