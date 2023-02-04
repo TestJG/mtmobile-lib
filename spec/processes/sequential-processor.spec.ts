@@ -81,7 +81,7 @@ describe('Processes', () => {
             });
 
             describe('Given a simple sequential processor', () => {
-                const runner = (item: TaskItem) =>
+                const runner = (item: TaskItem<string, number>) =>
                     timer(item.payload).pipe(map(() => item.payload));
                 const processor = startSequentialProcessor(runner, {
                     maxRetries: 5,
@@ -111,7 +111,7 @@ describe('Processes', () => {
 
             describe('Given a simple sequential processor with a bad behaved task', () => {
                 const runner = makeRunTask({
-                    taskA: (item: TaskItem) =>
+                    taskA: (item: TaskItem<string, number>) =>
                         timer(item.payload).pipe(
                             switchMap(() =>
                                 timer(0, 5).pipe(
@@ -120,7 +120,7 @@ describe('Processes', () => {
                                 )
                             )
                         ),
-                    taskB: (item: TaskItem) =>
+                    taskB: (item: TaskItem<string, number>) =>
                         timer(item.payload).pipe(
                             switchMap(() =>
                                 timer(0, 5).pipe(
