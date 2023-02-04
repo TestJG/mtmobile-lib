@@ -1,6 +1,7 @@
 import type {
     ConnectableObservable,
     ObservableInput,
+    ObservedValueOf,
     Observer,
     Subscribable,
     Subscription
@@ -29,10 +30,9 @@ import {
     normalizeError
 } from './common';
 
-export type ObsLike<T = any> = Subscribable<T> | PromiseLike<T> | T[] | T;
-export type ObsOrFunc<T = any> = ValueOrFunc<ObsLike<T>>;
+export type ObsOrFunc<T> = ValueOrFunc<Observable<T>>;
 
-export const normalizeErrorOnCatch = <T>(err: any): Observable<T> =>
+export const normalizeErrorOnCatch = (err: any) =>
     throwError(normalizeError(err));
 
 export const isSubscribable = <T>(subs: unknown): subs is Subscribable<T> =>
@@ -84,34 +84,48 @@ export const isObservableInput = <T>(
     return false;
 };
 
+export type ToObservable<
+    TValue,
+    TArraysAsValues extends boolean = true
+> = TValue extends unknown[]
+    ? TArraysAsValues extends false
+        ? Observable<TValue[number]>
+        : Observable<TValue>
+    : TValue extends ObservableInput<unknown>
+    ? Observable<ObservedValueOf<TValue>>
+    : Observable<TValue>;
+
 /**
- * FromObsLike gets a value and returns an observable. If source is an
- * @ObservableInput - If a string is passed is treated as a value.
- * it's considered as a single value
+ * FromObsLike gets a value and returns an observable. Special cases:
+ * * If source is an `Observable` it is returned as is.
+ * * Else if source is a `string` it will emits the `string` as a whole.
+ * * Else if source is an `Array` it will emit the `Array` as a whole or not
+ * depending on the `treatArraysAsValues` parameter.
+ * * Else if source is an `ObservableInput` it will emit the unwrapped value.
+ * * Else it will emit the value as is.
  * @param source Something to turn into an observable
  * @param treatArraysAsValues @default true
  * @returns Observable
  */
-export const fromObsLike = <T>(
-    source: ObsLike<T>,
-    treatArraysAsValues = true
-): Observable<T> => {
-    // Current behavior is not to treat a string as an observable.
+export const fromObsLike = <T, A extends boolean = true>(
+    source: T,
+    treatArraysAsValues: A = true as A
+): ToObservable<T, A> => {
     if (
         typeof source !== 'string' &&
         isObservableInput(source) &&
         (treatArraysAsValues ? !Array.isArray(source) : Array.isArray(source))
     ) {
-        return from(source as ObservableInput<T>);
+        return from(source) as any;
     } else {
-        return of(source as T);
+        return of(source) as any;
     }
 };
 
-export const tryTo = <T>(
-    thunk: (defer: (action: () => void) => void) => ObsLike<T>,
-    treatArraysAsValues = true
-) => {
+export const tryTo = <T, A extends boolean = true>(
+    thunk: (defer: (action: () => void) => void) => T,
+    treatArraysAsValues: A = true as A
+): ToObservable<T, A> => {
     const defers: (() => void)[] = [];
     let finishing = false;
     const defer = (action: () => void) => {
@@ -133,7 +147,7 @@ export const tryTo = <T>(
         }
     };
 
-    let obs: Observable<T>;
+    let obs;
     try {
         obs = fromObsLike(thunk(defer), treatArraysAsValues);
     } catch (error) {
@@ -190,8 +204,7 @@ export const firstSwitchMap =
             )
         );
 
-export const getAsObs = <T = any>(source: ObsOrFunc<T>) =>
-    tryTo(() => getAsValue(source));
+export const getAsObs = <T = any>(source: T) => tryTo(() => getAsValue(source));
 
 export function makeState<TState>(
     init: TState,

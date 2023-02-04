@@ -23,6 +23,7 @@ describe('Processes', () => {
 
             it('calling it with a taskItem without kind should return an observable error', done => {
                 testObs(
+                    // @ts-expect-error
                     runner({ kind: '', payload: 42 }),
                     [],
                     new Error('argument.null.task.kind'),
@@ -32,6 +33,7 @@ describe('Processes', () => {
 
             it('calling it with non-existing kind should return an observable error', done => {
                 testObs(
+                    // @ts-expect-error
                     runner({ kind: 'answer', payload: 42 }),
                     [],
                     new Error('unknown.task:answer'),
@@ -80,6 +82,7 @@ describe('Processes', () => {
 
             it('calling it with a taskItem without kind should return an observable error', done => {
                 testObs(
+                    // @ts-expect-error
                     runner({ kind: '', payload: 42 }),
                     [],
                     new Error('argument.null.task.kind'),
@@ -89,6 +92,7 @@ describe('Processes', () => {
 
             it('calling it with non-existing kind should return an observable error', done => {
                 testObs(
+                    // @ts-expect-error
                     runner({ kind: 'answer', payload: 42 }),
                     [],
                     new Error('unknown.task:answer'),

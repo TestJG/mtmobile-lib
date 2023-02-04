@@ -1,6 +1,7 @@
-import { from, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
+import type { Observable } from 'rxjs';
+import { ReplaySubject, Subject, throwError } from 'rxjs';
 import { assign, objMapValues } from '../utils/common';
-import type { ObsLike } from '../utils/rxutils';
+import { tryTo } from '../utils/rxutils';
 import { TransientError } from './errors';
 import { makeRunTask } from './makeRunTask';
 import type { IProcessor, TaskItem } from './processor.interfaces';
@@ -32,8 +33,8 @@ export interface DirectProcessorOptions {
     caption: string;
 }
 
-export function startDirectProcessor(
-    runTask: (task: TaskItem) => ObsLike<any>,
+export function startDirectProcessor<T>(
+    runTask: (task: TaskItem) => T,
     options?: Partial<DirectProcessorOptions>
 ): IProcessor {
     const opts = assign(
@@ -96,17 +97,9 @@ export function startDirectProcessor(
             }
 
             try {
-                obs = runTask(item);
+                obs = tryTo(() => runTask(item));
             } catch (error) {
                 obs = throwError(error);
-            }
-
-            if (obs instanceof Observable) {
-                // It is already an observable, let it be!
-            } else if (Promise.resolve(obs) === obs) {
-                obs = from(obs);
-            } else {
-                obs = of(obs);
             }
 
             return obs;
