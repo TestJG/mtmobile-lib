@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import _ from 'lodash';
+import type { Observable } from 'rxjs';
 import { ReplaySubject, Subject, throwError } from 'rxjs';
 import { tryTo } from '../utils';
 import type { ValueOrFunc } from '../utils/common';
 import { assign, errorToString, getAsValue } from '../utils/common';
-import type { ObsLike } from '../utils/rxutils';
 import { TransientError } from './errors';
 import type { IProcessor, TaskItem } from './processor.interfaces';
 
@@ -64,8 +64,8 @@ export interface SequentialProcessorOptions {
  * @param runTask
  * @param opts
  */
-export function startSequentialProcessor(
-    runTask: (task: TaskItem) => ObsLike<any>,
+export function startSequentialProcessor<T>(
+    runTask: (task: TaskItem) => T,
     options?: Partial<SequentialProcessorOptions>
 ): IProcessor {
     const opts = assign(
@@ -210,7 +210,7 @@ export function startSequentialProcessor(
         }
         work.retries++;
 
-        tryTo(() => runTask(work.item))
+        (tryTo(() => runTask(work.item)) as Observable<T>)
             // .timeout(opts.taskTimeout)
             .subscribe({
                 next: value => {
