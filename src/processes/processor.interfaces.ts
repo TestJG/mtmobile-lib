@@ -1,9 +1,9 @@
 import type { Observable } from 'rxjs';
 import { toKVMap, uuid } from '../utils';
 
-export interface TaskItem {
-    kind: string;
-    payload?: any;
+export interface TaskItem<T extends string = string, TPayload = unknown> {
+    kind: T;
+    payload?: TPayload;
     uid?: string;
 }
 
@@ -24,12 +24,16 @@ export interface IProcessor extends IProcessorCore {
     readonly onTaskCompleted$: Observable<TaskItem>;
 }
 
-export const task = (kind: string, payload?: any, uid?: string) =>
-    <TaskItem>{
+export const task = <TKind extends string, TPayload>(
+    kind: TKind,
+    payload?: TPayload,
+    uid?: string
+) =>
+    ({
         kind,
         payload,
         uid: uid || uuid('')
-    };
+    } satisfies TaskItem);
 
 /**
  * Creates an instance of a service, from a given processor and service methods,
