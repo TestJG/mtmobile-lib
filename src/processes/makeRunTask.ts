@@ -23,17 +23,17 @@ export function makeRunTask<T extends RunnersDict<string, unknown>>(
         task: TTask
     ) => {
         if (!task) {
-            return throwError(new Error('argument.null.task'));
+            return throwError(() => new Error('argument.null.task'));
         }
 
         if (!task.kind) {
-            return throwError(new Error('argument.null.task.kind'));
+            return throwError(() => new Error('argument.null.task.kind'));
         }
 
         const runner = runners[task.kind];
 
         if (!runner) {
-            return throwError(new Error(`unknown.task:${task.kind}`));
+            return throwError(() => new Error(`unknown.task:${task.kind}`));
         }
 
         return tryTo(() => runner(task.payload) as TResult);

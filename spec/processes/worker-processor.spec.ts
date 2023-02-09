@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { ReplaySubject, timer } from 'rxjs';
-import { timeoutWith } from 'rxjs/operators';
+import { timeout } from 'rxjs/operators';
 import type { IProcessor, SimpleWorker } from '../../src/processes';
 import {
     createBackgroundWorker,
@@ -310,9 +310,12 @@ describe('Processes', () => {
                 it("the worker's postMessage should have been called", done => {
                     const theTask = task('inc');
                     const subscription = testObs(
-                        foreWorker
-                            .process(theTask)
-                            .pipe(timeoutWith(20, ['timeout-signal'])),
+                        foreWorker.process(theTask).pipe(
+                            timeout({
+                                each: 20,
+                                with: () => ['timeout-signal']
+                            })
+                        ),
                         [1, 2, 'timeout-signal'],
                         null,
                         done

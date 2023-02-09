@@ -57,14 +57,14 @@ describe('Processes', () => {
                         setTimeout(() => r(new Error('error')), 10)
                     ),
                 taskObs: (payload: number) =>
-                    Observable.create((obs: Observer<number>) => {
+                    new Observable((obs: Observer<number>) => {
                         setTimeout(() => {
                             obs.next(payload + 30);
                             obs.complete();
                         }, 10);
                     }),
                 taskObsError: (payload: number) =>
-                    Observable.create((obs: Observer<number>) => {
+                    new Observable((obs: Observer<number>) => {
                         setTimeout(() => {
                             obs.error(new Error('error'));
                         }, 10);

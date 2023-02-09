@@ -138,25 +138,23 @@ export const createForegroundWorker = (opts: {
     };
 
     const process = (task: TaskItem): Observable<any> => {
-        const result = <Observable<any>>Observable.create(
-            (o: Observer<any>) => {
-                const id = uuid();
-                const sub = new Subject<any>();
-                const obs$ = sub.asObservable();
-                observers.set(id, sub);
-                worker.postMessage({ kind: 'process', uid: id, task });
-                const subs = obs$.subscribe({
-                    next: x => o.next(x),
-                    error: e => o.error(e),
-                    complete: () => o.complete()
-                });
+        const result = new Observable((o: Observer<any>) => {
+            const id = uuid();
+            const sub = new Subject<any>();
+            const obs$ = sub.asObservable();
+            observers.set(id, sub);
+            worker.postMessage({ kind: 'process', uid: id, task });
+            const subs = obs$.subscribe({
+                next: x => o.next(x),
+                error: e => o.error(e),
+                complete: () => o.complete()
+            });
 
-                return () => {
-                    subs.unsubscribe();
-                    worker.postMessage({ kind: 'unsubscribe', uid: id });
-                };
-            }
-        );
+            return () => {
+                subs.unsubscribe();
+                worker.postMessage({ kind: 'unsubscribe', uid: id });
+            };
+        });
         return result;
     };
 

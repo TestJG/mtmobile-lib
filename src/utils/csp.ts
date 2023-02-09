@@ -350,7 +350,7 @@ export const chanToObservable = <T>(
 ): Observable<T> & Logger => {
     const opts = Object.assign({}, options);
     const log = conditionalLog(opts, { prefix: 'OBS_CHAN: ' });
-    const obsResult = <Observable<T>>Observable.create((o: Observer<T>) => {
+    const obsResult = new Observable((o: Observer<T>) => {
         log('Start');
         const cancelCh = promiseChan();
         go(function* () {

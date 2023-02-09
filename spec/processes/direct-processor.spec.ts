@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { merge, of, timer } from 'rxjs';
-import { concat, skip, switchMap } from 'rxjs/operators';
+import { concatWith, skip, switchMap } from 'rxjs/operators';
 import type { TaskItem } from '../../src/processes';
 import {
     fromServiceToDirectProcessor,
@@ -117,9 +117,9 @@ describe('Processes', () => {
 
             describe('When a simple service is given and the processor is finished', () => {
                 const service = {
-                    taskA: () => timer(5).pipe(skip(1), concat(of('A'))),
+                    taskA: () => timer(5).pipe(skip(1), concatWith(of('A'))),
                     taskB: (p: number) =>
-                        timer(p).pipe(skip(1), concat(of('B' + p)))
+                        timer(p).pipe(skip(1), concatWith(of('B' + p)))
                 };
                 const processor = fromServiceToDirectProcessor(service);
 

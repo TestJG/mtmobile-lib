@@ -99,7 +99,7 @@ export function startDirectProcessor<T>(
             try {
                 obs = tryTo(() => runTask(item));
             } catch (error) {
-                obs = throwError(error);
+                obs = throwError(() => error);
             }
 
             return obs;
@@ -143,7 +143,7 @@ export function startDirectProcessor<T>(
 
     const process = (item: TaskItem) => {
         if (!isAlive()) {
-            return throwError(new Error('worker:finishing'));
+            return throwError(() => new Error('worker:finishing'));
         }
         runningCount++;
         const sub = new Subject<any>();

@@ -5,7 +5,7 @@ import {
     materialize,
     take,
     tap,
-    timeoutWith,
+    timeout,
     toArray
 } from 'rxjs/operators';
 import type { LogOpts } from '../../src/utils';
@@ -70,7 +70,7 @@ export const testObsNotifications = <T = any>(
 
     return actual
         .pipe(
-            timeoutWith(doneTimeout, ['TIMEOUT']),
+            timeout({ each: doneTimeout, with: () => ['TIMEOUT'] }),
             materialize(),
             tap(n => log('RECEIVED ', toStr(n))),
             toArray()
@@ -134,7 +134,7 @@ export const testTaskOf =
             concatMap(i => {
                 const elem = args[i];
                 if (i === args.length - 1 && elem instanceof Error) {
-                    return throwError(elem);
+                    return throwError(() => elem);
                 } else {
                     return of(elem);
                 }

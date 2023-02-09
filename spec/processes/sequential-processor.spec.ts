@@ -1,6 +1,13 @@
 /* eslint-disable max-len */
 import { merge, of, throwError, timer } from 'rxjs';
-import { concat, flatMap, map, skip, switchMap, take } from 'rxjs/operators';
+import {
+    concatWith,
+    map,
+    mergeMap,
+    skip,
+    switchMap,
+    take
+} from 'rxjs/operators';
 import type { TaskItem } from '../../src/processes';
 import {
     makeRunTask,
@@ -18,7 +25,7 @@ describe('Processes', () => {
 
             describe('When a sequential processor is started with well behaved task', () => {
                 const runner = (item: TaskItem) =>
-                    timer(5).pipe(skip(1), concat(of(1, 2, 3)));
+                    timer(5).pipe(skip(1), concatWith(of(1, 2, 3)));
                 const proc = startSequentialProcessor(runner);
 
                 it('it should process task returning the well behaved result', done => {
@@ -30,8 +37,10 @@ describe('Processes', () => {
                 const runner = (item: TaskItem) =>
                     timer(5).pipe(
                         skip(1),
-                        concat(of(1, 2, 3)),
-                        concat(throwError(new TransientError('transient')))
+                        concatWith(of(1, 2, 3)),
+                        concatWith(
+                            throwError(() => new TransientError('transient'))
+                        )
                     );
                 const proc = startSequentialProcessor(runner, {
                     maxRetries: 3,
@@ -53,12 +62,15 @@ describe('Processes', () => {
                 const runner = (item: TaskItem) =>
                     timer(5).pipe(
                         skip(1),
-                        concat(
+                        concatWith(
                             ++errorCount <= 2
                                 ? of(1, 2, 3).pipe(
-                                      concat(
+                                      concatWith(
                                           throwError(
-                                              new TransientError('temporary')
+                                              () =>
+                                                  new TransientError(
+                                                      'temporary'
+                                                  )
                                           )
                                       )
                                   )
@@ -128,7 +140,11 @@ describe('Processes', () => {
                                     map(v => 10 * (v + 1))
                                 )
                             ),
-                            concat(throwError(new TransientError('transient')))
+                            concatWith(
+                                throwError(
+                                    () => new TransientError('transient')
+                                )
+                            )
                         )
                 });
                 const processor = startSequentialProcessor(runner, {
@@ -141,7 +157,7 @@ describe('Processes', () => {
                     testObs(
                         timer(10, 10).pipe(
                             take(2),
-                            flatMap(i => {
+                            mergeMap(i => {
                                 if (i === 0) {
                                     return processor.process(task('taskB', 30));
                                 } else {

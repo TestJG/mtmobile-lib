@@ -32,12 +32,12 @@ export function startRouterProcessor(
     const process = (task: TaskItem) => {
         const pos = task.kind.indexOf(options.routeSeparator);
         if (pos < 0) {
-            return throwError(new Error('argument.invalid.task.kind'));
+            return throwError(() => new Error('argument.invalid.task.kind'));
         }
         const prefix = task.kind.substr(0, pos);
         const route = routes[prefix];
         if (!route) {
-            return throwError(new Error('argument.invalid.task.prefix'));
+            return throwError(() => new Error('argument.invalid.task.prefix'));
         }
         const newKind = task.kind.substr(pos + options.routeSeparator.length);
         const newTask = assign(task, { kind: newKind });
@@ -124,7 +124,7 @@ export function startRouterProxy(
 
     const isAlive = () => processor.isAlive();
 
-    const finish = () => throwError(new Error('invalidop.proxy.finish'));
+    const finish = () => throwError(() => new Error('invalidop.proxy.finish'));
 
     const process = (task: TaskItem) => {
         const newTask = assign(task, {
