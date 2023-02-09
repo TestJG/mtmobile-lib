@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { chan, go, promiseChan, put, take } from 'js-csp';
-import { EMPTY, of, throwError, timer } from 'rxjs';
+import { EMPTY, firstValueFrom, of, throwError, timer } from 'rxjs';
 import { map, take as takeObs } from 'rxjs/operators';
 import {
     chanToObservable,
@@ -223,25 +223,23 @@ describe('Utils', () => {
                 expect(promiseToChan).toBeInstanceOf(Function));
 
             it('with a resolving promise it should produce the value in the channel', done => {
-                const prom = timer(10)
-                    .pipe(() => of(10))
-                    .toPromise();
+                const prom = firstValueFrom(timer(10).pipe(() => of(10)));
                 const ch = promiseToChan(prom);
                 testObs(chanToObservable(ch), [10], null, done);
             });
 
             it('with a resolving promise and keepOpen it should produce the value and leave the channel open', done => {
-                const prom = timer(10)
-                    .pipe(() => of(10))
-                    .toPromise();
+                const prom = firstValueFrom(timer(10).pipe(() => of(10)));
                 const ch = promiseToChan(prom, { keepOpen: true });
                 testObs(chanToObservable(ch), [10, 'TIMEOUT'], null, done);
             });
 
             it('with a rejecting promise it should produce the error in the channel', done => {
-                const prom = timer(10)
-                    .pipe(() => throwError(new Error('unexpected')))
-                    .toPromise();
+                const prom = firstValueFrom(
+                    timer(10).pipe(() =>
+                        throwError(() => new Error('unexpected'))
+                    )
+                );
                 const ch = promiseToChan(prom);
                 testObs(
                     chanToObservable(ch),
@@ -252,9 +250,11 @@ describe('Utils', () => {
             });
 
             it('with a rejecting promise and no include errors it should produce an empty channel', done => {
-                const prom = timer(10)
-                    .pipe(() => throwError(new Error('unexpected')))
-                    .toPromise();
+                const prom = firstValueFrom(
+                    timer(10).pipe(() =>
+                        throwError(() => new Error('unexpected'))
+                    )
+                );
                 const ch = promiseToChan(prom, { includeErrors: false });
                 testObs(chanToObservable(ch), [], null, done);
             });
@@ -291,7 +291,9 @@ describe('Utils', () => {
             });
 
             it('with a failing observable it should produce the error in the channel', done => {
-                const obs = timer(10).pipe(() => throwError(new Error('test')));
+                const obs = timer(10).pipe(() =>
+                    throwError(() => new Error('test'))
+                );
                 const ch = firstToChan(obs);
                 testObs(chanToObservable(ch), [new Error('test')], null, done);
             });
@@ -331,7 +333,9 @@ describe('Utils', () => {
             });
 
             it('with a failing observable it should produce the error in the channel', done => {
-                const obs = timer(10).pipe(() => throwError(new Error('test')));
+                const obs = timer(10).pipe(() =>
+                    throwError(() => new Error('test'))
+                );
                 const ch = observableToChan(obs);
                 testObs(chanToObservable(ch), [new Error('test')], null, done);
             });
@@ -377,9 +381,7 @@ describe('Utils', () => {
             });
 
             it('with a promise it should produce the value in the channel', done => {
-                const prom = timer(10)
-                    .pipe(() => of(10))
-                    .toPromise();
+                const prom = firstValueFrom(timer(10).pipe(() => of(10)));
                 const ch = toChan(prom);
                 testObs(chanToObservable(ch), [10], null, done);
             });

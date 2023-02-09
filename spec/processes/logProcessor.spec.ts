@@ -1,4 +1,3 @@
-import { ArgumentOutOfRangeError } from 'rxjs';
 import {
     defaultErrorFormatter,
     defaultTaskFormatter,
@@ -61,9 +60,9 @@ describe('Processes', () => {
             expect(
                 defaultErrorFormatter(true)(new Error('Simple error'))
             ).not.toBe('Error: Simple error');
-            expect(
-                defaultErrorFormatter(false)(new ArgumentOutOfRangeError())
-            ).toBe('ArgumentOutOfRangeError: argument out of range');
+            expect(defaultErrorFormatter(false)(new TypeError())).toBe(
+                'TypeError: (no message)'
+            );
         });
     });
 

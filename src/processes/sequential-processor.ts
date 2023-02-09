@@ -260,7 +260,7 @@ export function startSequentialProcessor<T>(
     const process = (item: TaskItem) => {
         if (!_isAlive) {
             log('PROCESS - NOT ALIVE');
-            return throwError(new Error('worker:finishing'));
+            return throwError(() => new Error('worker:finishing'));
         }
 
         const sub = new Subject<any>();

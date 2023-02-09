@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { of, throwError, timer } from 'rxjs';
-import { concat, concatMap, delay, map, take } from 'rxjs/operators';
+import { concatMap, concatWith, delay, map, take } from 'rxjs/operators';
 import { id } from '../../src/utils/common';
 import {
     firstMap,
@@ -171,7 +171,7 @@ describe('Utils', () => {
 
             it('on an array value should return an observable returning that array as a whole', done => {
                 testObs(
-                    tryTo<string[]>(() => ['many', 'values']),
+                    tryTo(() => ['many', 'values']),
                     [['many', 'values']],
                     null,
                     done
@@ -214,7 +214,7 @@ describe('Utils', () => {
                 const actual = tryTo(() =>
                     of(1, 2, 3).pipe(
                         concatMap(v => of(v).pipe(delay(v))),
-                        concat(throwError(new Error('an error')))
+                        concatWith(throwError(() => new Error('an error')))
                     )
                 );
                 testObs(actual, [1, 2, 3], new Error('an error'), done);
@@ -354,7 +354,7 @@ describe('Utils', () => {
 
             it('should normalize errors', done => {
                 testObs(
-                    firstMap(throwError(4))(id),
+                    firstMap(throwError(() => 4))(id),
                     [],
                     new Error('error.unknown'),
                     done
@@ -387,7 +387,7 @@ describe('Utils', () => {
 
             it('should normalize errors', done => {
                 testObs(
-                    firstSwitchMap(throwError(4))(x => of(x)),
+                    firstSwitchMap(throwError(() => 4))(x => of(x)),
                     [],
                     new Error('error.unknown'),
                     done

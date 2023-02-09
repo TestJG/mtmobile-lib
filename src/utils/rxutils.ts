@@ -1,24 +1,30 @@
 import type {
-    ConnectableObservable,
     ObservableInput,
     ObservedValueOf,
     Observer,
     Subscribable,
     Subscription
 } from 'rxjs';
-import { from, merge, Observable, of, throwError } from 'rxjs';
+import {
+    BehaviorSubject,
+    connectable,
+    from,
+    merge,
+    Observable,
+    of,
+    ReplaySubject,
+    throwError
+} from 'rxjs';
 import {
     catchError,
+    finalize,
     first,
     ignoreElements,
     map,
     materialize,
-    publishBehavior,
-    publishReplay,
     scan,
     switchMap,
-    takeUntil,
-    tap
+    takeUntil
 } from 'rxjs/operators';
 import type { FuncOf, ValueOrFunc } from './common';
 import {
@@ -33,7 +39,7 @@ import {
 export type ObsOrFunc<T> = ValueOrFunc<Observable<T>>;
 
 export const normalizeErrorOnCatch = (err: any) =>
-    throwError(normalizeError(err));
+    throwError(() => normalizeError(err));
 
 export const isSubscribable = <T>(subs: unknown): subs is Subscribable<T> =>
     isSomething(subs) && typeof subs['subscribe'] === 'function';
@@ -153,7 +159,7 @@ export const tryTo = <T, A extends boolean = true>(
     } catch (error) {
         obs = normalizeErrorOnCatch(error);
     }
-    return obs.pipe(tap({ complete: runDefers, error: runDefers }));
+    return obs.pipe(finalize(runDefers));
 };
 
 // type FuncOf<V> = (...args: any[]) => V;
@@ -162,7 +168,10 @@ export type FuncOfObs<V> = FuncOf<Observable<V>>;
 export const wrapFunctionStream = <V, F extends FuncOfObs<V>>(
     stream: Observable<F>
 ): F => {
-    const conn = stream.pipe(publishReplay(1)) as ConnectableObservable<F>;
+    const conn = connectable(stream, {
+        connector: () => new ReplaySubject(1),
+        resetOnDisconnect: false
+    });
     const _subs = conn.connect();
     return <F>((...args: any[]) =>
         conn.pipe(
@@ -175,7 +184,10 @@ export const wrapServiceStreamFromNames = <T extends { [name: string]: any }>(
     source: Observable<T>,
     names: (keyof T)[]
 ): T => {
-    const conn = source.pipe(publishReplay(1)) as ConnectableObservable<T>;
+    const conn = connectable(source, {
+        connector: () => new ReplaySubject(1),
+        resetOnDisconnect: false
+    });
     const _subs = conn.connect();
     return names.reduce(
         (prev, name) =>
@@ -210,10 +222,13 @@ export function makeState<TState>(
     init: TState,
     updates$: Observable<(state: TState) => TState>
 ): [Observable<TState>, Subscription] {
-    const state$ = updates$.pipe(
-        scan((prev: TState, up: (state: TState) => TState) => up(prev), init),
-        publishBehavior(init)
-    ) as ConnectableObservable<TState>;
+    const acc = updates$.pipe(
+        scan((prev: TState, up: (state: TState) => TState) => up(prev), init)
+    );
+    const state$ = connectable(acc, {
+        connector: () => new BehaviorSubject(init),
+        resetOnDisconnect: false
+    });
     const connection = state$.connect();
     return [state$, connection];
 }
