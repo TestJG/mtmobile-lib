@@ -22,11 +22,7 @@ module.exports = {
         project: 'tsconfig.spec.json',
         sourceType: 'module'
     },
-    plugins: [
-        '@angular-eslint/eslint-plugin',
-        '@typescript-eslint',
-        'deprecation'
-    ],
+    plugins: ['@typescript-eslint', 'deprecation'],
     extends: [
         // "eslint:recommended",
         // "plugin:@typescript-eslint/recommended",
@@ -42,27 +38,6 @@ module.exports = {
     ],
     rules: {
         'deprecation/deprecation': 'warn', // or "error" to have stricter rule
-        '@angular-eslint/component-class-suffix': 'error',
-        '@angular-eslint/component-selector': [
-            'error',
-            {
-                type: 'element',
-                prefix: 'app',
-                style: 'kebab-case'
-            }
-        ],
-        '@angular-eslint/directive-class-suffix': 'error',
-        '@angular-eslint/directive-selector': [
-            'error',
-            {
-                type: 'attribute',
-                prefix: 'app',
-                style: 'camelCase'
-            }
-        ],
-        '@angular-eslint/no-input-rename': 'error',
-        '@angular-eslint/no-output-rename': 'error',
-        '@angular-eslint/use-pipe-transform-interface': 'error',
         '@typescript-eslint/consistent-type-definitions': 'error',
         '@typescript-eslint/consistent-type-exports': 'error',
         '@typescript-eslint/consistent-type-imports': 'error',
