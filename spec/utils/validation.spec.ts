@@ -167,6 +167,22 @@ describe('Utils', () => {
             it('should be a function', () =>
                 expect(mergeValidators).toBeInstanceOf(Function));
 
+            describe('when null is passed as an argument', () => {
+                it('should not error', () =>
+                    expect(mergeValidators(null)).not.toThrowError());
+
+                const merged = mergeValidators(null);
+                expectErrors(merged, 'mergeValidators', allValues);
+            });
+
+            describe('when undefined is passed as an argument', () => {
+                it('should not error', () =>
+                    expect(mergeValidators(undefined)).not.toThrowError());
+
+                const merged = mergeValidators(undefined);
+                expectErrors(merged, 'mergeValidators', allValues);
+            });
+
             expectParamErrors(mergeValidators, 'mergeValidators', [
                 {
                     value: 'any value',

@@ -114,10 +114,8 @@ export const makeValidator = <T>(
     };
 };
 
-export const mergeValidators = <T>(validators?: ValidatorInit<T>) => {
-    if (validators === undefined) {
-        validators = [];
-    }
+export const mergeValidators = <T>(validators?: ValidatorInit<T> | null) => {
+    validators ??= [];
     if (typeof validators === 'function') {
         validators = [validators];
     }
