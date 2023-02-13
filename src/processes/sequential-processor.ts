@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import _ from 'lodash';
 import type { Observable } from 'rxjs';
 import { ReplaySubject, Subject, throwError } from 'rxjs';
 import { tryTo } from '../utils';
 import type { ValueOrFunc } from '../utils/common';
-import { assign, errorToString, getAsValue } from '../utils/common';
+import { assign, between, errorToString, getAsValue } from '../utils/common';
 import { TransientError } from './errors';
 import type { IProcessor, TaskItem } from './processor.interfaces';
 
@@ -227,7 +226,7 @@ export function startSequentialProcessor<T>(
                         opts.isTransientError(error, work.retries) &&
                         work.retries < opts.maxRetries
                     ) {
-                        const newDelay = _.clamp(
+                        const newDelay = between(
                             opts.nextDelay(work.delay, work.retries),
                             opts.minDelay,
                             opts.maxDelay

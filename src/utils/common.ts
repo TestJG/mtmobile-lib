@@ -1,4 +1,3 @@
-import * as _ from 'lodash';
 import type { EqualityComparer } from './equality';
 import { shallowEqualStrict } from './equality';
 
@@ -192,7 +191,7 @@ export const objFlatMap =
             throw new Error('Must be an object');
         }
         return toKVMap(
-            _.flatMap(Object.keys(toKVMap(source)), key =>
+            Object.keys(toKVMap(source)).flatMap(key =>
                 toKVArray(mapper([key, source[key]]))
             )
         );

@@ -1,4 +1,3 @@
-import * as _ from 'lodash';
 import type { ValueOrFunc } from './common';
 import {
     assign,
@@ -679,7 +678,9 @@ const updateFormItemInternalRec = (
                     );
                 }
                 const indices = isNaN(indexOrWildcard)
-                    ? _.range((<any[]>item.fields).length)
+                    ? Array.from({ length: item.fields.length }).map(
+                          (_, i) => i
+                      )
                     : [indexOrWildcard];
 
                 const restOfPath = path.slice(1);
@@ -1034,7 +1035,7 @@ export const getAllErrorsInternalRec = (
         }
 
         case 'group': {
-            const fieldErrors = _.flatMap(Object.keys(item.fields), key =>
+            const fieldErrors = Object.keys(item.fields).flatMap(key =>
                 getAllErrorsInternalRec(
                     item.fields[key],
                     appendGroupPath(path, key)
@@ -1044,7 +1045,7 @@ export const getAllErrorsInternalRec = (
         }
 
         case 'listing': {
-            const fieldErrors = _.flatMap(item.fields, (field, index) =>
+            const fieldErrors = item.fields.flatMap((field, index) =>
                 getAllErrorsInternalRec(field, appendListingPath(path, index))
             );
             return currentErrors.concat(fieldErrors);
