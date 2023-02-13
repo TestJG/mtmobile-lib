@@ -34,12 +34,12 @@ export function startRouterProcessor(
         if (pos < 0) {
             return throwError(() => new Error('argument.invalid.task.kind'));
         }
-        const prefix = task.kind.substr(0, pos);
+        const prefix = task.kind.slice(0, pos);
         const route = routes[prefix];
         if (!route) {
             return throwError(() => new Error('argument.invalid.task.prefix'));
         }
-        const newKind = task.kind.substr(pos + options.routeSeparator.length);
+        const newKind = task.kind.slice(pos + options.routeSeparator.length);
         const newTask = assign(task, { kind: newKind });
         return route.process(newTask);
     };

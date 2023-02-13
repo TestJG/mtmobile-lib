@@ -252,7 +252,7 @@ export function capString(
 ) {
     maxLength = maxLength >= ellipsis.length ? maxLength : ellipsis.length;
     if (str.length > maxLength) {
-        return str.substr(0, maxLength - ellipsis.length) + ellipsis;
+        return str.slice(0, maxLength - ellipsis.length) + ellipsis;
     } else {
         return str;
     }
@@ -389,16 +389,16 @@ export function printStr(
     if (str.length > maxLength) {
         if (opts.ellipsis.length + opts.backChars >= str.length) {
             return (
-                opts.ellipsis + str.substr(0, str.length - opts.ellipsis.length)
+                opts.ellipsis + str.slice(0, str.length - opts.ellipsis.length)
             );
         } else {
             return (
-                str.substr(
+                str.slice(
                     0,
                     maxLength - opts.ellipsis.length - opts.backChars
                 ) +
                 opts.ellipsis +
-                str.substr(str.length - opts.backChars)
+                str.slice(str.length - opts.backChars)
             );
         }
     } else {
@@ -681,7 +681,7 @@ export const oldPrintObj = (
 
     const unIndent = () => {
         depth--;
-        indentation = indentation.substr(
+        indentation = indentation.slice(
             0,
             indentation.length - opts.indentChars.length
         );
