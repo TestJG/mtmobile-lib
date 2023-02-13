@@ -216,7 +216,8 @@ export const firstSwitchMap =
             )
         );
 
-export const getAsObs = <T = any>(source: T) => tryTo(() => getAsValue(source));
+export const getAsObs = <T>(source: ValueOrFunc<T>) =>
+    tryTo(() => getAsValue(source));
 
 export function makeState<TState>(
     init: TState,
