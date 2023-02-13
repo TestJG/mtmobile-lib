@@ -891,3 +891,18 @@ export const printObj = (
 
     return loop(obj, 0, '');
 };
+
+/**
+ * Between clamps `value` within the inclusive `min` and `max` bounds.
+ * @param value The number to clamp
+ * @param min The lower bound
+ * @param max The upper bound
+ * @returns Returns the clamped number
+ */
+export const between = (value: number, min: number, max: number) => {
+    // Handle NaN cases.
+    min = min === min ? min : 0;
+    max = max === max ? max : 0;
+
+    return Math.min(Math.max(value, min), max);
+};

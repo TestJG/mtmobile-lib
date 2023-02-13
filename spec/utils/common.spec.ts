@@ -6,6 +6,7 @@ import {
     assignIf,
     assignOrSame,
     assignOrSameWith,
+    between,
     capString,
     compareArray,
     compareDataByType,
@@ -1439,6 +1440,60 @@ describe('Utils', () => {
     i_undefined1: undefined
 }`));
             }
+        });
+
+        describe('between', () => {
+            it('should be a function', () =>
+                expect(between).toBeInstanceOf(Function));
+
+            it('should clamp negative numbers', () => {
+                expect(between(-10, -5, 5)).toBe(-5);
+                expect(between(-10.2, -5.5, 5.5)).toBe(-5.5);
+                expect(between(-Infinity, -5, 5)).toBe(-5);
+            });
+
+            it('should clamp positive numbers', () => {
+                expect(between(10, -5, 5)).toBe(5);
+                expect(between(10.6, -5.6, 5.4)).toBe(5.4);
+                expect(between(Infinity, -5, 5)).toBe(5);
+            });
+
+            it('should not alter negative numbers in range', () => {
+                expect(between(-4, -5, 5)).toBe(-4);
+                expect(between(-5, -5, 5)).toBe(-5);
+                expect(between(-5.5, -5.6, 5.6)).toBe(-5.5);
+            });
+
+            it('should not alter positive numbers in range', () => {
+                expect(between(4, -5, 5)).toBe(4);
+                expect(between(5, -5, 5)).toBe(5);
+                expect(between(4.5, -5.1, 5.2)).toBe(4.5);
+            });
+
+            it('should not alter `0` in range', () => {
+                expect(1 / between(0, -5, 5)).toBe(Infinity);
+            });
+
+            it('should clamp to `0`', () => {
+                expect(1 / between(-10, 0, 5)).toBe(Infinity);
+            });
+
+            it('should not alter `-0` in range', () => {
+                expect(1 / between(-0, -5, 5)).toBe(-Infinity);
+            });
+
+            it('should clamp to `-0`', () => {
+                expect(1 / between(-10, -0, 5)).toBe(-Infinity);
+            });
+
+            it('should return `NaN` when `number` is `NaN`', () => {
+                expect(between(NaN, -5, 5)).toBe(NaN);
+            });
+
+            it('should coerce `min` and `max` of `NaN` to `0`', () => {
+                expect(between(1, -5, NaN)).toBe(0);
+                expect(between(-1, NaN, 5)).toBe(0);
+            });
         });
     });
 });

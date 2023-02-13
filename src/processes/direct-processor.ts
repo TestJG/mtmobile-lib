@@ -1,6 +1,6 @@
 import type { Observable } from 'rxjs';
 import { ReplaySubject, Subject, throwError } from 'rxjs';
-import { assign, objMapValues } from '../utils/common';
+import { assign, between, objMapValues } from '../utils/common';
 import { tryTo } from '../utils/rxutils';
 import { TransientError } from './errors';
 import { makeRunTask } from './makeRunTask';
@@ -104,9 +104,6 @@ export function startDirectProcessor<T>(
 
             return obs;
         };
-
-        const between = (value: number, min: number, max: number) =>
-            Math.min(Math.max(value, min), max);
 
         const looper = (retries: number, delay: number) => {
             const task = runOnce(retries);
