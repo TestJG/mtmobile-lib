@@ -1,8 +1,10 @@
 import type { EqualityComparer } from './equality';
 import { shallowEqualStrict } from './equality';
 
-export const isNothing = x => x === undefined || x === null;
-export const isSomething = x => x !== undefined && x !== null;
+export const isNothing = <T>(x: T): x is null | undefined =>
+    x === undefined || x === null;
+export const isSomething = <T>(x: T): x is NonNullable<T> =>
+    x !== undefined && x !== null;
 
 export const isPromiseLike = <T>(prom: unknown): prom is PromiseLike<T> =>
     isSomething(prom) &&
