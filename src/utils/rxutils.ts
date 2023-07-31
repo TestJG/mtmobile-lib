@@ -164,8 +164,7 @@ export const tryTo = <T, A extends boolean = true>(
     return obs.pipe(finalize(runDefers));
 };
 
-// type FuncOf<V> = (...args: any[]) => V;
-export type FuncOfObs<V> = FuncOf<Observable<V>>;
+export type FuncOfObs<T> = FuncOf<Observable<T>>;
 
 export const wrapFunctionStream = <V, F extends FuncOfObs<V>>(
     stream: Observable<F>
