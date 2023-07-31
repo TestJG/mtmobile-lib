@@ -36,6 +36,8 @@ import {
     normalizeError
 } from './common';
 
+export type ValueObsOrFunc<T> = T | ObsOrFunc<T>;
+
 export type ObsOrFunc<T> = ValueOrFunc<Observable<T>>;
 
 export const normalizeErrorOnCatch = (err: any) =>
