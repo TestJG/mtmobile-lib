@@ -13,6 +13,7 @@
         "declarationDir": "compiled/types",
         "outDir": "compiled",
         "noEmitOnError": true,
+        "skipLibCheck": true,
         "allowUnreachableCode": false
     },
     "include": [],
